@@ -248,6 +248,8 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
   REAL  (RealK), ALLOCATABLE ::                                         &
       tau_clr_f(:, :)                                                   &
 !       Clear-sky optical depth
+    , tau_clr_noscal_f(:, :)                                            &
+!       Unscaled clear-sky optical depth
     , omega_clr_f(:, :)                                                 &
 !       Clear-sky albedo of single scattering
     , phase_fnc_clr_f(:, :, :)
@@ -269,15 +271,18 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
   IF (i_cloud == ip_cloud_clear) THEN
 !   Allocate and set dynamic arrays.
     ALLOCATE(tau_clr_f(nd_profile, nd_layer))
+    ALLOCATE(tau_clr_noscal_f(nd_profile, nd_layer))
     ALLOCATE(omega_clr_f(nd_profile, nd_layer))
     ALLOCATE(phase_fnc_clr_f(nd_profile, nd_layer, 1))
 
 ! DEPENDS ON: copy_clr_full
     CALL copy_clr_full(n_profile, n_layer, n_cloud_top                  &
-      , 1                                                               &
-      , ss_prop%tau_clr, ss_prop%omega_clr, ss_prop%phase_fnc_clr       &
-      , ss_prop%tau, ss_prop%omega, ss_prop%phase_fnc                   &
-      , tau_clr_f, omega_clr_f, phase_fnc_clr_f                         &
+      , control, 1                                                      &
+      , ss_prop%tau_clr, ss_prop%tau_clr_noscal, ss_prop%omega_clr      &
+      , ss_prop%phase_fnc_clr                                           &
+      , ss_prop%tau, ss_prop%tau_noscal                                 &
+      , ss_prop%omega, ss_prop%phase_fnc                                &
+      , tau_clr_f, tau_clr_noscal_f, omega_clr_f, phase_fnc_clr_f       &
 !                   Sizes of arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct, 1                    &
       )
@@ -305,7 +310,8 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
       , rho_alb(1, ip_surf_alb_diff)                                    &
       , rho_alb(1, ip_surf_alb_dir), d_planck_flux_surface              &
 !                 Single scattering properties
-      , tau_clr_f, omega_clr_f, phase_fnc_clr_f(1, 1, 1)                &
+      , tau_clr_noscal_f, tau_clr_f                                     &
+      , omega_clr_f, phase_fnc_clr_f(1, 1, 1)                           &
 !                 Fluxes calculated
       , flux_direct, flux_total                                         &
 !                 Sizes of arrays
@@ -314,6 +320,7 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
 
 !   Release temporary storage.
     DEALLOCATE(tau_clr_f)
+    DEALLOCATE(tau_clr_noscal_f)
     DEALLOCATE(omega_clr_f)
     DEALLOCATE(phase_fnc_clr_f)
 

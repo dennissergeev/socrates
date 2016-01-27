@@ -13,12 +13,12 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE trans_source_coeff(n_profile                                 &
+SUBROUTINE trans_source_coeff(control, n_profile                        &
      , i_layer_first, i_layer_last                                      &
      , isolir, l_ir_source_quad                                         &
-     , tau, sum, diff, lambda, sec_0                                    &
+     , tau_noscal, tau, sum, diff, lambda, sec_0                        &
      , gamma_up, gamma_down                                             &
-     , trans, reflect, trans_0, source_coeff                            &
+     , trans, reflect, trans_0_noscal, trans_0, source_coeff            &
      , nd_profile                                                       &
      , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                         &
      , nd_source_coeff                                                  &
@@ -30,9 +30,12 @@ SUBROUTINE trans_source_coeff(n_profile                                 &
   USE vectlib_mod, ONLY : exp_v
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE def_control, ONLY: StrCtrl
 
   IMPLICIT NONE
 
+! Control options:
+  TYPE(StrCtrl), INTENT(IN) :: control
 
 ! Sizes of dummy arrays.
   INTEGER, INTENT(IN) ::                                                &
@@ -71,6 +74,8 @@ SUBROUTINE trans_source_coeff(n_profile                                 &
   REAL (RealK), INTENT(IN) ::                                           &
       tau(nd_profile, id_op_lt: id_op_lb)                               &
 !       Optical depths of layers
+    , tau_noscal(nd_profile, id_op_lt: id_op_lb)                        &
+!       Unscaled optical depths of layers
     , sum(nd_profile, id_op_lt: id_op_lb)                               &
 !       Sum of alpha_1 and alpha_2
     , diff(nd_profile, id_op_lt: id_op_lb)                              &
@@ -93,6 +98,8 @@ SUBROUTINE trans_source_coeff(n_profile                                 &
 !       Diffuse reflection coefficient
     , trans_0(nd_profile, id_trs_lt: id_trs_lb)                         &
 !       Direct transmission coefficient
+    , trans_0_noscal(nd_profile, id_trs_lt: id_trs_lb)                  &
+!       Direct transmission coefficient without scaling
     , source_coeff(nd_profile, id_trs_lt: id_trs_lb                     &
         , nd_source_coeff)
 !       Source coefficients
@@ -177,6 +184,12 @@ SUBROUTINE trans_source_coeff(n_profile                                 &
         temp(l) = -tau(l,i)*sec_0(l)
      END DO
      CALL exp_v(n_profile,temp,trans_0(1,i))
+     IF (control%l_noscal_tau) THEN
+        DO l=1, n_profile
+           temp(l) = -tau_noscal(l,i)*sec_0(l)
+        END DO
+        CALL exp_v(n_profile,temp,trans_0_noscal(1,i))
+     END IF
      DO l=1, n_profile
         source_coeff(l, i, ip_scf_solar_up)                             &
           =(gamma_up(l, i)-reflect(l, i)                                &

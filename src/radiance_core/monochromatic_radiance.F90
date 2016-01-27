@@ -409,7 +409,22 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
     , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_cloud_type          &
     )
 
-
+  IF (control%l_noscal_tau) THEN
+    ! Above cloud top.
+    DO i=1, n_cloud_top-1
+      DO l=1, n_profile
+         ss_prop%tau_clr_noscal(l,i) = ss_prop%tau_clr(l,i)
+      END DO
+    END DO
+    ! Below cloud top.
+    DO k=0, cld%n_cloud_type
+       DO i=n_cloud_top, n_layer
+         DO l=1, n_profile
+           ss_prop%tau_noscal(l,i,k)=ss_prop%tau(l,i,k)
+         END DO
+       END DO
+    END DO
+  END IF
 
   IF ( (i_angular_integration == ip_two_stream).OR.                     &
        (i_angular_integration == ip_spherical_harmonic) ) THEN
@@ -499,7 +514,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 ! DEPENDS ON: monochromatic_radiance_sph
     CALL monochromatic_radiance_sph(ierr                                &
 !                   Atmospheric Propertries
-      , n_profile, n_layer, d_mass                                      &
+      , control, n_profile, n_layer, d_mass                             &
 !                   Angular Integration
       , n_order_phase, ms_min, ms_max, i_truncation, ls_local_trunc     &
       , accuracy_adaptive, euler_factor, i_sph_algorithm                &

@@ -2214,21 +2214,24 @@ CONTAINS
       DO
 !       Read contiguous blocks of data from LbL file
         IF (i_nu     + nu_count <= n_nu .AND. &
-            nu_index + nu_count <= SIZE(nu_wgt_all) .AND. &
-            nu_wgt_map(i_nu+nu_count) == &
+            nu_index + nu_count <= SIZE(nu_wgt_all)) THEN
+          IF (nu_wgt_map(i_nu+nu_count) == &
             nu_wgt_all_map(nu_index+nu_count)) THEN
-          nu_count=nu_count+1
+            nu_count=nu_count+1
+          ELSE
+            EXIT
+          END IF
         ELSE
-          WRITE(*,'(2(a,f12.2))') 'Reading wavenumbers:', &
-            nu_wgt(i_nu),' to', nu_wgt(i_nu+nu_count-1)
-          CALL nf(nf90_get_var(ncidin_lbl,varid, &
-            kabs_all(i_nu:i_nu+nu_count-1,:), &
-            start=(/nu_index, 1/), &
-            count=(/nu_count, n_pt_pair/)))
-          i_nu=i_nu+nu_count
           EXIT
         END IF
       END DO
+      WRITE(*,'(2(a,f12.2))') 'Reading wavenumbers:', &
+        nu_wgt(i_nu),' to', nu_wgt(i_nu+nu_count-1)
+      CALL nf(nf90_get_var(ncidin_lbl,varid, &
+        kabs_all(i_nu:i_nu+nu_count-1,:), &
+        start=(/nu_index, 1/), &
+        count=(/nu_count, n_pt_pair/)))
+      i_nu=i_nu+nu_count
     END DO
 
   END SUBROUTINE input_lbl_band_cdf

@@ -893,6 +893,8 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
     ALLOCATE(ss_prop%tau_clr                                                   &
       (dimen%nd_profile, dimen%nd_layer_clr))
+    ALLOCATE(ss_prop%tau_clr_noscal                                            &
+      (dimen%nd_profile, dimen%nd_layer_clr))
     ALLOCATE(ss_prop%omega_clr                                                 &
       (dimen%nd_profile, dimen%nd_layer_clr))
 
@@ -918,6 +920,9 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
        0: dimen%nd_cloud_type))
 
     ALLOCATE(ss_prop%tau                                                       &
+      (dimen%nd_profile, dimen%id_cloud_top: dimen%nd_layer,                   &
+       0: dimen%nd_cloud_type))
+    ALLOCATE(ss_prop%tau_noscal                                                &
       (dimen%nd_profile, dimen%id_cloud_top: dimen%nd_layer,                   &
        0: dimen%nd_cloud_type))
     ALLOCATE(ss_prop%omega                                                     &
@@ -2054,7 +2059,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
     DEALLOCATE(ss_prop%omega)
     DEALLOCATE(ss_prop%tau)
-
+    DEALLOCATE(ss_prop%tau_noscal)
     DEALLOCATE(ss_prop%forward_solar)
     DEALLOCATE(ss_prop%phase_fnc_solar)
     DEALLOCATE(ss_prop%forward_scatter)
@@ -2064,6 +2069,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
     DEALLOCATE(ss_prop%omega_clr)
     DEALLOCATE(ss_prop%tau_clr)
+    DEALLOCATE(ss_prop%tau_clr_noscal)
 
     DEALLOCATE(ss_prop%forward_solar_clr)
     DEALLOCATE(ss_prop%phase_fnc_solar_clr)

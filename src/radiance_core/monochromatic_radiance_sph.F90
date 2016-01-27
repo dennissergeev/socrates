@@ -18,7 +18,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                 Atmospheric Propertries
-    , n_profile, n_layer, d_mass                                        &
+    , control, n_profile, n_layer, d_mass                               &
 !                 Angular Integration
     , n_order_phase, ms_min, ms_max, i_truncation, ls_local_trunc       &
     , accuracy_adaptive, euler_factor, i_sph_algorithm                  &
@@ -70,6 +70,7 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 
 
   USE realtype_rd, ONLY: RealK
+  USE def_control, ONLY: StrCtrl
   USE def_ss_prop
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
@@ -79,6 +80,9 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 
   IMPLICIT NONE
 
+
+! Control options:
+  TYPE(StrCtrl),      INTENT(IN)    :: control
 
 ! Sizes of dummy arrays.
   INTEGER, INTENT(IN) ::                                                &
@@ -339,6 +343,8 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
   REAL  (RealK), ALLOCATABLE ::                                         &
       tau_clr_f(:, :)                                                   &
 !       Clear-sky optical depth for the whole column
+    , tau_clr_noscal_f(:, :)                                            &
+!       Unscaled clear-sky optical depth
     , omega_clr_f(:, :)                                                 &
 !       Clear-sky albedo of single scattering for the whole column
     , phase_fnc_clr_f(:, :, :)                                          &
@@ -376,6 +382,7 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 
 !   Allocate and set dynamic arrays.
     ALLOCATE(tau_clr_f(nd_profile, nd_layer))
+    ALLOCATE(tau_clr_noscal_f(nd_profile, nd_layer))
     ALLOCATE(omega_clr_f(nd_profile, nd_layer))
     ALLOCATE(phase_fnc_clr_f(nd_profile, nd_layer, nd_max_order))
     ALLOCATE(forward_scatter_clr_f(nd_profile, nd_layer))
@@ -384,10 +391,12 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 
 ! DEPENDS ON: copy_clr_full
     CALL copy_clr_full(n_profile, n_layer, n_cloud_top                  &
-      , n_order_phase                                                   &
-      , ss_prop%tau_clr, ss_prop%omega_clr, ss_prop%phase_fnc_clr       &
-      , ss_prop%tau, ss_prop%omega, ss_prop%phase_fnc                   &
-      , tau_clr_f, omega_clr_f, phase_fnc_clr_f                         &
+      , control, n_order_phase                                          &
+      , ss_prop%tau_clr, ss_prop%tau_clr_noscal                         &
+      , ss_prop%omega_clr, ss_prop%phase_fnc_clr                        &
+      , ss_prop%tau, ss_prop%tau_noscal                                 &
+      , ss_prop%omega, ss_prop%phase_fnc                                &
+      , tau_clr_f, tau_clr_noscal_f, omega_clr_f, phase_fnc_clr_f       &
 !                   Sizes of arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_max_order         &
       )
@@ -446,6 +455,15 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
       , nd_sph_cf_weight, nd_sph_u_range                                &
       , nd_viewing_level, nd_direction                                  &
       )
+
+!   Release temporary storage.
+    DEALLOCATE(tau_clr_f)
+    DEALLOCATE(tau_clr_noscal_f)
+    DEALLOCATE(omega_clr_f)
+    DEALLOCATE(phase_fnc_clr_f)
+    DEALLOCATE(forward_scatter_clr_f)
+    DEALLOCATE(phase_fnc_solar_clr_f)
+
 
 
   ELSE IF ((i_cloud == ip_cloud_mix_max).OR.                            &

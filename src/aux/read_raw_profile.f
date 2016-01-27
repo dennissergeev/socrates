@@ -119,9 +119,13 @@
         length_word(i)=0
       ENDDO
 1     j=j+1
-      IF ( ( (line(j:j) /= ' ').AND.(line(j:j) /= tab) ).AND.
-     &     ( (j == 1).OR.(line(j-1:j-1) == ' ').OR.
-     &       (line(j-1:j-1) == tab) ) ) THEN
+      IF (j == 1) THEN
+        IF ( (line(j:j) /= ' ').AND.(line(j:j) /= tab) ) THEN
+!         A new word is found.
+          n_word=n_word+1
+        END IF
+      ELSE IF ( ( (line(j:j) /= ' ').AND.(line(j:j) /= tab) ).AND.
+     &      ( (line(j-1:j-1) == ' ').OR. (line(j-1:j-1) == tab) ) ) THEN
 !       A new word is found.
         n_word=n_word+1
       ENDIF

@@ -14,13 +14,13 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE two_coeff_cloud(ierr                                         &
+SUBROUTINE two_coeff_cloud(ierr, control                                &
      , n_profile, i_layer_first, i_layer_last                           &
      , i_2stream, l_ir_source_quad, n_source_coeff                      &
      , n_cloud_type, frac_cloud                                         &
-     , phase_fnc_cloud, omega_cloud, tau_cloud                          &
+     , phase_fnc_cloud, omega_cloud, tau_cloud_noscal, tau_cloud        &
      , isolir, sec_0                                                    &
-     , trans_cloud, reflect_cloud, trans_0_cloud                        &
+     , trans_cloud, reflect_cloud, trans_0_cloud_noscal, trans_0_cloud  &
      , source_coeff_cloud                                               &
      , nd_profile, nd_layer, id_ct, nd_max_order                        &
      , nd_source_coeff, nd_cloud_type                                   &
@@ -31,10 +31,13 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE def_control, ONLY: StrCtrl 
 
   IMPLICIT NONE
 
 
+! Control options:
+  TYPE(StrCtrl),      INTENT(IN)    :: control
 ! Sizes of dummy arrays.
   INTEGER, INTENT(IN) ::                                                &
       nd_profile                                                        &
@@ -84,8 +87,10 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
 !       Phase functions
     , omega_cloud(nd_profile, id_ct: nd_layer, nd_cloud_type)           &
 !       Albedo of single scattering
-    , tau_cloud(nd_profile, id_ct: nd_layer, nd_cloud_type)
+    , tau_cloud(nd_profile, id_ct: nd_layer, nd_cloud_type)             &
 !       Optical depth
+    , tau_cloud_noscal(nd_profile, id_ct: nd_layer, nd_cloud_type)
+!       Unscaled Optical depth
 
 ! Solar beam
   REAL (RealK), INTENT(IN) ::                                           &
@@ -101,6 +106,8 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
 !       Mean diffuse reflection coefficient
     , trans_0_cloud(nd_profile, nd_layer)                               &
 !       Mean direct transmission coefficient
+    , trans_0_cloud_noscal(nd_profile, nd_layer)                        &
+!       Mean direct transmission coefficient without scaling
     , source_coeff_cloud(nd_profile, nd_layer, nd_source_coeff)
 !       Mean source coefficients in two-stream equations
 
@@ -124,6 +131,8 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
 !       Temporary diffuse reflection coefficient
     , trans_0_temp(nd_profile, 1)                                       &
 !       Temporary direct transmission coefficient
+    , trans_0_temp_noscal(nd_profile, 1)                                &
+!       Temporary direct transmission coefficient
     , source_coeff_temp(nd_profile, 1, nd_source_coeff)
 !       Temporary source coefficients in two-stream equations
 
@@ -138,6 +147,8 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
   REAL (RealK) ::                                                       &
       tau_gathered(nd_profile, 1)                                       &
 !       Gathered optical depth
+    , tau_gathered_noscal(nd_profile, 1)                                &
+!       Unscaled gathered tau
     , omega_gathered(nd_profile, 1)                                     &
 !       Gathered alebdo of single scattering
     , asymmetry_gathered(nd_profile, 1)                                 &
@@ -175,6 +186,13 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
         trans_0_cloud(l, i)=0.0e+00_RealK
       END DO
     END DO
+    IF (control%l_noscal_tau) THEN
+      DO i=i_layer_first, i_layer_last
+        DO l=1, n_profile
+          trans_0_cloud_noscal(l, i)=0.0e+00_RealK
+        END DO
+      END DO
+    END IF
   END IF
 
 
@@ -214,6 +232,13 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
           asymmetry_gathered(l, 1)                                      &
             =phase_fnc_cloud(l_list(l), i, 1, k)
         END DO
+
+        IF (control%l_noscal_tau) THEN
+          DO l=1, n_list
+            tau_gathered_noscal(l, 1)                                   &
+              =tau_cloud_noscal(l_list(l), i, k)
+          END DO
+        END IF
         IF (isolir == ip_solar) THEN
           DO l=1, n_list
             sec_0_gathered(l)=sec_0(l_list(l))
@@ -222,13 +247,13 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
 
 
 ! DEPENDS ON: two_coeff
-        CALL two_coeff(ierr                                             &
+        CALL two_coeff(ierr, control                                    &
           , n_list, i, i                                                &
           , i_2stream, l_ir_source_quad                                 &
           , asymmetry_gathered, omega_gathered                          &
-          , tau_gathered                                                &
+          , tau_gathered_noscal, tau_gathered                           &
           , isolir, sec_0_gathered                                      &
-          , trans_temp, reflect_temp, trans_0_temp                      &
+          , trans_temp, reflect_temp, trans_0_temp_noscal, trans_0_temp &
           , source_coeff_temp                                           &
           , nd_profile, i, i, i, i, nd_source_coeff                     &
           )
@@ -253,7 +278,17 @@ SUBROUTINE two_coeff_cloud(ierr                                         &
             ll=l_list(l)
             trans_0_cloud(ll, i)=trans_0_cloud(ll, i)                   &
                +frac_cloud(ll, i, k)*trans_0_temp(l, 1)
+            trans_0_cloud_noscal(ll, i)=trans_0_cloud_noscal(ll, i)     &
+               +frac_cloud(ll, i, k)*trans_0_temp_noscal(l, 1)
           END DO
+
+          IF (control%l_noscal_tau) THEN
+            DO l=1, n_list
+              ll=l_list(l)
+              trans_0_cloud_noscal(ll, i)=trans_0_cloud_noscal(ll, i)   &
+                 +frac_cloud(ll, i, k)*trans_0_temp_noscal(l, 1)
+            END DO
+          END IF
         END IF
       END IF
 

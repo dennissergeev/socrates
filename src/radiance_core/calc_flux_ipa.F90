@@ -224,6 +224,8 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
   REAL (RealK) ::                                                       &
       tau_long(nd_profile_column, nd_layer)                             &
 !       Long vector of optical depth
+    , tau_long_noscal(nd_profile_column, nd_layer)                      &
+!       Unscaled Long vector of optical depth
     , omega_long(nd_profile_column, nd_layer)                           &
 !       Long vector of albedo of single scattering
     , asymmetry_long(nd_profile_column, nd_layer)                       &
@@ -257,6 +259,8 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
   REAL  (RealK), ALLOCATABLE ::                                         &
       tau_clr_f(:, :)                                                   &
 !       Clear-sky optical depth for the whole column
+    , tau_clr_noscal_f(:, :)                                            &
+!       Unscaled clear-sky optical depth
     , omega_clr_f(:, :)                                                 &
 !       Clear-sky albedos of single scattering for the whole column
     , phase_fnc_clr_f(:, :, :)
@@ -319,6 +323,14 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
           asymmetry_long(ll, i)=ss_prop%phase_fnc(lp, i, 1, 0)
         END DO
 
+        IF (control%l_noscal_tau) THEN
+          DO i=1, n_cloud_top-1
+            tau_long_noscal(ll, i)=ss_prop%tau_clr_noscal(lp, i)
+          END DO
+          DO i=n_cloud_top, n_layer
+            tau_long_noscal(ll, i)=ss_prop%tau_noscal(lp, i, 0)
+          END DO
+        END IF
         l_new=.FALSE.
 
 
@@ -339,6 +351,11 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
           asymmetry_long(ll, i)                                         &
             =asymmetry_long(ll_copy, i)
         END DO
+        IF (control%l_noscal_tau) THEN
+          DO i=1, n_layer
+            tau_long_noscal(ll, i)=tau_long_noscal(ll_copy, i)
+          END DO
+        END IF
 
       END IF
 
@@ -356,6 +373,14 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
 
         icl=icl+1
       END DO
+      IF (control%l_noscal_tau) THEN
+        DO WHILE (icl <  list_column_slv(lp, ics))
+          icc=i_clm_lyr_chn(lp, icl)
+          ict=i_clm_cld_typ(lp, icl)
+          tau_long_noscal(ll, icc)=ss_prop%tau_noscal(lp, icc, ict)
+          icl=icl+1
+        END DO
+      END IF
 
 
 !     Set arrays which are independent of cloud changes.
@@ -435,7 +460,7 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
       , rho_alb_long(1, ip_surf_alb_diff)                               &
       , rho_alb_long(1, ip_surf_alb_dir), d_planck_flux_surface_long    &
 !                   Single scattering properties
-      , tau_long, omega_long, asymmetry_long(1, 1)                      &
+      , tau_long_noscal, tau_long, omega_long, asymmetry_long(1, 1)     &
 !                   Fluxes calculated
       , flux_direct_long, flux_total_long                               &
 !                   Sizes of arrays
@@ -474,14 +499,17 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
 !   Set aside space for the clear optical properties and copy
 !   them across.
     ALLOCATE(tau_clr_f(nd_profile, nd_layer))
+    ALLOCATE(tau_clr_noscal_f(nd_profile, nd_layer))
     ALLOCATE(omega_clr_f(nd_profile, nd_layer))
     ALLOCATE(phase_fnc_clr_f(nd_profile, nd_layer, 1))
 
 ! DEPENDS ON: copy_clr_full
-    CALL copy_clr_full(n_profile, n_layer, n_cloud_top, 1               &
-      , ss_prop%tau_clr, ss_prop%omega_clr, ss_prop%phase_fnc_clr       &
-      , ss_prop%tau, ss_prop%omega, ss_prop%phase_fnc                   &
-      , tau_clr_f, omega_clr_f, phase_fnc_clr_f                         &
+    CALL copy_clr_full(n_profile, n_layer, n_cloud_top, control, 1      &
+      , ss_prop%tau_clr, ss_prop%tau_clr_noscal                         &
+      , ss_prop%omega_clr, ss_prop%phase_fnc_clr                        &
+      , ss_prop%tau, ss_prop%tau_noscal                                 &
+      , ss_prop%omega, ss_prop%phase_fnc                                &
+      , tau_clr_f, tau_clr_noscal_f, omega_clr_f, phase_fnc_clr_f       &
 !                   Sizes of arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct, 1                    &
       )
@@ -508,7 +536,8 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
       , rho_alb(1, ip_surf_alb_diff)                                    &
       , rho_alb(1, ip_surf_alb_dir), d_planck_flux_surface              &
 !                   Single scattering properties
-      , tau_clr_f, omega_clr_f, phase_fnc_clr_f(1, 1, 1)                &
+      , tau_clr_noscal_f, tau_clr_f, omega_clr_f                        &
+      , phase_fnc_clr_f(1, 1, 1)                                        &
 !                   Fluxes calculated
       , flux_direct_clear, flux_total_clear                             &
 !                   Sizes of arrays
@@ -517,6 +546,7 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
 
 !   Remove the arrays that are no longer required.
     DEALLOCATE(tau_clr_f)
+    DEALLOCATE(tau_clr_noscal_f)
     DEALLOCATE(omega_clr_f)
     DEALLOCATE(phase_fnc_clr_f)
 

@@ -19,7 +19,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
      , n_profile, n_layer, n_cloud_top                                  &
      , n_region, flux_inc_direct                                        &
      , l_scale_solar, adjust_solar_ke                                   &
-     , trans_0, source_coeff                                            &
+     , trans_0_noscal, trans_0, source_coeff                            &
      , v11, v12, v13, v21, v22, v23, v31, v32, v33                      &
      , flux_direct                                                      &
      , flux_direct_ground                                               &
@@ -85,6 +85,8 @@ SUBROUTINE triple_solar_source(control, bound                           &
   REAL (RealK), INTENT(IN) ::                                           &
       trans_0(nd_profile, nd_layer, nd_region)                          &
 !       Direct transmission
+    , trans_0_noscal(nd_profile, nd_layer, nd_region)                   &
+!       Unscaled direct transmission coefficients
     , source_coeff(nd_profile, nd_layer                                 &
       , nd_source_coeff, nd_region)
 !       Source coefficients
@@ -134,8 +136,10 @@ SUBROUTINE triple_solar_source(control, bound                           &
   REAL (RealK) ::                                                       &
       solar_top(nd_profile, nd_region)                                  &
 !       Solar fluxes at top of layer
-    , solar_base(nd_profile, nd_region)
+    , solar_base(nd_profile, nd_region)                                 &
 !       Solar fluxes at base of layer
+    , flux_direct_noscal(nd_profile, 0: nd_layer)
+!       Overall unscaled direct flux
 
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
@@ -153,6 +157,11 @@ SUBROUTINE triple_solar_source(control, bound                           &
   DO l=1, n_profile
     flux_direct(l, 0)=flux_inc_direct(l)
   END DO
+  IF (control%l_noscal_tau) THEN
+    DO l=1, n_profile
+      flux_direct_noscal(l, 0)=flux_inc_direct(l)
+    END DO
+  END IF
 
 ! With equivalent extinction the direct solar flux must be corrected.
   IF (l_scale_solar) THEN
@@ -172,6 +181,17 @@ SUBROUTINE triple_solar_source(control, bound                           &
       END DO
     END DO
 
+    IF (control%l_noscal_tau) THEN
+      DO i=1, n_cloud_top-1
+        DO l=1, n_profile
+          flux_direct_noscal(l, i)                                      &
+            =flux_direct_noscal(l, i-1)                                 &
+            *trans_0_noscal(l, i, ip_region_clear)                      &
+            *adjust_solar_ke(l, i)
+        END DO
+      END DO
+    END IF
+
   ELSE
 
     DO i=1, n_cloud_top-1
@@ -186,6 +206,16 @@ SUBROUTINE triple_solar_source(control, bound                           &
           *flux_direct(l, i-1)
       END DO
     END DO
+
+    IF (control%l_noscal_tau) THEN
+      DO i=1, n_cloud_top-1
+        DO l=1, n_profile
+          flux_direct_noscal(l, i)                                      &
+            =flux_direct_noscal(l, i-1)                                 &
+            *trans_0_noscal(l, i, ip_region_clear)
+        END DO
+      END DO
+    END IF
 
   END IF
 
@@ -264,6 +294,82 @@ SUBROUTINE triple_solar_source(control, bound                           &
     END DO
 
   END DO
+
+
+! Repeat for direct flux using trans without scaling
+  IF (control%l_noscal_tau) THEN
+
+!   Clear and cloudy region.
+!   Initialize partial fluxes:
+    DO l=1, n_profile
+      solar_base(l, ip_region_clear)=flux_direct_noscal(l, n_cloud_top-1)
+      solar_base(l, ip_region_strat)=0.0e+00_RealK
+      solar_base(l, ip_region_conv)=0.0e+00_RealK
+    END DO
+    
+    
+    DO i=n_cloud_top, n_layer
+    
+!     Transfer fluxes across the interface.
+    
+      DO l=1, n_profile
+        solar_top(l, ip_region_clear)                                   &
+          =v11(l, i-1)*solar_base(l, ip_region_clear)                   &
+          +v12(l, i-1)*solar_base(l, ip_region_strat)                   &
+          +v13(l, i-1)*solar_base(l, ip_region_conv)
+        solar_top(l, ip_region_strat)                                   &
+          =v21(l, i-1)*solar_base(l, ip_region_clear)                   &
+          +v22(l, i-1)*solar_base(l, ip_region_strat)                   &
+          +v23(l, i-1)*solar_base(l, ip_region_conv)
+        solar_top(l, ip_region_conv)                                    &
+          =v31(l, i-1)*solar_base(l, ip_region_clear)                   &
+          +v32(l, i-1)*solar_base(l, ip_region_strat)                   &
+          +v33(l, i-1)*solar_base(l, ip_region_conv)
+      END DO
+    
+    
+!     Propagate the fluxes through the layer:
+      IF (l_scale_solar) THEN
+    
+        DO k=1, n_region
+          DO l=1, n_profile
+            solar_base(l, k)                                            &
+              =solar_top(l, k)                                          &
+              *trans_0_noscal(l, i, k)*adjust_solar_ke(l, i)
+          END DO
+        END DO
+    
+      ELSE
+    
+        DO k=1, n_region
+          DO l=1, n_profile
+            solar_base(l, k)=solar_top(l, k)                            &
+              *trans_0_noscal(l, i, k)
+          END DO
+        END DO
+    
+      END IF
+    
+    
+!     Calculate the total direct flux.
+      DO l=1, n_profile
+        flux_direct_noscal(l, i)=solar_base(l, ip_region_clear)         &
+          +solar_base(l, ip_region_strat)                               &
+          +solar_base(l, ip_region_conv)
+      END DO
+    
+    END DO
+
+
+!   From this point, use the unscaled direct flux as the direct component.
+    DO i= 0, n_layer
+      DO l=1, n_profile
+        flux_direct(l, i)=flux_direct_noscal(l, i)
+      END DO
+    END DO
+
+  END IF
+
 
 ! Pass the last value at the base of the cloud out.
   DO k=1, n_region

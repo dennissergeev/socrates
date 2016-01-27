@@ -486,9 +486,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
 
 ! Local variables.
   INTEGER                                                               &
-      j                                                                 &
-!       Loop variable
-    , k                                                                 &
+      k                                                                 &
 !       Loop variable
     , l                                                                 &
 !       Loop variable
@@ -501,14 +499,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
 !       Index of active gas
     , i_gas_pointer(nd_species)                                         &
 !       Pointer array for monochromatic ESFTs
-    , i_esft_pointer(nd_species)                                        &
-!       Pointer to ESFT for gas
-    , i_change                                                          &
-!       Position of ESFT term to be altered
-    , index_change                                                      &
-!       Index of term to be altered
-    , index_last                                                        &
-!       Index of last gas in band
     , iex                                                               &
 !       Index of ESFT term
     , i_band_esft_mix                                                   &
@@ -521,8 +511,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
     , iex_mix_red                                                       &
 !       Index of term for two gases combined after resorting and
 !       rebinning
-    , map(nd_esft_max*nd_esft_max)                                        &
-!       Mapping array used to order the terms
     , n_esft_red
 !       Number of reduced terms
   REAL (RealK) ::                                                       &
@@ -546,8 +534,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
 !       Weights for the mixture of two gases
     , w_esft_mix_unsort(nd_esft_max*nd_esft_max)                        &
 !       Unsorted weights for the mixture of two gases
-    , glim_mix((nd_esft_max+1)*(nd_esft_max+1))                         &
-!       g-coordinate limits for the terms of the two gases
     , k_esft_layer_mix_red(nd_profile, nd_layer, nd_esft_max)           &
 !       Reduced (resorted and rebinned) ESFT monochromatic exponents
 !       for the mixture of two gases
@@ -777,7 +763,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
         CALL rebin_esft_terms(i_band_esft_mix, n_esft_red,              &
           i_profile, i_layer,                                           &
           w_esft_target, glim_target,                                   &
-          k_esft_layer_mix, w_esft_mix, glim_mix,                       &
+          k_esft_layer_mix, w_esft_mix,                                 &
           k_esft_layer_mix_red, glim_mix_red,                           &
           nd_profile, nd_layer, nd_esft_max)
       END DO

@@ -23,6 +23,7 @@ dp_corr_strat=1.0e4
 dp_corr_conv=1.0e4
 rad_mcica_sigma=0.75
 rad_mcica_sampling=2
+dbg=F
 #
 # Process options
 #
@@ -40,6 +41,7 @@ do case $1 in
       -e) euler_trnf=T ; shift ;;
       +F) sph_flux=T ; shift ;;
       -F) filter=$2; shift 2 ;;
+      -ns) noscal=T; shift ;;
       -G) brdf_basis=$2 ; ls_brdf_trunc=$3 ; shift 3 ;;
       -g) c_gas=g ; gas_overlap=$2 ; shift 2 ; \
           if [ $gas_overlap -eq $IP_OVERLAP_SINGLE ] ; \
@@ -78,6 +80,7 @@ do case $1 in
       -Y) sph_algorithm=$IP_SPH_DIRECT ; shift ;;
       -Z) n_phf_solar=$2 ; shift 2 ;;
       -z) SCATTER_FLAG=$2 ; shift 2 ;;
+      -dbg) dbg=T  ; shift ;;
        *) echo "Unknown option: $1"; exit 1 ;;
    esac
 done
@@ -126,6 +129,11 @@ fi
 if [ "$filter" ]
    then echo "y" >> /tmp/lrcdl.$$
    echo $filter >> /tmp/lrcdl.$$
+else
+   echo "n" >> /tmp/lrcdl.$$
+fi
+if [ "$noscal" ]
+   then echo "y"  >> /tmp/lrcdl.$$
 else
    echo "n" >> /tmp/lrcdl.$$
 fi
@@ -331,10 +339,16 @@ if [ "$isolir" -eq $IP_INFRA_RED ]
       echo "l" >> /tmp/lrcdl.$$
    fi
 fi
-if [ "$verbose" ] 
-  then l_run_cdl < /tmp/lrcdl.$$
+if [ "$dbg" = T ] ; then
+  cd $RAD_BIN
+  echo " run < /tmp/lrcdl.$$ "
+  idbc l_run_cdl
 else
-  l_run_cdl < /tmp/lrcdl.$$ > /dev/null
+  if [ "$verbose" ] 
+    then l_run_cdl < /tmp/lrcdl.$$
+  else
+    l_run_cdl < /tmp/lrcdl.$$ > /dev/null
+  fi
 fi
 if [ ! "$retain" ] 
    then rm -f /tmp/lrcdl.$$

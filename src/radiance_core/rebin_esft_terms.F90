@@ -17,7 +17,7 @@
 SUBROUTINE rebin_esft_terms(i_band_esft_mix, n_esft_red                 &
     , i_profile, i_layer                                                &
     , w_esft_target, glim_target                                        &
-    , k_esft_layer_mix, w_esft_mix, glim_mix                            &
+    , k_esft_layer_mix, w_esft_mix                                      &
     , k_esft_layer_mix_red, glim_mix_red                                &
     , nd_profile, nd_layer, nd_esft_max)
     
@@ -46,8 +46,6 @@ SUBROUTINE rebin_esft_terms(i_band_esft_mix, n_esft_red                 &
 !       ESFT monochromatic exponents for the mixture of two gases
     , w_esft_mix(nd_esft_max*nd_esft_max)                               &
 !       ESFT weights for the mixture of two gases
-    , glim_mix((nd_esft_max+1)*(nd_esft_max+1))                         &
-!       g-coordinate limits for the ESFT terms of the two gases
     , w_esft_target(nd_esft_max)                                        &
 !       Target weights when performing rebinning
     , glim_target(nd_esft_max+1)

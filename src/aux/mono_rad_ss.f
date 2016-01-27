@@ -282,6 +282,8 @@
      &    cos_sol_view(nd_radiance_profile, nd_direction)
 !           Cosines of the angles between the solar direction and
 !           the viewing direction
+     &  , tau_noscal(nd_profile, nd_layer)
+!           Unscaled optical depths
      &  , phase_fnc_solar(nd_radiance_profile, nd_layer, nd_direction)
 !           The phase function evaluated at in the viewing directions
 !           for scattering from the solar beam
@@ -521,6 +523,15 @@
           ENDDO
         ENDIF
 !
+
+        IF (control%l_noscal_tau) THEN
+          DO i=1, n_layer
+            DO l=1, n_profile
+              tau_noscal(l, i) = tau(l, i)
+            END DO
+          END DO
+        END IF
+
         IF (l_rescale) THEN
 !
 !         Set the forward scattering fraction if it is not explicitly
@@ -597,6 +608,14 @@
           omega(l, i)=min(omega(l, i), 1.0_RealK-eps_r)
         ENDDO
       ENDDO
+      IF (control%l_noscal_tau) THEN
+        DO i=1, n_layer
+          DO l=1, n_profile
+            tau_noscal(l, i)=                                            
+     &        max(tau_noscal(l, i), sqrt(tiny(tau_noscal(1,1))))
+          END DO
+        END DO
+      END IF
 !
 !     Calculate Planckian terms:
       IF (isolir == IP_infra_red) THEN
@@ -666,7 +685,7 @@
      &    , rho_alb(1, IP_surf_alb_diff)
      &    , rho_alb(1, IP_surf_alb_dir), d_planck_flux_surface
 !                       Single scattering properties
-     &    , tau, omega, phase_fnc(1, 1, 1)
+     &    , tau_noscal, tau, omega, phase_fnc(1, 1, 1)
 !                       Fluxes calculated
      &    , flux_direct, flux_total
 !                       Sizes of arrays

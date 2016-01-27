@@ -16,12 +16,12 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE two_coeff(ierr                                               &
+SUBROUTINE two_coeff(ierr, control                                      &
      , n_profile, i_layer_first, i_layer_last                           &
      , i_2stream, l_ir_source_quad                                      &
-     , asymmetry, omega, tau                                            &
+     , asymmetry, omega, tau_noscal, tau                                &
      , isolir, sec_0                                                    &
-     , trans, reflect, trans_0                                          &
+     , trans, reflect, trans_0_noscal, trans_0                          &
      , source_coeff                                                     &
      , nd_profile                                                       &
      , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                         &
@@ -34,9 +34,12 @@ SUBROUTINE two_coeff(ierr                                               &
   USE vectlib_mod, ONLY : sqrt_v
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE def_control, ONLY: StrCtrl
 
   IMPLICIT NONE
 
+! Control options:
+  TYPE(StrCtrl), INTENT(IN) :: control
 
 ! Sizes of dummy arrays.
   INTEGER, INTENT(IN) ::                                                &
@@ -79,8 +82,10 @@ SUBROUTINE two_coeff(ierr                                               &
 !       Asymmetry factor
     , omega(nd_profile, id_op_lt: id_op_lb)                             &
 !       Albedo of single scattering
-    , tau(nd_profile, id_op_lt: id_op_lb)
+    , tau(nd_profile, id_op_lt: id_op_lb)                               &
 !       Optical depth
+    , tau_noscal(nd_profile, id_op_lt: id_op_lb)
+!       Unscaled optical depth 
 
 ! Solar beam
   REAL (RealK), INTENT(IN) ::                                           &
@@ -96,6 +101,8 @@ SUBROUTINE two_coeff(ierr                                               &
 !       Diffuse reflection coefficient
     , trans_0(nd_profile, id_trs_lt: id_trs_lb)                         &
 !       Direct transmission coefficient
+    , trans_0_noscal(nd_profile, id_trs_lt: id_trs_lb)                  &
+!       Direct transmission coefficient without scaling
     , source_coeff(nd_profile, id_trs_lt: id_trs_lb                     &
         , nd_source_coeff)
 !       Source coefficients in two-stream equations
@@ -172,11 +179,12 @@ SUBROUTINE two_coeff(ierr                                               &
 
 ! Determine the transmission and reflection coefficients.
 ! DEPENDS ON: trans_source_coeff
-  CALL trans_source_coeff(n_profile, i_layer_first, i_layer_last        &
+  CALL trans_source_coeff(control                                       &
+    , n_profile, i_layer_first, i_layer_last                            &
     , isolir, l_ir_source_quad                                          &
-    , tau, sum, diff, lambda, sec_0                                     &
+    , tau_noscal, tau, sum, diff, lambda, sec_0                         &
     , gamma_up, gamma_down                                              &
-    , trans, reflect, trans_0, source_coeff                             &
+    , trans, reflect, trans_0_noscal, trans_0, source_coeff             &
     , nd_profile                                                        &
     , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                          &
     , nd_source_coeff                                                   &

@@ -35,6 +35,13 @@ mv 5118_142.sflx sw_avg.sflx
 mv 5118_142.uflx sw_avg.uflx
 mv 5118_142.vflx sw_avg.vflx
 mv 5118_142.dflx sw_avg.dflx
+$RAD_SCRIPT/Cl_run_cdf -B 5118_142 -s $RAD_DATA/spectra/ga3_0/sp_sw_ga3_0 -R 1 6 -S -t 2 +R -v 13 -g 5 -r -C 10 -K 1 -d 3 -i 3 -m 0.75 +m 2 -dp 10000 -ns
+mv 5118_142.hrts sw_ns_avg.hrts
+mv 5118_142.nflx sw_ns_avg.nflx
+mv 5118_142.sflx sw_ns_avg.sflx
+mv 5118_142.uflx sw_ns_avg.uflx
+mv 5118_142.vflx sw_ns_avg.vflx
+mv 5118_142.dflx sw_ns_avg.dflx
 
 rm -f cdl_lw*
 rm -f cdl_sw*
@@ -51,13 +58,23 @@ diff -q ref_sw_avg.uflx cdl_sw_avg.uflx || ierr=1
 diff -q ref_sw_avg.vflx cdl_sw_avg.vflx || ierr=1
 diff -q ref_sw_avg.dflx cdl_sw_avg.dflx || ierr=1
 
+Ccdf2cdl -a sw_ns_avg > /dev/null
+diff -q ref_sw_ns_avg.hrts cdl_sw_ns_avg.hrts || ierr=1
+diff -q ref_sw_ns_avg.nflx cdl_sw_ns_avg.nflx || ierr=1
+diff -q ref_sw_ns_avg.sflx cdl_sw_ns_avg.sflx || ierr=1
+diff -q ref_sw_ns_avg.uflx cdl_sw_ns_avg.uflx || ierr=1
+diff -q ref_sw_ns_avg.vflx cdl_sw_ns_avg.vflx || ierr=1
+diff -q ref_sw_ns_avg.dflx cdl_sw_ns_avg.dflx || ierr=1
+
 if [ $ierr -gt 0 ] ; then
   exit 1
 else
   resrm lw_avg
   resrm cdl_lw_avg
   resrm sw_avg
+  resrm sw_ns_avg
   resrm cdl_sw_avg
+  resrm cdl_sw_ns_avg
   echo OK
   exit 0
 fi

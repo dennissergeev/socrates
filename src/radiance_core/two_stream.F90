@@ -37,7 +37,7 @@ SUBROUTINE two_stream(ierr                                              &
 !                 Surface Conditions
     , diffuse_albedo, direct_albedo, d_planck_flux_surface              &
 !                 Single Scattering Properties
-    , tau, omega, asymmetry                                             &
+    , tau_noscal, tau, omega, asymmetry                                 &
 !                 Fluxes Calculated
     , flux_direct, flux_total                                           &
 !                 Dimensions
@@ -96,6 +96,8 @@ SUBROUTINE two_stream(ierr                                              &
   REAL (RealK), INTENT(IN) ::                                           &
       tau(nd_profile, nd_layer)                                         &
 !       Optical depth
+    , tau_noscal(nd_profile, nd_layer)                                  &
+!       Optical depth for direct flux
     , omega(nd_profile, nd_layer)                                       &
 !       Albedo of single scattering
     , asymmetry(nd_profile, nd_layer)                                   &
@@ -136,6 +138,8 @@ SUBROUTINE two_stream(ierr                                              &
 !       Reflectance of layer
     , trans_0(nd_profile, nd_layer)                                     &
 !       Direct transmittance
+    , trans_0_noscal(nd_profile, nd_layer)                              &
+!       Direct transmittance without scaling
     , source_coeff(nd_profile, nd_layer, nd_source_coeff)               &
 !       Source coefficients
     , s_down(nd_profile, nd_layer)                                      &
@@ -162,12 +166,12 @@ SUBROUTINE two_stream(ierr                                              &
   IF ( (i_scatter_method == ip_scatter_full) .OR.                       &
        (i_scatter_method == ip_scatter_approx) ) THEN
 ! DEPENDS ON: two_coeff
-    CALL two_coeff(ierr                                                 &
+    CALL two_coeff(ierr, control                                        &
       , n_profile, 1, n_layer                                           &
       , i_2stream, l_ir_source_quad                                     &
-      , asymmetry, omega, tau                                           &
+      , asymmetry, omega, tau_noscal, tau                               &
       , isolir, sec_0                                                   &
-      , trans, reflect, trans_0                                         &
+      , trans, reflect, trans_0_noscal, trans_0                         &
       , source_coeff                                                    &
       , nd_profile, 1, nd_layer, 1, nd_layer, nd_source_coeff           &
       )
@@ -196,7 +200,7 @@ SUBROUTINE two_stream(ierr                                              &
     CALL column_solver(ierr, control, bound                             &
     , n_profile, n_layer                                                &
     , i_scatter_method, i_solver                                        &
-    , trans, reflect, trans_0, source_coeff                             &
+    , trans, reflect, trans_0_noscal, trans_0, source_coeff             &
     , isolir, flux_inc_direct, flux_inc_down                            &
     , s_down, s_up                                                      &
     , diffuse_albedo, direct_albedo                                     &

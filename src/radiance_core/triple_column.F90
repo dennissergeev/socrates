@@ -210,8 +210,9 @@ SUBROUTINE triple_column(ierr                                           &
 !       Reflection coefficients
     , trans_0(nd_profile, nd_layer, nd_region)                          &
 !       Direct transmission coefficients
-    , source_coeff(nd_profile, nd_layer                                 &
-        , nd_source_coeff, nd_region)                                   &
+    , trans_0_noscal(nd_profile, nd_layer, nd_region)                   &
+!       Unscaled Direct transmission coefficients
+    , source_coeff(nd_profile, nd_layer, nd_source_coeff, nd_region)    &
 !       Source coefficients
     , s_down(nd_profile, nd_layer, nd_region)                           &
 !       Free downward source
@@ -252,15 +253,17 @@ SUBROUTINE triple_column(ierr                                           &
   IF ( (i_scatter_method == ip_scatter_full) .OR.                       &
        (i_scatter_method == ip_scatter_approx) ) THEN
 ! DEPENDS ON: two_coeff_region
-    CALL two_coeff_region(ierr                                          &
+    CALL two_coeff_region(ierr, control                                 &
       , n_profile, n_layer, n_cloud_top                                 &
       , i_2stream, l_ir_source_quad, n_source_coeff                     &
       , n_cloud_type, frac_cloud                                        &
       , n_region, i_region_cloud, frac_region                           &
-      , ss_prop%phase_fnc_clr, ss_prop%omega_clr, ss_prop%tau_clr       &
-      , ss_prop%phase_fnc, ss_prop%omega, ss_prop%tau                   &
+      , ss_prop%phase_fnc_clr, ss_prop%omega_clr                        &
+      , ss_prop%tau_clr_noscal, ss_prop%tau_clr                         &
+      , ss_prop%phase_fnc, ss_prop%omega                                &
+      , ss_prop%tau_noscal, ss_prop%tau                                 &
       , isolir, sec_0                                                   &
-      , trans, reflect, trans_0, source_coeff                           &
+      , trans, reflect, trans_0_noscal, trans_0, source_coeff           &
       , nd_profile, nd_layer, nd_layer_clr, id_ct                       &
       , nd_max_order, nd_source_coeff                                   &
       , nd_cloud_type, nd_region                                        &
@@ -350,7 +353,7 @@ SUBROUTINE triple_column(ierr                                           &
       , n_profile, n_layer, n_cloud_top                                 &
       , n_region, flux_inc_direct                                       &
       , l_scale_solar, adjust_solar_ke                                  &
-      , trans_0, source_coeff                                           &
+      , trans_0_noscal, trans_0, source_coeff                           &
       , cloud_overlap(1, id_ct-1, 1)                                    &
       , cloud_overlap(1, id_ct-1, 2)                                    &
       , cloud_overlap(1, id_ct-1, 3)                                    &
@@ -547,6 +550,7 @@ SUBROUTINE triple_column(ierr                                           &
       , i_scatter_method, i_solver_clear                                &
       , trans(1, 1, ip_region_clear)                                    &
       , reflect(1, 1, ip_region_clear)                                  &
+      , trans_0_noscal(1, 1, ip_region_clear)                           &
       , trans_0(1, 1, ip_region_clear)                                  &
       , source_coeff(1, 1, 1, ip_region_clear)                          &
       , isolir, flux_inc_direct, flux_inc_down                          &

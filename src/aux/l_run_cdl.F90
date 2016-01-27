@@ -416,6 +416,15 @@ PROGRAM l_run_cdl
     IF (ierr /= i_normal) STOP
   ENDIF
 
+! ------------------------------------------------------------------
+! Scaling of optical depth for direct flux
+! ------------------------------------------------------------------
+  WRITE(iu_stdout, '(/a)')                                              &
+    'Determine direct flux using unscaled optical depth? (y/n)'
+  READ(iu_stdin, '(a)') char_yn
+  IF ( (char_yn == 'Y').OR.(char_yn == 'y') ) THEN
+    control%l_noscal_tau=.TRUE.
+  END IF
 
 ! ------------------------------------------------------------------
 ! Options:

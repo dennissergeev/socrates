@@ -12,11 +12,12 @@ Cl_run_cdf \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
            [\fB\-i\fR \fIice\-type\fR] [\fB+i\fR \fIconvective\-ice\-type\fR]
            [\fB\-g\fR \fIgas\-overlap\fR [\fItype\fR] [\fIn_g\fR [\fIg_split\fR]]] [\fB\-a\fR] [\fB\+A\fR]
            [\fB\-c\fR] [\fB\-q\fR] [\fB\-r\fR] [\fB+R\fR] [\fB\-x\fR \fIcommand\-file\fR]
-           [\fB\-z\fR \fIscattering\-option\fR]
+           [\fB\-z\fR \fIscattering\-option\fR] [\fB\-dbg\fR]
            \fB[\fR \fB\+S\fR \fIn1 n2 n3 n4\fR \fB\-G\fR \fIbasis truncation\fR
              \fB\+F\fR \fB\+P\fR \fB\-H\fR \fB\-e\fR \fB\-Y\fR \fB\-T\fR \fB\-Z\fR \fIorder\fR \fB]\fR
-            \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR \fB]\fR
-            \fB|\fR \fB[\fR \fB\-Q\fR \fIGaussian\-order\fR \fB]\fR [\fB\-F\fR \fIfilter\-file\fR]
+            \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR \fB\-ns\fR \fB]\fR
+            \fB|\fR \fB[\fR \fB\-Q\fR \fIGaussian\-order\fR \fB]\fR
+           [\fB\-F\fR \fIfilter\-file\fR]
 
 .SH DESCRIPTION
 A script to run the netCDF version of the Offline Edwards-Slingo Radiation Code. Profiles of atmospheric data are read in along with a spectral file containing details of the absorbers present in a number of spectral bands. Output profiles of fluxes or radiances are calculated for the thermal (long wave) or solar (short wave) regions.
@@ -227,6 +228,10 @@ Approximate scattering: downward fluxes calculated ignoring reflection.
 Hybrid scattering method: treatment of scattering is dependent on the method specified for each k-term in the spectral file.
 .RE
 
+.TP
+\fB\-dbg\fR
+Use idbc to debug source code
+
 .LP
 
 .B Calculation of two-stream fluxes
@@ -287,6 +292,10 @@ Direct solution for coupled overlap (modified for correct treatment of shadowing
 .B 17
 Direct solution for coupled overlap with separation between convective and stratiform clouds (modified for correct treatment of shadowing by Robin Hogan)
 .RE
+
+.TP
+\fB\-ns\fR
+Determine direct flux using unscaled optical depth
 
 .TP
 \fB\-Q\fR \fIGaussian\-order\fR

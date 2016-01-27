@@ -203,6 +203,8 @@ TYPE StrCtrl
 !   Flag to use a quadratic source function in the IR
   LOGICAL :: l_rescale                                            = .FALSE.
 !   Flag for rescaling
+  LOGICAL :: l_noscal_tau                                         = .FALSE.
+!   Flag to remove the scaling of optical depth for direct flux calculations
   LOGICAL :: l_henyey_greenstein_pf                               = .FALSE.
 !   Flag to use Henyey-Greenstein phase functions
   LOGICAL :: l_lanczos                                            = .FALSE.

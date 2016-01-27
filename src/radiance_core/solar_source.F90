@@ -15,7 +15,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
      , flux_inc_direct                                                  &
-     , trans_0, source_coeff                                            &
+     , trans_0_noscal, trans_0, source_coeff                            &
      , l_scale_solar, adjust_solar_ke                                   &
      , flux_direct                                                      &
      , s_down, s_up                                                     &
@@ -65,6 +65,8 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
 !       Incident solar flux
     , trans_0(nd_profile, nd_layer)                                     &
 !       Direct transmission coefficient
+    , trans_0_noscal(nd_profile, nd_layer)                              &
+!       Unscaled Direct transmission coefficient
     , source_coeff(nd_profile, nd_layer, nd_source_coeff)               &
 !       Reflection coefficient
     , adjust_solar_ke(nd_profile, nd_layer)
@@ -87,6 +89,11 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
     , l
 !       Loop variable
 
+  REAL (RealK) ::                                                       &
+      flux_direct_noscal(nd_profile, 0: nd_layer)
+!       Direct flux without scaling
+
+
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
   REAL(KIND=jprb)               :: zhook_handle
@@ -99,13 +106,19 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
   DO l=1, n_profile
     flux_direct(l, 0)=flux_inc_direct(l)
   END DO
+  IF (control%l_noscal_tau) THEN
+    DO l=1, n_profile
+      flux_direct_noscal(l, 0)=flux_inc_direct(l)
+    END DO
+  END IF
 
-! The solar flux may be multiplied by a scaling factor if an
-! equivalent extinction is used.
   IF (l_scale_solar) THEN
-
+!   The solar flux may be multiplied by a scaling factor if an
+!   equivalent extinction is used.
     DO i=1, n_layer
       DO l=1, n_profile
+!       The delta-scaled direct flux is used for the source terms
+!       and the total downwards flux.
         flux_direct(l, i)                                               &
           =flux_direct(l, i-1)*trans_0(l, i)                            &
           *adjust_solar_ke(l, i)
@@ -116,6 +129,16 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
           +flux_direct(l, i)
       END DO
     END DO
+    IF (control%l_noscal_tau) THEN
+      DO i=1, n_layer
+        DO l=1, n_profile
+!         The unscaled direct flux is calculated separately.
+          flux_direct_noscal(l, i)                                      &
+            =flux_direct_noscal(l, i-1)*trans_0_noscal(l, i)            &
+            *adjust_solar_ke(l, i)
+        END DO
+      END DO
+    END IF
 
   ELSE
 
@@ -129,7 +152,24 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
           *flux_direct(l, i-1)
       END DO
     END DO
+    IF (control%l_noscal_tau) THEN
+      DO i=1, n_layer
+        DO l=1, n_profile
+          flux_direct_noscal(l, i)                                      &
+           =flux_direct_noscal(l, i-1)*trans_0_noscal(l, i)
+        END DO
+      END DO
+    END IF
+  END IF
 
+
+  IF (control%l_noscal_tau) THEN
+!   From this point, use the unscaled direct flux as the direct component.
+    DO i= 0, n_layer
+      DO l=1, n_profile
+        flux_direct(l, i)=flux_direct_noscal(l, i)
+      END DO
+    END DO
   END IF
 
 
@@ -139,6 +179,8 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
         flux_direct(1:n_profile, n_layer) *                             &
         bound%orog_corr(1:n_profile)
 
+!    The total flux at the surface must also add the correction made
+!    to the direct flux.
      s_down(1:n_profile, n_layer) =                                     &
            s_down(1:n_profile, n_layer) +                               &
            flux_direct(1:n_profile, n_layer) *                          &

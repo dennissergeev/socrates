@@ -20,7 +20,8 @@
 SUBROUTINE column_solver(ierr, control, bound                           &
     , n_profile, n_layer                                                &
     , i_scatter_method, i_solver_clear                                  &
-    , trans_free, reflect_free, trans_0_free, source_coeff_free         &
+    , trans_free, reflect_free, trans_0_noscal, trans_0_free            &
+    , source_coeff_free                                                 &
     , isolir, flux_inc_direct, flux_inc_down                            &
     , s_down_free, s_up_free                                            &
     , albedo_surface_diff, albedo_surface_dir                           &
@@ -83,6 +84,8 @@ SUBROUTINE column_solver(ierr, control, bound                           &
 !       Reflection coefficients
     , trans_0_free(nd_profile, nd_layer)                                &
 !       Direct transmission coefficients
+    , trans_0_noscal(nd_profile, nd_layer)                              &
+!       Direct transmission coefficients without scaling
     , source_coeff_free(nd_profile, nd_layer, nd_source_coeff)          &
 !       Coefficients in source terms
     , albedo_surface_diff(nd_profile)                                   &
@@ -137,7 +140,7 @@ SUBROUTINE column_solver(ierr, control, bound                           &
 ! DEPENDS ON: solar_source
     CALL solar_source(control, bound, n_profile, n_layer                &
       , flux_inc_direct                                                 &
-      , trans_0_free, source_coeff_free                                 &
+      , trans_0_noscal, trans_0_free, source_coeff_free                 &
       , l_scale_solar, adjust_solar_ke                                  &
       , flux_direct_clear                                               &
       , s_down_free, s_up_free                                          &

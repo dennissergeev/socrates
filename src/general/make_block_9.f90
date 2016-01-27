@@ -79,8 +79,8 @@ SUBROUTINE make_block_9(Spectrum, ierr)
       DO j=1, Spectrum%Cont%n_band_continuum(i)
         Spectrum%Cont%k_cont(i, j)=0.0_RealK
         Spectrum%Cont%i_scale_fnc_cont(i, j)=IP_scale_fnc_null
-        Spectrum%Cont%p_ref_cont(i, j)=1.0_RealK
-        Spectrum%Cont%t_ref_cont(i, j)=200.0_RealK
+        Spectrum%Cont%p_ref_cont(j, i)=1.0_RealK
+        Spectrum%Cont%t_ref_cont(j, i)=200.0_RealK
       END DO
     END DO
   END IF

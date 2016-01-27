@@ -54,6 +54,8 @@ MODULE def_ss_prop
 
     REAL (RealK), POINTER :: tau_clr(:, :)                     => NULL()
 !     Optical depth in clear-sky region above clouds
+    REAL (RealK), POINTER :: tau_clr_noscal(:, :)              => NULL()
+!     Optical depth for direct flux in clear-sky region above clouds
     REAL (RealK), POINTER :: omega_clr(:, :)                   => NULL()
 !     Albedo of single scattering in clear-sky region above clouds
 
@@ -74,6 +76,8 @@ MODULE def_ss_prop
 
     REAL (RealK), POINTER :: tau(:, :, :)                      => NULL()
 !     Optical depth in potentially cloudy regions
+    REAL (RealK), POINTER :: tau_noscal(:, :, :)               => NULL()
+!     Optical depth for direct flux in potentially cloudy regions
     REAL (RealK), POINTER :: omega(:, :, :)                    => NULL()
 !     Albedo of single scattering in potentially cloudy regions
 
