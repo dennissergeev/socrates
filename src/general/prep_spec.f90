@@ -122,7 +122,7 @@ PROGRAM prep_spec
           WRITE(*, '(a)') 'This file already exists: '// &
             'do you wish to overwrite? (y/n)'
           READ(*, '(a)') char_in
-          IF (char_in /= 'Y' .AND. char_in /= 'y') EXIT
+          IF (char_in == 'Y' .OR. char_in == 'y') EXIT
           WRITE(*, '(a)') 'Please specify another file.'
         ELSE
           EXIT

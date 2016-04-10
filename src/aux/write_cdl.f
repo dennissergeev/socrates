@@ -31,7 +31,7 @@
       USE realtype_rd
       USE error_pcf
       USE def_std_io_icf
-!
+      USE filenamelength_mod, ONLY: filenamelength
 !
       IMPLICIT NONE
 !
@@ -51,10 +51,10 @@
 !
 !
 !     Local variables:
-      CHARACTER
-     &    file_out*80
+      CHARACTER (LEN=filenamelength) :: file_out
 !           Compressed name of output
-     &  , text*80
+      CHARACTER
+     &    text*80
 !           Text for output file
      &  , string(2)*80
 !           Temporary strings

@@ -15,8 +15,8 @@
 !
 !- ---------------------------------------------------------------------
       SUBROUTINE output_flux_cdl(ierr
+     &  , control, sp
      &  , base_name, length_name
-     &  , isolir
      &  , n_latitude, latitude, n_longitude, longitude, n_profile
      &  , n_layer, name_vert_coord, len_vert_coord, p, p_level
      &  , n_channel
@@ -29,6 +29,8 @@
 !
 !
 !     Modules to set types of variables:
+      USE def_control,  ONLY: StrCtrl
+      USE def_spectrum, ONLY: StrSpecData
       USE realtype_rd
       USE def_std_io_icf
       USE rad_pcf
@@ -37,19 +39,21 @@
 !
 !
       IMPLICIT NONE
-!
-!
-!
-!
-!
+
+
 !     Declaration of variables:
 !
-      INTEGER	!,Intent(OUT)
-     &    ierr
+      INTEGER, INTENT(INOUT) :: ierr
 !            Error flag
-!
+
+!     Control options:
+      TYPE(StrCtrl),     INTENT(IN) :: control
+
+!     Spectral information:
+      TYPE(StrSpecData), INTENT(IN) :: sp
+
       INCLUDE 'cdl_struc.finc'
-!
+
 !     Sizes of arrays
       INTEGER, Intent(IN) ::
      &    nd_profile
@@ -74,8 +78,6 @@
 !           Number of layers
      &  , n_channel
 !           Number of channels used
-     &  , isolir
-!           Spectral region
 !
       REAL  (RealK), Intent(IN) ::
      &    latitude(nd_latitude)
@@ -198,25 +200,75 @@
       ENDIF
 !
 !     Set common properties of the variables.
-      IF (trim(name_vert_coord) == 'plev') THEN
+      IF (n_channel == 1) THEN
         n_var=1
-      ELSE IF (trim(name_vert_coord) == 'level') THEN
-        n_var=2
-        n_dimension_var(1)=3
-        list_dimension_var(1, 1)=1
-        list_dimension_var(2, 1)=2
-        list_dimension_var(3, 1)=3
-        var_name(1)='plev'
+      ELSE
+        n_var=4
+        n_dimension_var(1)=1
+        list_dimension_var(1, 1)=4
+        var_name(1)='wl_short'
         var_type(1)='float'
-        var_unit(1)='pa'
-        var_long(1)='pressure levels'
-        n_data(1)=n_profile*(n_layer+1)
+        var_unit(1)='m'
+        var_long(1)='Wavelength lower bound'
+        n_data(1)=n_channel
+        data_fl(1:n_channel, 1)=MAXVAL(sp%basic%wavelength_short
+     &    (control%first_band:control%last_band))
+        DO i=control%first_band, control%last_band
+           data_fl(control%map_channel(i), 1) =
+     &       MIN( data_fl(control%map_channel(i), 1),
+     &            sp%basic%wavelength_short(i) )
+        END DO
+        n_dimension_var(2)=1
+        list_dimension_var(1, 2)=4
+        var_name(2)='wl_long'
+        var_type(2)='float'
+        var_unit(2)='m'
+        var_long(2)='Wavelength upper bound'
+        n_data(2)=n_channel
+        data_fl(1:n_channel, 2)=MINVAL(sp%basic%wavelength_long
+     &    (control%first_band:control%last_band))
+        DO i=control%first_band, control%last_band
+           data_fl(control%map_channel(i), 2) =
+     &       MAX( data_fl(control%map_channel(i), 2),
+     &            sp%basic%wavelength_long(i) )
+        END DO
+        n_dimension_var(3)=1
+        list_dimension_var(1, 3)=4
+        var_name(3)='bandwidth'
+        var_type(3)='float'
+        var_unit(3)='m'
+        var_long(3)='Channel width'
+        n_data(3)=n_channel
+        data_fl(1:n_channel, 3)=0.0_RealK
+        DO i=control%first_band, control%last_band
+          data_fl(control%map_channel(i), 3) =
+     &      data_fl(control%map_channel(i), 3) +
+     &      sp%basic%wavelength_long(i) - sp%basic%wavelength_short(i)
+          DO l=1, sp%basic%n_band_exclude(i)
+            k = Sp%Basic%index_exclude(l, i)
+            data_fl(control%map_channel(i), 3) =
+     &        data_fl(control%map_channel(i), 3) -
+     &        sp%basic%wavelength_long(k) + sp%basic%wavelength_short(k)
+          END DO
+        END DO
+      END IF  
+      IF (trim(name_vert_coord) == 'level') THEN
+        n_dimension_var(n_var)=3
+        list_dimension_var(1, n_var)=1
+        list_dimension_var(2, n_var)=2
+        list_dimension_var(3, n_var)=3
+        var_name(n_var)='plev'
+        var_type(n_var)='float'
+        var_unit(n_var)='pa'
+        var_long(n_var)='pressure levels'
+        n_data(n_var)=n_profile*(n_layer+1)
         DO i=1, n_layer+1
           DO l=1, n_profile
             point=l+(i-1)*n_profile
-            data_fl(point, 1)=p_level(l, i-1)
+            data_fl(point, n_var)=p_level(l, i-1)
           ENDDO
         ENDDO
+        n_var=n_var+1
       ENDIF
 !
       IF (n_channel == 1) THEN
@@ -239,7 +291,7 @@
       var_name(n_var)='dflx'
       var_type(n_var)='float'
       var_unit(n_var)='wm-2'
-      IF (isolir == IP_solar) THEN
+      IF (control%isolir == IP_solar) THEN
         var_long(n_var)='diffuse downward flux'
         n_data(n_var)=n_profile*(n_layer+1)*n_channel
         DO k=1, n_channel
@@ -333,7 +385,7 @@
      &  )
       IF (ierr /= i_normal) RETURN
 !
-      IF (isolir == IP_solar) THEN
+      IF (control%isolir == IP_solar) THEN
 !
 !       Direct Flux:
         file_name(1: length_name+1+len_file_suffix)

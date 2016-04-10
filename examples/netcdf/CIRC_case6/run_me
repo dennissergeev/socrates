@@ -5,22 +5,22 @@ ierr=0
 
 # LW
 cp case6.surflw case6.surf
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -t 12 -v 11 -g 5 -c -C 2 -K 1 -d 5 -i 8 -z 2
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_lw_hadgem1_3 -R 1 9 -I -g 5 -c -C 2 -K 1 -d 5 -i 8 -z 2
 fmove case6 case6_lw_hadgem1_3
 rm cdl_case6_lw_hadgem1_3* 2> /dev/null
 Ccdf2cdl -a case6_lw_hadgem1_3 > /dev/null
 
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -t 12 -v 11 -g 4 -c -C 2 -K 1 -d 5 -i 8 -z 2
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -R 1 9 -I -g 4 -c -C 2 -K 1 -d 5 -i 8 -z 2
 fmove case6 case6_lw_ga7
 rm cdl_case6_lw_ga7* 2> /dev/null
 Ccdf2cdl -a case6_lw_ga7 > /dev/null
 
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 -R 1 300 -I -t 12 -v 11 -g 2 -c -C 2 -K 1 -d 5 -i 8 -z 2
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_lw_300_jm2 -R 1 300 -I -g 2 -c -C 2 -K 1 -d 5 -i 8 -z 2
 fmove case6 case6_lw_300_jm2
 rm cdl_case6_lw_300_jm2* 2> /dev/null
 Ccdf2cdl -a case6_lw_300_jm2 > /dev/null
 
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_lw_jm1_1 -R 1 8 -I -t 12 -v 11 -g 7 -c -C 2 -K 1 -d 5 -i 8 -z 2
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_lw_jm1_1 -R 1 8 -I -g 7 -c -C 2 -K 1 -d 5 -i 8 -z 2
 fmove case6 ses_lw_jm1_1
 rm cdl_ses_lw_jm1_1* 2> /dev/null
 Ccdf2cdl -a ses_lw_jm1_1 > /dev/null
@@ -28,26 +28,26 @@ Ccdf2cdl -a ses_lw_jm1_1 > /dev/null
 # SW
 cp case6.surfsw_hadgem case6.surf
 cp case6.op_soot_hadgem case6.op_soot
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_sw_hadgem1_3r -R 1 6 -S -t 16 +R -v 11 -g 5 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/hadgem1/sp_sw_hadgem1_3r -R 1 6 -S +R -g 5 -c -r -a +A -C 2 -K 1 -d 5 -i 8
 fmove case6 case6_sw_hadgem1_3r
 rm cdl_case6_sw_hadgem1_3r* 2> /dev/null
 Ccdf2cdl -a case6_sw_hadgem1_3r > /dev/null
 
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S -t 16 +R -v 11 -g 4 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7/sp_sw_ga7 -R 1 6 -S +R -g 4 -c -r -a +A -C 2 -K 1 -d 5 -i 8
 fmove case6 case6_sw_ga7
 rm cdl_case6_sw_ga7* 2> /dev/null
 Ccdf2cdl -a case6_sw_ga7 > /dev/null
 
 cp case6.surfsw_260 case6.surf
 cp case6.op_soot_260 case6.op_soot
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_sw_260_jm2 -R 1 260 -S -t 16 +R -v 11 -g 2 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ga7_ref/sp_sw_260_jm2 -R 1 260 -S +R -g 2 -c -r -a +A -C 2 -K 1 -d 5 -i 8
 fmove case6 case6_sw_260_jm2
 rm cdl_case6_sw_260_jm2* 2> /dev/null
 Ccdf2cdl -a case6_sw_260_jm2 > /dev/null
 
 cp case6.surfsw_ses case6.surf
 cp case6.op_soot_ses case6.op_soot
-Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_sw_jm1_1 -R 1 9 -S -t 16 +R -v 11 -g 7 -c -r -a +A -C 2 -K 1 -d 5 -i 8
+Cl_run_cdf -B case6 -s $RAD_DATA/spectra/ses2/ses_sw_jm1_1 -R 1 9 -S +R -g 7 -c -r -a +A -C 2 -K 1 -d 5 -i 8
 fmove case6 ses_sw_jm1_1
 rm cdl_ses_sw_jm1_1* 2> /dev/null
 Ccdf2cdl -a ses_sw_jm1_1 > /dev/null

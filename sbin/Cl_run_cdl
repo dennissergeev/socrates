@@ -24,6 +24,7 @@ dp_corr_conv=1.0e4
 rad_mcica_sigma=0.75
 rad_mcica_sampling=2
 dbg=F
+angular_integration=$IP_TWO_STREAM
 #
 # Process options
 #
@@ -34,6 +35,7 @@ do case $1 in
       -B) base_name=$2 ; shift 2 ;;
       -C) cloud_scheme=$2 ; shift 2 ;;
       -c) c_continuum=c ; shift ;;
+      -ch) n_channel=$2 ; shift 2 ;;
       -d) c_drop=d ; drop_type=$2 ; shift 2 ;;
       +d) convective_drop_type=$2 ; shift 2 ;;
       -dp) dp_corr_strat=$2 ; shift 2 ;;
@@ -41,16 +43,16 @@ do case $1 in
       -e) euler_trnf=T ; shift ;;
       +F) sph_flux=T ; shift ;;
       -F) filter=$2; shift 2 ;;
-      -ns) noscal=T; shift ;;
+      -ns) noscal=T ; shift ;;
       -G) brdf_basis=$2 ; ls_brdf_trunc=$3 ; shift 3 ;;
       -g) c_gas=g ; gas_overlap=$2 ; shift 2 ; \
           if [ $gas_overlap -eq $IP_OVERLAP_SINGLE ] ; \
           then gas_type=$1 ; shift ; \
           elif [ $gas_overlap -eq $IP_OVERLAP_RANDOM_RESORT_REBIN ] ; \
-          then ; n_esft_red=$1 ; \
-            if [ $n_esft_red -ne "0" ] ; then ; \
-            gpnt_split=$2 ; shift 2 ; \
-            else ; shift ; fi ; \
+          then n_esft_red=$1 ; \
+            if [ $n_esft_red -ne "0" ] ; \
+            then gpnt_split=$2 ; shift 2 ; \
+            else shift ; fi ; \
           fi ;;
       -H) hg_phf=T ; shift ;;
       -I) isolir=$IP_INFRA_RED ; shift ;;
@@ -108,6 +110,11 @@ else
    echo "Spectral file not set."
    exit  
 fi
+if [ "$n_channel" ]
+   then echo $n_channel >> /tmp/lrcdl.$$
+else
+    echo "1" >> /tmp/lrcdl.$$
+fi
 if [ "$base_name" ] 
    then echo $base_name >> /tmp/lrcdl.$$
 else
@@ -125,6 +132,21 @@ if [ "$range_1" ]
 else
    echo "Range of bands not set"
    exit
+fi
+if [ "$n_channel" ]
+   then
+   n_band=$(($range_2-$range_1+1))
+   bnd_per_ch=$(($n_band/$n_channel))
+   case $n_channel in
+      1) ;;
+      $n_band) ;;
+      $(($n_band/$bnd_per_ch))) i=0 ; \
+	 while [[ $i -lt $n_band ]] ; \
+	 do echo $(($i/$bnd_per_ch + 1)) >> /tmp/lrcdl.$$ ; \
+            i=$(($i+1)) ; \
+	 done ;;
+      *) echo "Cannot determine channel map" ; exit ;;
+   esac
 fi
 if [ "$filter" ]
    then echo "y" >> /tmp/lrcdl.$$
@@ -237,8 +259,11 @@ if [ $angular_integration -eq $IP_TWO_STREAM ]
    then if [ "$two_stream" ]
       then echo $two_stream >> /tmp/lrcdl.$$
    else
-      echo "Two-stream scheme not set."
-      exit
+      if [ $isolir -eq $IP_INFRA_RED ]
+         then echo "12" >> /tmp/lrcdl.$$
+      else
+         echo "16" >> /tmp/lrcdl.$$
+      fi
    fi
    if [ "$rescale" ]
       then echo ".T." >> /tmp/lrcdl.$$
@@ -248,8 +273,21 @@ if [ $angular_integration -eq $IP_TWO_STREAM ]
    if [ "$solver" ]
       then echo $solver >> /tmp/lrcdl.$$
    else
-      echo "Solver not set."
-      exit
+      if [ $cloud_scheme -eq $IP_CLOUD_CLEAR ] || \
+         [ $cloud_scheme -eq $IP_CLOUD_COLUMN_MAX ] || \
+         [ $cloud_scheme -eq $IP_CLOUD_MCICA ]
+         then echo "13" >> /tmp/lrcdl.$$
+      elif [ $cloud_scheme -eq $IP_CLOUD_MIX_MAX ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_MIX_RANDOM ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_PART_CORR ]
+         then echo "16" >> /tmp/lrcdl.$$
+      elif [ $cloud_scheme -eq $IP_CLOUD_TRIPLE ] || \
+           [ $cloud_scheme -eq $IP_CLOUD_PART_CORR_CNV ]
+         then echo "17" >> /tmp/lrcdl.$$
+      else
+         echo "Solver not set."
+         exit 1
+      fi
    fi
 else if [ $angular_integration -eq $IP_IR_GAUSS ]
       then echo $gauss_order >> /tmp/lrcdl.$$

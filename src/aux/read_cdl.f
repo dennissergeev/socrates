@@ -33,7 +33,7 @@
       USE realtype_rd
       USE error_pcf
       USE def_std_io_icf
-!
+      USE filenamelength_mod, ONLY: filenamelength
 !
       IMPLICIT NONE
 !
@@ -53,10 +53,10 @@
 !
 !
 !     Local variables:
-      CHARACTER
-     &    file_in*80
+      CHARACTER (LEN=filenamelength) :: file_in
 !           Compressed name of output
-     &  , text*132
+      CHARACTER
+     &    text*132
 !           Text for output file
      &  , name_temp*80
 !           Temporary string
@@ -167,7 +167,7 @@
       CALL remove_blank(filename, file_in, length_in)
       INQUIRE(file=file_in(1: length_in), exist=l_exist)
       IF (.NOT.l_exist) THEN
-        WRITE(iu_err, '(3(/a))') 'Error: The file '
+        WRITE(iu_stdout, '(3(/a))') 'Warning: The file '
      &    , file_in(1: length_in)
      &    , 'does not exist.'
         ierr=i_err_exist

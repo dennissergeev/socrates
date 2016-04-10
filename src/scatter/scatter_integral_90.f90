@@ -578,10 +578,10 @@ Subroutine scatter_integral_90 &
       IF (l_refine) THEN
         IF ( (2 * n_point >= nd_point) .OR. &
              (i_refinement >= nd_refinement) ) THEN
-          WRITE(iu_err, '(/A, 1X, 1PE10.3, 1X, A)') &
+          WRITE(iu_stdout, '(/A, 1X, 1PE10.3, 1X, A)') &
             '+++ Warning: Scattering integrals at wavelength', &
             wavelength, 'have not converged.'
-          WRITE(iu_err, '(A)') 'The last values will be used.'
+          WRITE(iu_stdout, '(A)') 'The last values will be used.'
           EXIT
         ENDIF
       ELSE

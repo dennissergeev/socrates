@@ -1,4 +1,4 @@
-#! /bin/ksh
+#! /bin/bash
 # Script to set-up and make the radiation code
 
 here=`pwd`
@@ -7,8 +7,13 @@ host=`uname -n`
 SRC_LIST="general modules_gen aux scatter correlated_k um"
 SRC_LIST=${SRC_LIST}" modules_core radiance_core radiation_control"
 
-echo 'Building the radiation code in bin/'
+echo 'Building the radiation code in bin/ and utilities in sbin/'
 date
+
+# Build the C utilities in sbin
+cd sbin
+make
+cd $here
 
 # Create the bin directory and copy across files
 mkdir -p bin
@@ -38,9 +43,9 @@ done
 
 # Build the source code in bin
 cd bin
-if [ $host == 'post-zen' ]
+if [ -r Mk_cmd_$host ]
   then
-    cp Mk_cmd_postzen Mk_cmd
+    cp Mk_cmd_$host Mk_cmd
 fi
 ./mkdep
 make $1 && echo "All compiled OK"

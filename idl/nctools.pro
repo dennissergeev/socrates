@@ -25,7 +25,7 @@ nvals  = n_elements(alb)
 IF nvals EQ 1 THEN BEGIN
    albs = REPLICATE(total(alb), n_lon, n_lat, levels)
 ENDIF ELSE IF nvals EQ n_lon*n_lat*levels THEN BEGIN
-   albs = alb
+   albs = reform(alb,[n_lon,n_lat,levels])
 ENDIF ELSE BEGIN
    print, ' Error in ncout_surf: arrays dont match', nvals, n_lon*n_lat*levels
    retall
@@ -419,7 +419,7 @@ n_rlv  = n_elements(rlev)
 IF n_pol EQ 1 THEN BEGIN
    pols = REPLICATE(total(pol),n_lon,n_lat,n_dir)
 ENDIF ELSE IF n_pol EQ n_lon*n_lat*n_dir THEN BEGIN
-   pols = pol
+   pols = reform(pol,[n_lon,n_lat,n_dir])
 ENDIF ELSE BEGIN
    print, ' Error in ncout_view: arrays dont match', n_pol, n_lon*n_lat*n_dir
    retall
@@ -428,7 +428,7 @@ ENDELSE
 IF n_azm EQ 1 THEN BEGIN
    azims = REPLICATE(total(azim),n_lon,n_lat,n_dir)
 ENDIF ELSE IF n_pol EQ n_lon*n_lat*n_dir THEN BEGIN
-   azims = azim
+   azims = reform(azim,[n_lon,n_lat,n_dir])
 ENDIF ELSE BEGIN
    print, ' Error in ncout_view: arrays dont match', n_azm, n_lon*n_lat*n_dir
    retall
@@ -465,18 +465,15 @@ level_varid = ncdf_vardef(cdfid, 'level', level_dimid, /SHORT)
 ncdf_attput,cdfid, level_varid, 'units', 'None', LENGTH=4, /CHAR
 ncdf_attput,cdfid, level_varid, 'title', 'LEVEL', LENGTH=5, /CHAR
 
-;pol_varid = ncdf_vardef(cdfid, 'pol',[lon_dimid,lat_dimid,direction_dimid], /FLOAT)
-pol_varid = ncdf_vardef(cdfid, 'pol',[direction_dimid,lon_dimid,lat_dimid], /FLOAT)
+pol_varid = ncdf_vardef(cdfid, 'pol',[lon_dimid,lat_dimid,direction_dimid], /FLOAT)
 ncdf_attput,cdfid, pol_varid, 'units', 'degree', LENGTH=6, /CHAR
 ncdf_attput,cdfid, pol_varid, 'title', 'POLAR VIEWING ANGLE', LENGTH=19, /CHAR
 
-;azim_varid = ncdf_vardef(cdfid, 'azim',[lon_dimid,lat_dimid,direction_dimid], /FLOAT)
 azim_varid = ncdf_vardef(cdfid, 'azim',[lon_dimid,lat_dimid,direction_dimid], /FLOAT)
 ncdf_attput,cdfid, azim_varid, 'units', 'degree', LENGTH=6, /CHAR
 ncdf_attput,cdfid, azim_varid, 'title', 'AZIMUTHAL VIEWING ANGLE', LENGTH=23, /CHAR
 
-;rlev_varid = ncdf_vardef(cdfid, 'rlev', level_dimid, /FLOAT)
-rlev_varid = ncdf_vardef(cdfid, 'rlev', [lon_dimid,lat_dimid,level_dimid], /FLOAT)
+rlev_varid = ncdf_vardef(cdfid, 'rlev', level_dimid, /FLOAT)
 ncdf_attput,cdfid, rlev_varid, 'units', 'None', LENGTH=4, /CHAR
 ncdf_attput,cdfid, rlev_varid, 'title', 'VIEWING LEVEL', LENGTH=13, /CHAR
 

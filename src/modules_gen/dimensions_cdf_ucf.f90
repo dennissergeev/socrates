@@ -16,7 +16,7 @@ MODULE dimensions_cdf_ucf
 !   Maximum size of a dimension
   INTEGER            :: npd_cdl_data        = 10000
 !   Maximum size of netCDF data
-  INTEGER, Parameter :: npd_cdl_var         = 4
+  INTEGER, Parameter :: npd_cdl_var         = 5
 !   Maximum number of netCDF variables in a file
 
 END MODULE dimensions_cdf_ucf

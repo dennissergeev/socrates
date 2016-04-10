@@ -17,7 +17,7 @@ variables:
              plev:units = "pa";                                               
              plev:title = "pressure";                                        
 
-    float hrts(lon,lat,plev);                                                  
+    float hrts(plev,lat,lon);                                                  
              hrts:units = "k.d-1";                                            
              hrts:title = "heating rates";                                                   
 

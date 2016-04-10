@@ -78,8 +78,8 @@ Subroutine read_cdf(ierr, filename,                                 &
   ! Check whether the file exists
   Inquire(file=Trim(filename), exist=l_exist)
   If (.Not.l_exist) Then
-     Write(iu_err, '(3a)') &
-          'Error: The file "',Trim(filename),'" does not exist.'
+     Write(iu_stdout, '(3a)') &
+          'Warning: The file "',Trim(filename),'" does not exist.'
      ierr=i_err_exist
      Return
   End If

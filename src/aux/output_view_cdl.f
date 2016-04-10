@@ -103,8 +103,8 @@
       n_dimension=4
       dimension_name(1)='lon'
       dimension_name(2)='lat'
-      dimension_name(3)='direction'
-      dimension_name(4)='level'
+      dimension_name(3)='level'
+      dimension_name(4)='direction'
       dimension_type(1)='float'
       dimension_type(2)='float'
       dimension_type(3)='int'
@@ -145,7 +145,7 @@
       var_type(1)='float'
       var_unit(1)='degree'
       var_long(1)='polar viewing angle'
-      n_data(1)=n_profile
+      n_data(1)=n_profile*n_direction
       DO k=1, n_direction
         DO l=1, n_profile
           data_fl(l+(k-1)*n_profile, 1)=direction(l, k, 1)
@@ -160,7 +160,7 @@
       var_type(2)='float'
       var_unit(2)='degree'
       var_long(2)='azimuthal viewing angle'
-      n_data(2)=n_profile
+      n_data(2)=n_profile*n_direction
       DO k=1, n_direction
         DO l=1, n_profile
           data_fl(l+(k-1)*n_profile, 2)=direction(l, k, 2)

@@ -4,189 +4,15 @@ interactively, although it is usually more useful to run them from a UNIX script
 
 \section{UNIX command}
 
-The UNIX-command is {\tt Cl\_run\_cdl} or {\tt Cl\_run\_cdf}. The following is an expanded version of the man
-pages for these commands which both take the same options:
+The UNIX-command is {\tt Cl\_run\_cdl} or {\tt Cl\_run\_cdf} which both take the same options.
+The man page for {\tt Cl\_run\_cdf} follows formatted using {\tt man -t}.
 
-{\large
-{\tt Cl\_run\_cdf} {\tt -s} {\it spectral-file} {\tt -R} {\it first-band last-band}                          \\
-\indent\indent     {\tt -B} {\it basename} {\tt  -I$|$-S }                                                   \\
-\indent\indent     {\tt -C} {\it cloud-scheme} [{\tt -K} {\it cloud-representation} ]                        \\
-\indent\indent     [{\tt -dp} {\it decorrelation-scale}]                                                     \\
-\indent\indent     [{\tt +dp} {\it convective-decorrelation-scale}]                                          \\
-\indent\indent     [{\tt -m} {\it fractional-standard-deviation} {\tt +m} {\it mcica-sampling}]              \\
-\indent\indent     [{\tt -d} {\it drop-type} ] [{\tt +d} {\it convective-drop-type} ]			     \\
-\indent\indent     [{\tt -i} {\it ice-type} ] [{\tt +i} {\it convective-ice-type} ]			     \\
-\indent\indent     [{\tt -g} {\it gas-overlap} [{\it type}] ] [{\tt -a}] [{\tt +A}] [{\tt -b}]		     \\
-\indent\indent     [{\tt -c}] [{\tt -q}] [{\tt -r}] [{\tt +R}] [{\tt -x} {\it command-file} ]		     \\
-\indent\indent     [{\tt -z} {\it scattering-option} ]							     \\
-\indent\indent     {\bf [} {\tt +S} {\it n1 n2 n3 n4} {\tt -G} {\it basis truncation}
-                   {\tt +F} {\tt +P} {\tt -H} {\tt -e} {\tt -Y} {\tt -T} {\tt -Z} {\it order} {\bf ]}        \\
-\indent\indent\indent      {\tt $|$} {\bf [} {\tt -t} {\it two-stream-scheme} {\tt -v} {\it solver} {\bf ]}  \\
-\indent\indent\indent      {\tt $|$} {\bf [} {\tt -Q} {\it Gaussian-order} {\bf ]} [{\tt -F} {\it filter-file} ]
-}
-
-\subsection{General Options}
-These options are used whether fluxes or radiances are calculated.
-
-\begin{description}
-\item [{\tt -s} {\it spectral-file} ] The full pathname of the spectral file (examples of which 
-can be found in {\tt \$RAD\_DATA/spectra}).
-\item [{\tt -R} {\it first-band last-band} ] The range of spectral bands to be used. 
-Normally, this will be from 1 to the number of bands in the spectral file, but a 
-sub-range may be selected. The wavelengths of each of the spectral bands may be found 
-in block 1 of the spectral file.
-\item [{\tt -B} {\it basename} ] The base-name of the netCDF input and output files.
-\item [{\tt -I} ] Solve for a thermal source (LW).
-\item [{\tt -S} ] Solve for a solar source (SW).
-\item [{\tt -C} {\it cloud-scheme} ] Treatment of the vertical overlap between different 
-cloudy layers, as defined in cloud\_scheme\_pcf.f90:
-
-\begin{description}
-\item [{\tt 2} ] Maximum/random overlap in a mixed column.
-\item [{\tt 3} ] Maximum overlap in a column model.
-\item [{\tt 4} ] Random overlap in a mixed column.
-\item [{\tt 5} ] Clear column.
-\item [{\tt 6} ] Maximum/random overlap in a triple column with split between 
-convective and layer cloud.
-\item [{\tt 7} ] Coupled overlap with partial correlation of cloud.
-\item [{\tt 8} ] Coupled overlap with partial correlation of cloud with a separate 
-treatment of convective cloud.
-\item [{\tt 10} ] McICA scheme used (allows greater flexibility for representing unresolved cloud).
-If McICA is selected then '-m' and '+m' options set the fractional standard deviation and sampling
-respectively.
-\end{description}
-
-\item [{\tt -K} {\it cloud-representation} ] The macroscopic division of cloud
-in a single atmospheric layer. Ice and water parts are considered as a single
-cloud region for the purposes of overlap as described above. {\it cloud-representation},
-as defined in cloud\_representation\_pcf.f90, is given by: 
-
-\begin{description}
-\item [{\tt 1} ] Ice and water mixed homogeneously.
-\item [{\tt 2} ] Ice and water clouds are treated separately.
-\item [{\tt 3} ] Clouds are divided into homogeneously mixed stratiform and convective parts.
-\item [{\tt 4} ] Clouds divided into ice and water phases and into stratiform and convective
-components.
-\end{description}
-
-\item [{\tt -dp} {\it decorrelation-scale} ] Decorrelation scale for large scale cloud in
-pressure units (only for use with -C 7/8/10)
-
-\item [{\tt +dp} {\it convective-decorrelation-scale} ] Decorrelation scale for convective cloud in
-pressure units (only for use with -C 8)
-
-\item [{\tt -m} {\it fractional-standard-deviation} ]
-standard deviation divided by mean of unresolved water content. (only for use with -C 10, defaults to 0.75)
-
-\item [{\tt +m} {\it mcica-sampling} ]
-Method for sampling cloud sub-columns (only for use with -C 10)
-
-\begin{description}
-\item [{\tt 0} ] Full sampling (all k-terms sample all sub-columns)
-\item [{\tt 1} ] Single sampling (each k-term samples one sub-column)
-\item [{\tt 2} ] Optimal sampling (more important k-terms sample multiple sub-columns. This is the default)
-\end{description}
-
-\item [{\tt -d} {\it drop-type} ] Type of water droplet (chosen from those set in
-the spectral file).
-\item [{\tt +d} {\it convective-drop-type} ] Type of convective water droplet.
-\item [{\tt -i} {\it ice-type} ] Type of ice-crystal.
-\item [{\tt +i} {\it convective-ice-type} ] Type of convective ice-crystal.
-\item [{\tt -g} {\it gas-overlap} {\it [type]} ] Include gaseous absorption using specified
-overlap assumption, as defined in gas\_overlap\_pcf.f90:
-
-\begin{description}
-\item [{\tt 1} ] Consider absorption by only one gas specified by {\it type}, 
-as given in gas\_list\_pcf.f90.
-\item [{\tt 2} ] Random overlap (most accurate but slow).
-\item [{\tt 4} ] Equivalent extinction with corrected scaling (recommended for fast runs).
-\item [{\tt 5} ] Equivalent extinction (original method).
-\item [{\tt 6} ] Equivalent extinction using modulus of flux.
-\item [{\tt 7} ] Mixed gases used in the SES2 scheme (required for ses spectral files).
-\end{description}
-
-\item [{\tt -a} ] Include aerosols.
-\item [{\tt +A} ] Prescribed profiles of aerosols are provided as input files.
-\item [{\tt -b} ] Include Doppler broadening.
-\item [{\tt -c} ] Include continuum absorption.
-\item [{\tt -q} ] Assume a quadratic variation of the thermal source function over the layer. 
-In two-stream IR codes it is usual to assume that the source function is linear in the 
-optical depth across each layer. With this option the temperatures in the {\tt .t} file
-are used to specify a quadratic variation of the source function. This option is mainly for 
-use in the UM.
-\item [{\tt -r} ] Include Rayleigh Scattering.
-\item [{\tt +R} ] Apply rescaling to the optical properties. Rescaling is always recommended
-when the size parameter becomes larger than 1 and the phase function develops a strong forward
-peak.
-\item [{\tt -x} {\it command-file} ] Retain input to l\_run\_cdf in a named file.
-\item [{\tt -z} {\it scattering-option} ] Treatment of scattering:
-
-\begin{description}
-\item [{\tt 1 (default)} ] Full treatment of scattering.
-\item [{\tt 2} ] Scattering ignored completely: this is often sufficiently accurate 
-in the IR where scattering is prodominantly in the forward direction.
-\item [{\tt 3} ] Scattering treated as absorption: this is a reasonable
-approximation only very rarely for small particles at long wavelengths.
-\item [{\tt 4} ] Approximate scattering: downward fluxes calculated ignoring reflection.
-\item [{\tt 5} ] Hybrid scattering method: treatment of scattering is dependent on the method specified for each k-term in the spectral file.
-\end{description}
- 
-\end{description}
-
-\subsection{Calculation of two-stream fluxes}
-
-\begin{description}
-\item [{\tt -t} {\it two-stream-scheme} ] Two-stream approximation,
-chosen from those defined in two\_ stream\_ scheme\_ pcf.f90: 
-
-\begin{description}
-\item [{\tt 2} ] Eddington's approximation.
-\item [{\tt 4} ] Discrete ordinate method.
-\item [{\tt 6} ] Practical improved flux method (version of Zdunkowski et al. 1985).
-\item [{\tt 12 (recommended for LW)} ] Practical
-improved flux method (1985) with Elsasser's diffusivity factor (D=1.66).
-\item [{\tt 14} ] User defined test approximation.
-\item [{\tt 15} ] Hemispheric mean approximation.
-\item [{\tt 16 (recommended for SW)} ] Practical improved flux method 
-(original form of 1980).
-\end{description}
-In this code, schemes with $\delta$-rescaling are not treated as separate schemes,
-but $\delta$-rescaling is controlled with the option {\tt +R}. Hence, for the 
-$\delta$-Eddington scheme we use the options {\tt +R -t 2}, but omit {\tt +R} for
-the Eddington scheme itself.
-
-\item [{\tt -v} {\it solver} ] Solver used for the two-stream calculations, 
-chosen from those defined in solver\_ pcf.f90. The solver must be consistent with 
-the treatment of cloud overlap (set using -C and -K). Where there are no clouds or 
-the atmosphere is divided into homogeneous subcolumns ({\tt -C 5,3}) the solver 
-may be {\tt -v 13} or {\tt -v 1}. Where clear and cloudy fluxes are combined together,
-the recommended solvers should be used.
-Options for {\it solver} are: 
-
-\begin{description}
-\item [{\tt 1} ] Pentadiagonal solver for homogeneous column.
-\item [{\tt 9} ] Coupled overlap scheme with approximate scattering.
-\item [{\tt 11 (recommended solver for coupled overlap)} ] Direct solution for coupled overlap.
-\item [{\tt 13} ] Direct solution in a homogeneous column.
-\item [{\tt 14 (recommended solver for triple overlap)} ] Direct solution for coupled 
-overlap with separation between convective and stratiform clouds.
-\item [{\tt 15} ] Direct solution for coupled overlap with separation between convective
-and stratiform clouds with approximate scattering.
-\item [{\tt 16} ] Direct solution for coupled overlap (modified for correct treatment of shadowing by Robin Hogan).
-\item [{\tt 17} ] Direct solution for coupled overlap with separation between convective and stratiform clouds (modified for correct treatment of shadowing by Robin Hogan).
-\end{description}
-Where solver 1 is selected, this will be used for the clear-sky calculations, 
-otherwise solver 13 will be used.
-
-\item [{\tt -Q} {\it Gaussian-order} ] Use Gaussian integration of the specified order. 
-This option is available only in the IR as an alternative to the two-stream equations:
-there is no treatment of scattering here.
-\item [{\tt -F} {\it filter-file} ] The name of the filter file to be convolved
-with the fluxes.
-\end{description}
-
+\includepdf[pages=-]{Cl_run_cdf.pdf}
 
 \subsection{Full Spectral Calculation}
+
+The options required for using spherical harmonics to calculate radiances or fluxes are only
+briefly dealt with in the man page. Explanation of these options is expanded here.
 
 \begin{description}
 \item [{\tt +S} {\it n1 n2 n3 n4} ] Calculate radiances by doing a full spectral calculation. 
@@ -206,7 +32,7 @@ which we select truncation 3 (the first number after +S). In the visible,
 if radiances are required the truncation must be 1 to include non-axisymmetric
 terms, but 3 can be used if only fluxes are required. The second number is
 the order of truncation, which must be odd. The next two numbers specify
-the azimuthal orders of truncation. As we are calculating fluxes here,
+the azimuthal orders of truncation. For calculating fluxes, 
 the two orders will be 0, but if calculating solar radiances the lowest
 order would normally  be 0 and the highest equal to the global order of
 truncation (but note that it is redundant to set it higher than the number

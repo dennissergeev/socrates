@@ -25,7 +25,7 @@
       USE dimensions_cdl_ucf
       USE interp_mode_pcf
       USE error_pcf
-!
+      USE filenamelength_mod, ONLY: filenamelength
 !
       IMPLICIT NONE
 !
@@ -46,8 +46,7 @@
 !
 !
 !     Input field:
-      CHARACTER
-     &    file_in*80
+      CHARACTER (LEN=filenamelength) :: file_in
 !           Name of input file
       INTEGER
      &    n_latitude_in
@@ -70,8 +69,7 @@
 !
 !
 !     Grid field:
-      CHARACTER
-     &    file_grid*80
+      CHARACTER (LEN=filenamelength) :: file_grid
 !           Name of grid file
       INTEGER
      &    n_latitude_grid
@@ -97,10 +95,10 @@
 !
 !
 !     Output field:
-      CHARACTER
-     &    file_out*80
+      CHARACTER (LEN=filenamelength) :: file_out
 !           Name of output file
-     &  , name_out*24
+      CHARACTER
+     &    name_out*24
 !           Name of the output field
      &  , unit_out*20
 !           Units of the output field

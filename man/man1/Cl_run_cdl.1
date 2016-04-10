@@ -1,6 +1,6 @@
-.TH Cl_run_cdl 1 "12-6-2014"
+.TH Cl_run_cdl 1 "4-4-2016"
 .SH NAME
-Cl_run_cdl \- Driver for the Edwards-Slingo Radiation Code
+Cl_run_cdl \- Driver for the SOCRATES Radiative Transfer Code
 .SH USAGE
 Cl_run_cdl \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
            \fB\-B\fR \fIbasename\fR \fB \-I|\-S \fR
@@ -11,16 +11,16 @@ Cl_run_cdl \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
            [\fB\-d\fR \fIdrop\-type\fR] [\fB+d\fR \fIconvective\-drop\-type\fR]
            [\fB\-i\fR \fIice\-type\fR] [\fB+i\fR \fIconvective\-ice\-type\fR]
            [\fB\-g\fR \fIgas\-overlap\fR [\fItype\fR] [\fIn_g\fR [\fIg_split\fR]]] [\fB\-a\fR] [\fB\+A\fR]
-           [\fB\-c\fR] [\fB\-q\fR] [\fB\-r\fR] [\fB+R\fR] [\fB\-x\fR \fIcommand\-file\fR]
+           [\fB\-c\fR] [\fB\-q\fR] [\fB\-r\fR] [\fB+R\fR] [\fB\-x\fR \fIcommand\-file\fR] [\fB\-o\fR]
            [\fB\-z\fR \fIscattering\-option\fR] [\fB\-dbg\fR]
            \fB[\fR \fB\+S\fR \fIn1 n2 n3 n4\fR \fB\-G\fR \fIbasis truncation\fR
              \fB\+F\fR \fB\+P\fR \fB\-H\fR \fB\-e\fR \fB\-Y\fR \fB\-T\fR \fB\-Z\fR \fIorder\fR \fB]\fR
             \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR \fB\-ns\fR \fB]\fR
             \fB|\fR \fB[\fR \fB\-Q\fR \fIGaussian\-order\fR \fB]\fR
-           [\fB\-F\fR \fIfilter\-file\fR]
+           [\fB\-F\fR \fIfilter\-file\fR] [\fB\-ch\fR \fInum-channels\fR]
 
 .SH DESCRIPTION
-A script to run the CDL version of the Offline Edwards-Slingo Radiation Code. Profiles of atmospheric data are read in along with a spectral file containing details of the absorbers present in a number of spectral bands. Output profiles of fluxes or radiances are calculated for the thermal (long wave) or solar (short wave) regions.
+A script to run the CDL version of the SOCRATES Radiative Transfer Code. Profiles of atmospheric data are read in along with a spectral file containing details of the absorbers present in a number of spectral bands. Output profiles of fluxes or radiances are calculated for the thermal (long wave) or solar (short wave) regions.
 
 .SH OPTIONS
 
@@ -32,23 +32,23 @@ These options are used whether fluxes or radiances are calculated.
 
 .TP
 \fB\-s\fR \fIspectral\-file\fR 
-The full pathname of the spectral file
+The full pathname of the spectral file (examples of which can be found in $RAD_DATA/spectra).
 
 .TP
 \fB\-R\fR \fIfirst\-band last\-band\fR
-The range of spectral bands to be used
+The range of spectral bands to be used. Normally, this will be from 1 to the number of bands in the spectral file, but a sub-range may be selected. The wavelengths of each of the spectral bands may be found in block 1 of the spectral file.
 
 .TP
 \fB\-B\fR \fIbasename\fR
-The base-name of the CDL input and output files
+The base-name of the CDL input and output files.
 
 .TP
 \fB\-I\fR
-Solve for a thermal source (LW)
+Solve for a thermal source (LW).
 
 .TP
 \fB\-S\fR
-Solve for a solar source (SW)
+Solve for a solar source (SW).
 
 .TP
 \fB\-C\fR \fIcloud\-scheme\fR
@@ -110,7 +110,7 @@ Decorrelation scale for convective cloud in pressure units (only for use with -C
 
 .TP
 \fB\-m\fR \fIfractional\-standard\-deviation\fR
-standard deviation divided by mean of unresolved water content. (only for use with -C 10, defaults to 0.75)
+standard deviation divided by mean of unresolved water content (only for use with -C 10, defaults to 0.75).
 .RE
 
 .TP
@@ -125,7 +125,7 @@ Full sampling (all k-terms sample all sub-columns)
 Single sampling (each k-term samples one sub-column)
 .TP
 .B 2
-Optimal sampling (more important k-terms sample multiple sub-columns. This is the default)
+Optimal sampling (more important k-terms sample multiple sub-columns). This is the default.
 .RE
 
 .TP
@@ -193,7 +193,7 @@ Include continuum absorption
 
 .TP
 \fB\-q\fR 
-Use a quadratic variation of the source function over the layer
+Use a quadratic variation of the thermal source function over the layer. In two-stream IR codes it is usual to assume that the source function is linear in the optical depth across each layer. With this option the temperatures in the .t file are used to specify a quadratic variation of the source function. This option is mainly for use in GCMs to avoid the generation of wavelike heating patterns.
 
 .TP
 \fB\-r\fR
@@ -201,11 +201,15 @@ Include Rayleigh Scattering
 
 .TP
 \fB+R\fR
-Apply rescaling to the optical properties
+Apply rescaling to the optical properties. Rescaling is always recommended when the size parameter becomes larger than 1 and the phase function develops a strong forward peak.
 
 .TP
 \fB\-x\fR \fIcommand\-file\fR
 Retain input to l_run\_cdl in a named file
+
+.TP
+\fB\-o\fR
+Show output of l_run\_cdf on standard out. This is generally prompts for information that is passed directly by the script, but may provide useful information for debugging.
 
 .TP
 \fB\-z\fR \fIscattering\-option\fR
@@ -216,7 +220,7 @@ Treatment of scattering:
 Full treatment of scattering
 .TP
 .B 2
-Scattering ignored completely: this is often sufficiently accurate in the IR where scattering is prodominantly in the forward direction
+Scattering ignored completely: this is often sufficiently accurate in the IR where scattering is prodominantly in the forward direction.
 .TP
 .B 3
 Scattering treated as absorption: this is a reasonable approximation only very rarely for small particles at long wavelengths.
@@ -231,6 +235,14 @@ Hybrid scattering method: treatment of scattering is dependent on the method spe
 .TP
 \fB\-dbg\fR
 Use idbc to debug source code
+
+.TP
+\fB\-F\fR \fIfilter\-file\fR
+The name of the filter file to be convolved with the fluxes
+
+.TP
+\fB\-ch\fR \fInum-channels\fR
+The number of channels for output. This must divide exactly into the range of bands used. Defaults to 1.
 
 .LP
 
@@ -263,9 +275,11 @@ Hemispheric mean approximation
 Practical improved flux method (original form of 1980)
 .RE
 
+In this code, schemes with delta-rescaling are not treated as separate schemes, but delta-rescaling is controlled with the option +R. Hence, for the delta-Eddington scheme we use the options +R -t 2, but omit +R for the Eddington scheme itself.
+
 .TP
 \fB\-v\fR \fIsolver\fR
-Solver used for the two-stream calculations, chosen from those defined in solver\_pcf.f90. The solver must be consistent with the treatment of cloud overlap (set using \-C and \-K). Options for \fIsolver\fR are:
+Solver used for the two-stream calculations, chosen from those defined in solver\_pcf.f90. The solver must be consistent with the treatment of cloud overlap (set using \-C and \-K). Where there are no clouds or the atmosphere is divided into homogeneous subcolumns (-C 5,3) the solver may be -v 13 or -v 1. Where clear and cloudy fluxes are combined together, the recommended solvers should be used. Options for \fIsolver\fR are:
 .RS
 .TP
 .B 1
@@ -274,22 +288,22 @@ Pentadiagonal solver for homogeneous column
 .B 9
 Coupled overlap scheme with approximate scattering
 .TP
-.B 11 \fR(recommended solver for coupled overlap)
+.B 11
 Direct solution for coupled overlap
 .TP
-.B 13
+.B 13 \fR(recommended solver for clear-sky)
 Direct solution in a homogeneous column
 .TP
-.B 14 \fR(recommended solver for triple overlap)
+.B 14
 Direct solution for coupled overlap with separation between convective and stratiform clouds
 .TP
 .B 15
 Direct solution for coupled overlap with separation between convective and stratiform clouds with approximate scattering
 .TP
-.B 16
+.B 16 \fR(recommended solver for coupled overlap)
 Direct solution for coupled overlap (modified for correct treatment of shadowing by Robin Hogan)
 .TP
-.B 17
+.B 17 \fR(recommended solver for triple overlap)
 Direct solution for coupled overlap with separation between convective and stratiform clouds (modified for correct treatment of shadowing by Robin Hogan)
 .RE
 
@@ -299,15 +313,13 @@ Determine direct flux using unscaled optical depth
 
 .TP
 \fB\-Q\fR \fIGaussian\-order\fR
-Use Gaussian integration of the specified order
-
-.TP
-\fB\-F\fR \fIfilter\-file\fR
-The name of the filter file to be convolved with the fluxes
+Use Gaussian integration of the specified order. This option is available only in the IR as an alternative to the two-stream equations: there is no treatment of scattering here.
 
 .LP
 
 .B Full Spectral Calculation
+
+See the user guide for a more detailed explanation of the options.
 
 .TP
 \fB\+S\fR \fIn1 n2 n3 n4\fR
@@ -343,7 +355,7 @@ Calculate fluxes rather than radiances
 
 .TP
 \fB\+P\fR
-Calculate photolysis rates rather than radiances
+Calculate photolysis rates rather than radiances (not yet implemented)
 
 .TP
 \fB\-H\fR

@@ -8,12 +8,13 @@ program cdl2cdf
 
   use realtype_rd
   use def_std_io_icf
+  use filenamelength_mod, ONLY: filenamelength
 
   implicit none
 
   integer :: ierr = 0                ! Error flag
   integer :: i, j                    ! Loop variables
-  character (LEN=80) :: cdl_name, cdf_name
+  character (LEN=filenamelength) :: cdl_name, cdf_name
 
   integer :: nd_cdl_dimen  = 7       ! Array size for netCDF dimensions
   integer :: nd_cdl_dimen_size = 768 ! Array size for number of values
@@ -97,6 +98,13 @@ program cdl2cdf
         if (var_name(i)(j:j) == ' ') var_name(i)(j:j) = '_'
         j=j+1
      end do
+  end do
+
+  ! The list of dimensions will be in C order and need to be reversed
+  ! before passing to the writing routine:
+  do j = 1, n_var
+    list_dimension_var(1:n_dimension_var(j), j) =                     &
+      list_dimension_var(n_dimension_var(j):1:-1, j)
   end do
 
   write(iu_stdout, '(a)') 'Enter the output netCDF filename:'

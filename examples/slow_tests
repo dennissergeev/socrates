@@ -12,19 +12,25 @@ err=0
 echo ---
 echo "Testing prep_spec for generating solar variability data:"
 cd spectral_var
-run_me || err=1
+./run_me || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdl for calculating radiances and fluxes with mls profile:"
+cd setup_atmos
+./run_me mls || err=1
 cd ../
 
 echo ---
 echo "Testing Cscatter for generating monochromatic aerosol data:"
 cd aerosols
-run_scatter || err=1
+./run_scatter || err=1
 cd ../
 
 echo ---
 echo "Testing Cscatter for generating cloud droplet parametrisations:"
 cd droplets
-run_me || err=1
+./run_me || err=1
 cd ../
 
 echo ---

@@ -190,10 +190,10 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
     ENDDO
 !
     IF (iteration > np_max_iteration_cg) THEN
-      WRITE(iu_err, '(/a)') &
+      WRITE(iu_stdout, '(/a)') &
         'Too many iterations in the conjugate gradient routine ' // &
         'without convergence.'
-      WRITE(iu_err, '(a)') 'Current data will be used.'
+      WRITE(iu_stdout, '(a)') 'Current data will be used.'
       EXIT
     ENDIF
 !

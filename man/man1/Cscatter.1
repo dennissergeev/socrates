@@ -7,7 +7,7 @@ Cscatter \fB\-w\fR \fIwavelength\-file\fR \fB\-r\fR \fIrefract\-file\fR \fB\-c|\
          [\fB\-h\fR \fIwater\-refract\-file\fR \fIhumidity\-file\fR]
          \fB\-M | \-A\fR
          \fB\-g\fR \fIw r0 sigma\fR \fB|\fR \fB\-m\fR \fIw alpha rm beta\fR \fB|\fR \fB\-f\fR \fIdist\-file\fR
-         \fB\-n\fR \fIN\fR \fB\-P\fR \fImoments\fR \fB\-o\fR \fIoutput\-file\fR
+         \fB\-n\fR \fIN\fR \fB\-P\fR \fImoments\fR \fB\-o\fR \fIoutput\-file\fR [\fB\-v\fR]
 
 
 .SH DESCRIPTION
@@ -113,6 +113,10 @@ The number of moments of the phase function to be calculated.
 .TP
 \fB\-o\fR \fIoutput\-file\fR
 The name of the output file.
+
+.TP
+\fB\-v\fR
+Show verbose output from the Fortran routine (optional).
 
 .LP
 Multimodal distributions may be specified by repeating the options \fB\-g\fR

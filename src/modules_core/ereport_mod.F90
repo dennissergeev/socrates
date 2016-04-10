@@ -23,29 +23,30 @@ CONTAINS
     INTEGER, INTENT( INOUT )          :: ErrorStatus
 
 ! Local scalars
-    INTEGER                       :: unit = 6
+    INTEGER                       :: unit_err  = 0
+    INTEGER                       :: unit_warn = 6
     CHARACTER (LEN=*), PARAMETER  :: astline = '************************&
         &*****************************************************'
 
     IF ( ErrorStatus > 0 ) THEN
-      WRITE(unit,'(A)')    astline
-      WRITE(unit,'(A)')    '*** ERROR *****************************'
-      WRITE(unit,'(A,A)')  '* Error in routine: ', &
+      WRITE(unit_err,'(A)')    astline
+      WRITE(unit_err,'(A)')    '*** ERROR *****************************'
+      WRITE(unit_err,'(A,A)')  '* Error in routine: ', &
           RoutineName( 1 : Len_Trim(RoutineName) )
-      WRITE(unit,'(A,I5)') '* Error Code: ',ErrorStatus
-      WRITE(unit,'(A,A)')  '* Error Message: ', &
+      WRITE(unit_err,'(A,I5)') '* Error Code: ',ErrorStatus
+      WRITE(unit_err,'(A,A)')  '* Error Message: ', &
           Cmessage( 1 : Len_Trim(Cmessage) )
-      WRITE(unit,'(A)')    astline
+      WRITE(unit_err,'(A)')    astline
       STOP
     ELSE IF ( ErrorStatus < 0) THEN
-      WRITE(unit,'(A)')    astline
-      WRITE(unit,'(A)')    '*** WARNING *****************************'
-      WRITE(unit,'(A,A)')  '* Warning in routine: ', &
+      WRITE(unit_warn,'(A)')    astline
+      WRITE(unit_warn,'(A)')    '*** WARNING *****************************'
+      WRITE(unit_warn,'(A,A)')  '* Warning in routine: ', &
           RoutineName( 1 : Len_Trim(RoutineName) )
-      WRITE(unit,'(A,I5)') '* Warning Code: ',ErrorStatus
-      WRITE(unit,'(A,A)')  '* Warning Message: ', &
+      WRITE(unit_warn,'(A,I5)') '* Warning Code: ',ErrorStatus
+      WRITE(unit_warn,'(A,A)')  '* Warning Message: ', &
           Cmessage( 1 : LEN_TRIM(Cmessage) )
-      WRITE(unit,'(A)')    astline
+      WRITE(unit_warn,'(A)')    astline
     END IF
     
     ! Reset ErrorStatus

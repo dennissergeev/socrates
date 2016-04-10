@@ -14,7 +14,7 @@ MODULE def_std_io_icf
 !                           Unit number for standard input
   INTEGER, PARAMETER  ::  iu_stdout = 6
 !                           Unit number for standard output
-  INTEGER, PARAMETER  ::  iu_err = 6
+  INTEGER, PARAMETER  ::  iu_err = 0
 !                           Unit number for error messages
 
 END MODULE def_std_io_icf

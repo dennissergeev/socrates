@@ -6,6 +6,7 @@
 '''
 Plots a mean profile of the variable in the supplied file
 against height (calculated from pressure assuming isothermal atmos.)
+If channel dimension exists, spectrum at boundaries is also plotted.
 '''
 
 CONST = 287. * 250. / (9.80665 * 1000.0) #
@@ -34,18 +35,43 @@ layers= len(p)
 
 var = dgs.variables[name][:]
 
-vmean = np.zeros(layers)
-for i in np.arange(layers):
-    vmean[i] = np.sum(var[i, :, :]) / (n_lon * n_lat)
+try:
+    width     = dgs.variables['bandwidth'][:]
+    wl_short  = dgs.variables['wl_short'][:]
+    wl_long   = dgs.variables['wl_long'][:]
+    n_channel = len(width)
+except:
+    vmean = np.zeros(layers)
+    for i in np.arange(layers):
+        vmean[i] = np.sum(var[i, :, :]) / (n_lon * n_lat)
+    ax1 = plt.figure().add_subplot(111)
+    ax1.plot(vmean, -np.log(p/max(p))*CONST)
+    ax1.set_title('Average profile')
+    ax1.set_xlabel(name)
+    ax1.set_ylabel('Approx height (km)')
+else:
+    fig=plt.figure()
+    vmean = np.zeros(layers)
+    for i in np.arange(layers):
+        vmean[i] = np.sum(var[:, i, :, :]) / (n_lon * n_lat)
+    ax1 = fig.add_subplot(121)
+    ax1.plot(vmean, -np.log(p/max(p))*CONST)
+    ax1.set_title('Average profile')
+    ax1.set_xlabel(name)
+    ax1.set_ylabel('Approx height (km)')
+    wn = 0.5e-2/wl_short + 0.5e-2/wl_long 
+    toa_spec = np.zeros(n_channel)
+    surf_spec = np.zeros(n_channel)
+    for ch in range(0, n_channel):
+        toa_spec[ch]  = np.sum(var[ch,0,       :,:])/(width[ch]*1e9*n_lon*n_lat)
+        surf_spec[ch] = np.sum(var[ch,layers-1,:,:])/(width[ch]*1e9*n_lon*n_lat)
+    ax2 = fig.add_subplot(122)
+    ax2.plot(wn, toa_spec, color='blue', label='TOA')
+    ax2.plot(wn, surf_spec, color='green', label='Surface')
+    ax2.set_title('TOA & surface spectrum')
+    ax2.set_xlabel('Wavenumber (cm-1)')
+    ax2.set_ylabel('Flux (Wm-2nm-1)')
+    plt.legend()
 
-ax1 = plt.figure().add_subplot(111)
-ax1.plot(vmean, -np.log(p/max(p))*CONST)
-ax1.set_xlabel(name)
-ax1.set_ylabel('Approx height (km)')
+plt.tight_layout()
 plt.show()
-
-# plot,vmean,-alog(p/max(p))*const,xtitle=name,ytitle='Approx height (km)'
-
-# print 'Pressure, ', name  
-# for i in range(len(p)):
-#     print "%*.3f  %*.3f" %(9, p[i], 6, vmean[i])

@@ -17,7 +17,7 @@ variables:
              plev:units = "pa";                                               
              plev:title = "pressure";                                        
 
-    float dflx(lon,lat,plev);                                                  
+    float dflx(plev,lat,lon);                                                  
              dflx:units = "wm-2";                                             
              dflx:title = "downward flux";                                                   
 

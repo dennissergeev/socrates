@@ -183,8 +183,8 @@ PROGRAM l_run_cdf
 ! Spectral Data:
 ! ------------------------------------------------------------------
 ! Read in the spectral file.
-  WRITE(*, "(a)") "Enter the name of the spectral file."
-  READ(*, "(a)") control%spectral_file
+  WRITE(iu_stdout, "(a)") "Enter the name of the spectral file."
+  READ(iu_stdin, "(a)") control%spectral_file
 ! Derive path for McICA data file
   path_end=SCAN(control%spectral_file,'/',.TRUE.)
   mcica_data(:PATH_END)=control%spectral_file(:PATH_END)
@@ -193,6 +193,14 @@ PROGRAM l_run_cdf
 ! Read spectral file
   CALL read_spectrum(control%spectral_file, Spectrum)
 
+  WRITE(iu_stdout, "(a,i0,a)") &
+    "Enter the number of channels for output (1 - ", &
+    Spectrum%Basic%n_band, "):"
+  READ(iu_stdin, *) n_channel
+  IF ((n_channel < 1) .OR. (n_channel > Spectrum%Basic%n_band)) THEN
+    WRITE(*, "(a)") "Number of channels out of range, setting to 1."
+    n_channel = 1
+  END IF
 
 ! ------------------------------------------------------------------
 ! Input Files:
@@ -244,7 +252,7 @@ PROGRAM l_run_cdf
   dimen%nd_layer                  = npd_layer
   dimen%nd_layer_clr              = npd_layer
   dimen%id_cloud_top              = 1
-  dimen%nd_channel                = 1
+  dimen%nd_channel                = n_channel
   dimen%nd_column                 = npd_column
   dimen%nd_max_order              = npd_max_order
   dimen%nd_direction              = npd_direction
@@ -280,13 +288,14 @@ PROGRAM l_run_cdf
   ALLOCATE( heating_rate(dimen%nd_profile, dimen%nd_layer,              &
               dimen%nd_channel)                                       )
 
-  npd_cdl_data = Max(dimen%nd_profile*dimen%nd_layer,                   &
-                     dimen%nd_profile*dimen%nd_direction)
+  npd_cdl_data = Max(dimen%nd_profile*dimen%nd_layer*dimen%nd_channel,  &
+                     dimen%nd_profile*dimen%nd_direction*               &
+                     dimen%nd_viewing_level*dimen%nd_channel)
   print *,'Setting npd_cdl_data: ',npd_cdl_data
 
   npd_cdl_dimen_size = Max(npd_latitude,npd_longitude,                  &
                            dimen%nd_layer,dimen%nd_direction,           &
-                           spectrum%dim%nd_band)
+                           dimen%nd_viewing_level,spectrum%dim%nd_band)
   print *,'Setting npd_cdl_dimen_size: ',npd_cdl_dimen_size
 
 
@@ -414,6 +423,18 @@ PROGRAM l_run_cdf
       STOP
     ENDIF
   ENDIF
+
+! Map spectral bands into output channels
+  IF (n_channel == 1) THEN
+    control%map_channel(1:Spectrum%Basic%n_band)=1
+  ELSE IF (n_channel == control%last_band - control%first_band + 1) THEN
+    DO i = 1, n_channel
+      control%map_channel(control%first_band + i-1)=i
+    END DO
+  ELSE
+    WRITE(iu_stdout, '(a)') 'Enter channel map.'
+    READ(iu_stdin, *) control%map_channel(control%first_band:control%last_band)
+  END IF
 
 ! Calculate the weighting for the bands.
   control%weight_band = 1.0_RealK
@@ -569,46 +590,46 @@ PROGRAM l_run_cdf
       END IF
     ENDIF
 
-
-    DO i_gas=1, Spectrum%Gas%n_absorb
-
-!     Read in each file of mixing ratios. The values of the vertical
-!     coordinates are set only on the first occasion when a
-!     vertical coordinate is found.
-      file_name(1: length_name+1+len_file_suffix) =                     &
-        base_name(1: length_name) // '.' //                             &
-        gas_suffix(Spectrum%Gas%type_absorb(i_gas))(1:len_file_suffix)
-      INQUIRE(file=Trim(file_name(1:length_name+1+len_file_suffix)),    &
-              exist=l_exist)
-      IF (l_exist) THEN
-        l_vert_assignable=.NOT.l_vert_coord
-        CALL assign_input_vert_cdf(ierr,                                &
-          file_name(1: length_name+1+len_file_suffix),                  &
-          'gaseous mixing ratios',                                      &
-          l_vert_coord, name_vert_coord,                                &
-          .true., atm%n_layer, l_vert_assignable,                       &
-          n_latitude, atm%lat, n_longitude, atm%lon,                    &
-          1,                                                            &
-          atm%n_profile, atm%n_layer,                                   &
-          atm%p, atm%gas_mix_ratio(1, 1, i_gas),                        &
-          dimen%nd_profile, npd_latitude, npd_longitude, 1,             &
-          dimen%nd_layer,                                               &
-          npd_cdl_dimen, npd_cdl_dimen_size,                            &
-          npd_cdl_data, npd_cdl_var )
-        IF (ierr /= i_normal) STOP
-      ELSE
-        atm%gas_mix_ratio(:, :, i_gas) = 0.0_RealK
-      ENDIF
-
-!     Water vapour may be required for other elsewhere (as in
-!     the case of moist aerosols), so a check is made to see
-!     if it has been read.
-      l_q_unread=l_q_unread.OR.                                         &
-        (.NOT.(Spectrum%Gas%type_absorb(i_gas) == IP_h2o))
-
-    ENDDO
-
   ENDIF
+
+
+  DO i_gas=1, Spectrum%Gas%n_absorb
+
+!   Read in each file of mixing ratios. The values of the vertical
+!   coordinates are set only on the first occasion when a
+!   vertical coordinate is found.
+    file_name(1: length_name+1+len_file_suffix) =                       &
+      base_name(1: length_name) // '.' //                               &
+      gas_suffix(Spectrum%Gas%type_absorb(i_gas))(1:len_file_suffix)
+    INQUIRE(file=Trim(file_name(1:length_name+1+len_file_suffix)),      &
+            exist=l_exist)
+    IF (l_exist) THEN
+      l_vert_assignable=.NOT.l_vert_coord
+      CALL assign_input_vert_cdf(ierr,                                  &
+        file_name(1: length_name+1+len_file_suffix),                    &
+        'gaseous mixing ratios',                                        &
+        l_vert_coord, name_vert_coord,                                  &
+        .true., atm%n_layer, l_vert_assignable,                         &
+        n_latitude, atm%lat, n_longitude, atm%lon,                      &
+        1,                                                              &
+        atm%n_profile, atm%n_layer,                                     &
+        atm%p, atm%gas_mix_ratio(1, 1, i_gas),                          &
+        dimen%nd_profile, npd_latitude, npd_longitude, 1,               &
+        dimen%nd_layer,                                                 &
+        npd_cdl_dimen, npd_cdl_dimen_size,                              &
+        npd_cdl_data, npd_cdl_var )
+      IF (ierr /= i_normal) STOP
+    ELSE
+      atm%gas_mix_ratio(:, :, i_gas) = 0.0_RealK
+    ENDIF
+
+!   Water vapour may be required for other elsewhere (as in
+!   the case of moist aerosols), so a check is made to see
+!   if it has been read.
+    l_q_unread=l_q_unread.OR.                                           &
+      (.NOT.(Spectrum%Gas%type_absorb(i_gas) == IP_h2o))
+
+  ENDDO
 
 
 ! ------------------------------------------------------------------
@@ -961,14 +982,6 @@ PROGRAM l_run_cdf
 
 
 ! ------------------------------------------------------------------
-! Setting of diagnostic mapping.
-! ------------------------------------------------------------------
-! Map all spectral bands into one output band
-  n_channel=1
-  control%map_channel(1:Spectrum%Basic%n_band)=1
-
-
-! ------------------------------------------------------------------
 ! Subgrid cloud generator
 ! ------------------------------------------------------------------
   IF (control%i_cloud == IP_cloud_mcica) THEN
@@ -1088,8 +1101,8 @@ END IF
 
 !   Write the output files.
     CALL output_flux_cdf(ierr,                                          &
+      control, spectrum,                                                &
       base_name, length_name,                                           &
-      control%isolir,                                                   &
       n_latitude, atm%lat, n_longitude, atm%lon,                        &
       atm%n_profile, atm%n_layer,                                       &
       trim(name_vert_coord), len(trim(name_vert_coord)),                &
