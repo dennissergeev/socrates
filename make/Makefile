@@ -19,10 +19,13 @@ include Mk_pattern
 #-----------------------------------------------------------------------
 # Source code for each sub-package of the suite.
 include Mk_mod_gen
+include Mk_mod_gencore
+include Mk_src_gencore
 include Mk_src_gen
 include Mk_src_aux
 include Mk_src_ck
-include Mk_src_rad
+include Mk_src_radcore
+include Mk_src_radctrl
 include Mk_src_scat
 
 #-----------------------------------------------------------------------
@@ -37,28 +40,40 @@ include Mk_depend
 #-----------------------------------------------------------------------
 # Construction of Libraries.
 
-radlib.$(LIBSUFFIX): $(MODULES_GEN:.f90=.o) \
+radlib.$(LIBSUFFIX): \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
-	   $(SOURCE_RAD:.f90=.o)
-	$(LIBLINK) radlib.$(LIBSUFFIX) $(MODULES_GEN:.f90=.o)\
+	   $(SOURCE_RADCTRL:.f90=.o) $(SOURCE_RADCORE:.f90=.o) 
+	$(LIBLINK) radlib.$(LIBSUFFIX) \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
-	   $(SOURCE_RAD:.f90=.o)
+	   $(SOURCE_RADCTRL:.f90=.o) $(SOURCE_RADCORE:.f90=.o)
 
-cklib.$(LIBSUFFIX): $(MODULES_GEN:.f90=.o) \
+cklib.$(LIBSUFFIX): \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
 	   $(SOURCE_CK:.f90=.o)
-	$(LIBLINK) cklib.$(LIBSUFFIX) $(MODULES_GEN:.f90=.o)\
+	$(LIBLINK) cklib.$(LIBSUFFIX) \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
 	   $(SOURCE_CK:.f90=.o)
 
-scatlib.$(LIBSUFFIX): $(MODULES_GEN:.f90=.o) \
+scatlib.$(LIBSUFFIX): \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_SCAT:.f90=.o) $(SOURCE77_SCAT:.f=.o)
-	$(LIBLINK) scatlib.$(LIBSUFFIX) $(MODULES_GEN:.f90=.o)\
+	$(LIBLINK) scatlib.$(LIBSUFFIX) \
+	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
+	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_SCAT:.f90=.o) $(SOURCE77_SCAT:.f=.o)
 

@@ -76,6 +76,8 @@ TYPE StrCtrl
 !   random overlap with resorting and rebinning
   INTEGER :: i_gas                                                = imdi
 !   Gas to be considered (if only one gas)
+  LOGICAL :: l_h2o                                                = .FALSE.
+!   Flag for absorption by water vapour
   LOGICAL :: l_o2                                                 = .FALSE.
 !   Flag for absorption by oxygen
   LOGICAL :: l_n2o                                                = .FALSE.
@@ -130,6 +132,12 @@ TYPE StrCtrl
 !   Flag for absorption by acetylene
   LOGICAL :: l_hcn                                                = .FALSE.
 !   Flag for absorption by hydrogen cyanide
+  LOGICAL :: l_o3                                                 = .FALSE.
+!   Flag for absorption by ozone
+  LOGICAL :: l_so2                                                = .FALSE.
+!   Flag for absorption by sulfur dioxide
+  LOGICAL :: l_no2                                                = .FALSE.
+!   Flag for absorption by nitrogen dioxide
 
 
 ! Properties of clouds:

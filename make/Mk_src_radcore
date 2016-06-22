@@ -1,4 +1,4 @@
-SOURCE_RAD =	adjust_ir_radiance.f90 \
+SOURCE_RADCORE=	adjust_ir_radiance.f90 \
 		aggregate_cloud.f90 \
 		augment_radiance.f90 \
 		augment_tiled_radiance.f90 \
@@ -16,8 +16,6 @@ SOURCE_RAD =	adjust_ir_radiance.f90 \
 		calculate_density.f90 \
 		cg_kappa_ms.f90 \
 		check_phf_term.f90 \
-                cld_generator_mod.f90 \
-                close_cloud_gen.f90 \
 		cloud_maxcs_split.f90 \
 		column_solver.f90 \
 		copy_clr_full.f90 \
@@ -31,7 +29,7 @@ SOURCE_RAD =	adjust_ir_radiance.f90 \
 		eval_uplm.f90 \
 		gas_optical_properties.f90 \
 		gauss_angle.f90 \
-                gaussian_weight_pcf.f90 \
+		gaussian_weight_pcf.f90 \
 		grey_opt_prop.f90 \
 		hemi_sph_integ.f90 \
 		increment_rad_cf.f90 \
@@ -43,7 +41,6 @@ SOURCE_RAD =	adjust_ir_radiance.f90 \
 		layer_part_integ.f90 \
 		legendre_weight.f90 \
 		mcica_column.f90 \
-                mcica_order.f90 \
 		mcica_sample.f90 \
 		mix_app_scat.f90 \
 		mix_column.f90 \
@@ -53,17 +50,16 @@ SOURCE_RAD =	adjust_ir_radiance.f90 \
 		monochromatic_radiance.f90 \
 		monochromatic_radiance_sph.f90 \
 		monochromatic_radiance_tseq.f90 \
-                open_cloud_gen.f90 \
 		opt_prop_aerosol.f90 \
 		opt_prop_ukca_aerosol.f90 \
 		opt_prop_ice_cloud.f90 \
 		opt_prop_water_cloud.f90 \
+		opt_prop_inhom_corr_cairns.f90 \
 		overlap_coupled.f90 \
 		prsc_gather_spline.f90 \
 		prsc_opt_prop.f90 \
 		quicksort.f90 \
 		radiance_calc.f90 \
-                rand_no_mcica.f90 \
 		rebin_esft_terms.f90 \
 		rescale_continuum.f90 \
 		rescale_phase_fnc.f90 \
@@ -76,7 +72,6 @@ SOURCE_RAD =	adjust_ir_radiance.f90 \
 		set_dirn_weights.f90 \
 		set_level_weights.f90 \
 		set_matrix_pentadiagonal.f90 \
-		set_moist_aerosol_properties.f90 \
 		set_n_source_coeff.f90 \
 		set_rad_layer.f90 \
 		set_truncation.f90 \

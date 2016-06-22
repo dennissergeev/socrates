@@ -14,22 +14,24 @@ MODULE hitran_cnst
   IMPLICIT NONE
 
 
-  INTEGER, Parameter :: number_molecules = 28
-  INTEGER, Parameter :: number_species   = 82
-  INTEGER, Parameter :: number_temperatures = 431 ! 70 - 500K for qcoeff
+  INTEGER, Parameter :: number_molecules = 31
+  INTEGER, Parameter :: number_species   = 88
+  INTEGER, Parameter :: number_temperatures = 931 ! 70 - 1000K for qcoeff
 
   CHARACTER (LEN=6), Parameter, DIMENSION(number_molecules) :: &
     molecule_names = &
        (/"   H2O", "   CO2", "    O3", "   N2O", "    CO", "   CH4", "    O2", & !  1-7
          "    NO", "   SO2", "   NO2", "   NH3", "  HNO3", "    OH", "    HF", & !  8-14
          "   HCl", "   HBr", "    HI", "   ClO", "   OCS", "  H2CO", "  HOCl", & ! 15-21
-         "    N2", "   HCN", " CH3Cl", "  H2O2", "  C2H2", "  C2H6", "   PH3"/)  ! 22-28
+         "    N2", "   HCN", " CH3Cl", "  H2O2", "  C2H2", "  C2H6", "   PH3", & ! 22-28
+         "  COF2", "   SF6", "   H2S" /)                                         ! 29-31
 
   INTEGER, Parameter, DIMENSION(1:number_molecules) :: number_isotopes = &
        (/ 6,10, 5, 5, 6, 4, 3, &
           3, 2, 1, 2, 1, 3, 1, &
           2, 2, 1, 2, 5, 3, 2, &
-          1, 3, 2, 1, 3, 2, 1 /)
+          1, 3, 2, 1, 3, 2, 1, &
+          2, 1, 3 /)
 
   REAL  (RealK), Parameter, DIMENSION(1:number_species) :: q296 = &
      (/1.7464E+02,  1.7511E+02,  1.0479E+03,  8.5901E+02,  8.7519E+02,  5.2204E+03, & ! H20
@@ -60,11 +62,14 @@ MODULE hitran_cnst
        9.8198E+03, &                                                                  ! H2O2
        4.1403E+02, 1.6562E+03, 1.5818E+03, &                                          ! C2H2
        7.0881E+04, 3.6191E+04, &                                                      ! C2H6
-       3.2486E+03/)                                                                   ! PH3
+       3.2486E+03, &                                                                  ! PH3
+       7.0044E+04, 3.7844E+04, &                                                      ! COF2
+       1.6233E+06, &                                                                  ! SF6
+       5.0307E+02, 5.0435E+02, 2.0149E+03 /)                                          ! H2S
 
                  
   REAL  (RealK), DIMENSION(1:number_temperatures,1:number_species) :: qcoeff
-! Total internal partition sums for 70 <= T <=500 K range, read from parsum.dat file
+! Total internal partition sums for 70 <= T <=1000 K range, read from parsum.dat file
 ! using internal subroutine read_parsum_dat.
 
   REAL  (RealK), Parameter, DIMENSION(1:number_species) :: iso_mass = &
@@ -96,7 +101,10 @@ MODULE hitran_cnst
      34.005480, &                                                        ! H2O2
      26.015650, 27.019005, 27.021825, &                                  ! C2H2
      30.046950, 31.050305, &                                             ! C2H6
-     33.997238/)                                                         ! PH3
+     33.997238, &                                                        ! PH3
+     65.991722, 66.995083, &                                             ! COF2
+     145.962492, &                                                       ! SF6
+     33.987721, 35.983515, 34.987105 /)                                  ! H2S
      
 
   REAL  (RealK), PARAMETER :: &  ! Physical constants

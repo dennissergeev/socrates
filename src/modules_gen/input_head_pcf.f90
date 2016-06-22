@@ -263,7 +263,7 @@ MODULE input_head_pcf
     'TiO       ', 'VO        ', 'H2        ', 'He        ', &
     'OCS       ', 'Na        ', 'K         ', 'FeH       ', &
     'CrH       ', 'Li        ', 'Rb        ', 'Cs        ', &
-    'PH3       ', 'C2H2      ', 'HCN       ' /) 
+    'PH3       ', 'C2H2      ', 'HCN       ', 'H2S       ' /) 
 !   Headers for gaseous data
 !
 !
@@ -277,7 +277,7 @@ MODULE input_head_pcf
     'tio         ', 'vo          ', 'h2          ', 'he          ', &
     'ocs         ', 'na          ', 'k           ', 'feh         ', &
     'crh         ', 'li          ', 'rb          ', 'cs          ', &
-    'ph3         ', 'c2h2        ', 'hcn         ' /) 
+    'ph3         ', 'c2h2        ', 'hcn         ', 'h2s         ' /) 
 !   File suffixes for gaseous data
 !
 !
@@ -300,7 +300,7 @@ MODULE input_head_pcf
     ' Chromium hydride             ', ' Lithium                      ', &
     ' Rubidium                     ', ' Cesium                       ', &
     ' Phosphine                    ', ' Acetylene                    ', &
-    ' Hydrogen cyanide             ' /)
+    ' Hydrogen cyanide             ', ' Hydrogen sulphide            ' /)
 !   Long titles for gaseous data
 !
 !

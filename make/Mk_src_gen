@@ -1,7 +1,6 @@
 SOURCE90_GEN =	d_planck_90.f90 \
 		fit_parabola_90.f90 \
 		get_free_unit.f90 \
-		read_spectrum.f90 \
 		line_search_90.f90 \
 		make_block_0.f90 \
 		make_block_1.f90 \
@@ -30,11 +29,8 @@ SOURCE90_GEN =	d_planck_90.f90 \
 		remove_negative_gas_90.f90 \
 		remove_negative_cont_90.f90 \
 		set_interactive.f90 \
-		set_n_cloud_parameter.f90 \
 		solar_intensity.f90 \
                 solar_intensity_90.f90 \
- 		spline_evaluate.f90 \
-		spline_fit.f90 \
 		sum_unity.f90 \
 		trapezoid_90.f90 \
 		rayleigh_scatter_h2he.f90

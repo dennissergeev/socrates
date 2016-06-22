@@ -263,6 +263,11 @@ INTEGER, PARAMETER :: ip_scaling          = 1
 INTEGER, PARAMETER :: ip_mcica            = 2
 !   flag to represent inhomogeneity with
 !   the McICA scheme.
+INTEGER, PARAMETER :: ip_cairns           = 3
+!   flag to represent inhomogeneity by calculating corrections to
+!   single scattering parameters as described in Cairns et al.,
+!   Journal of Atmospheric Sciences, Volume 57, 2000. Only supported
+!   with two-stream approximation.
 
 ! ------------------------------------------------------------------
 ! treatment of cloud vertical overlap
@@ -617,6 +622,19 @@ INTEGER, PARAMETER :: ip_surf_alb_diff = 1
 !   Pointer to diffuse surface albedo
 INTEGER, PARAMETER :: ip_surf_alb_dir  = 2
 !   Pointer to direct surface albedo
+
+! ------------------------------------------------------------------
+! tileid3z
+! ------------------------------------------------------------------
+! This module defines identifiers for different surface types
+! as used in the radiation scheme.
+INTEGER, PARAMETER :: ip_ocean_tile   = 1
+!   Identifier for open sea
+INTEGER, PARAMETER :: ip_seaice_tile  = 2
+!   Idenitifer for ice
+INTEGER, PARAMETER :: ip_land_tile    = 3
+!   Identifer for land
+INTEGER, PARAMETER :: ip_landice_tile = 4
 
 ! ------------------------------------------------------------------
 ! two_stream_scheme_pcf, twostr3a

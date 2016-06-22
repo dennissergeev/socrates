@@ -21,7 +21,7 @@ USE realtype_rd
 
 IMPLICIT NONE
 
-INTEGER, PARAMETER :: npd_gases = 35
+INTEGER, PARAMETER :: npd_gases = 36
 !   Number of indexed gases
 
 INTEGER, PARAMETER :: IP_h2o = 1
@@ -94,6 +94,8 @@ INTEGER, PARAMETER :: IP_c2h2 = 34
 !   Identifier for acetylene
 INTEGER, PARAMETER :: IP_hcn = 35
 !   Identifier for hydrogen cyanide
+INTEGER, PARAMETER :: IP_h2s = 36
+!   Identifier for hydrogen sulphide
 
 CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Water Vapour        ", &
@@ -130,7 +132,8 @@ CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Cesium              ", &
                                    "Phosphine           ", &
                                    "Acetylene           ", &
-                                   "Hydrogen cyanide    " /)
+                                   "Hydrogen cyanide    ", &
+                                   "Hydrogen sulphide   " /)
 
 
 ! Molecular weights taken from "General Inorganic Chemistry"
@@ -170,7 +173,8 @@ REAL (RealK), PARAMETER :: molar_weight(npd_gases) = (/ &
   132.9054519_RealK, & ! Cs (from NIST)
   33.99758_RealK,    & ! PH3 (from NIST)
   26.0373_RealK,     & ! C2H2 (from NIST)
-  27.0253_RealK     /) ! HCN (from NIST)
+  27.0253_RealK,     & ! HCN (from NIST)
+  34.081_RealK      /) ! H2S (from NIST)
 
 
 ! Array of identifiers in HITRAN for each gas in the radiation code.
@@ -209,6 +213,7 @@ INTEGER, PARAMETER :: hitran_number(npd_gases) = (/ &
   0,   & ! Cs
   28,  & ! PH3
   26,  & ! C2H2
-  23  /) ! HCN
+  23,  & ! HCN
+  31  /) ! H2S
 
 END MODULE gas_list_pcf

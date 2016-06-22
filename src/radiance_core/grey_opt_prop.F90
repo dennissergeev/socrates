@@ -40,6 +40,7 @@ SUBROUTINE grey_opt_prop(ierr                                           &
     , n_cloud_top, n_condensed, l_cloud_cmp, i_phase_cmp                &
     , i_condensed_param, condensed_n_phf, condensed_param_list          &
     , condensed_mix_ratio, condensed_dim_char                           &
+    , condensed_rel_var_dens                                            &
     , n_cloud_type, i_cloud_type                                        &
     , n_opt_level_drop_prsc                                             &
     , drop_pressure_prsc, drop_absorption_prsc                          &
@@ -299,8 +300,11 @@ SUBROUTINE grey_opt_prop(ierr                                           &
         , nd_cloud_component)                                           &
 !       Mixing ratios of cloudy components
     , condensed_dim_char(nd_profile, id_ct: nd_layer                    &
-        , nd_cloud_component)
+        , nd_cloud_component)                                           &
 !       Characteristic dimensions of cloudy components
+    , condensed_rel_var_dens(nd_profile, id_ct: nd_layer                &
+        , nd_cloud_component)
+!       Relative variance of cloud density
 
 ! Prescribed cloudy optical properties:
   INTEGER, INTENT(IN) ::                                                &
@@ -1013,6 +1017,22 @@ SUBROUTINE grey_opt_prop(ierr                                           &
 
       END IF
 
+!     Apply cloud inhomogeneity correction
+
+! DEPENDS ON: opt_prop_inhom_corr_cairns
+      IF (control%i_inhom == ip_cairns) THEN
+        CALL opt_prop_inhom_corr_cairns(                                &
+            n_profile, n_layer, n_cloud_top                             &
+          , n_cloud_profile, i_cloud_profile                            &
+          , control%l_rescale, control%n_order_forward                  &
+          , condensed_rel_var_dens(1, id_ct, k)                         &
+          , ss_prop%k_ext_tot_cloud_comp(1, id_ct, k)                   &
+          , ss_prop%k_ext_scat_cloud_comp(1, id_ct, k)                  &
+          , ss_prop%phase_fnc_cloud_comp(1, id_ct, 1, k)                &
+          , ss_prop%forward_scatter_cloud_comp(1, id_ct, k)             &
+          , nd_profile, nd_layer, id_ct                                 &
+          )
+      END IF
 
 !     Increment the arrays of optical properties.
 

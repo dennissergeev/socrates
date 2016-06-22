@@ -987,6 +987,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
       , cld%i_condensed_param, cld%condensed_n_phf                             &
       , cld%condensed_param_list(1, 1, i_band)                                 &
       , cld%condensed_mix_ratio, cld%condensed_dim_char                        &
+      , cld%condensed_rel_var_dens                                             &
       , cld%n_cloud_type, i_cloud_type                                         &
       , cld%n_opt_level_drop_prsc, cld%drop_pressure_prsc                      &
       , cld%drop_absorption_prsc(1, 1, i_band)                                 &

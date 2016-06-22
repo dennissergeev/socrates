@@ -1,42 +1,22 @@
 MODULES_GEN =	dimensions_cdl_ucf.f90 \
 		dimensions_fixed_pcf.f90 \
 		dimensions_pp_ucf.f90 \
-		dimensions_spec_ucf.f90 \
-		realtype_rd.f90 \
                 realtypefx_rd.f90 \
-		def_aer.f90 \
-		def_atm.f90 \
-		def_bound.f90 \
-		def_cld.f90 \
-		def_control.f90 \
-		def_dimen.f90 \
 		def_inst_flt.f90 \
-		def_out.f90 \
 		def_refract.f90 \
 		def_solarspec.f90 \
-		def_spectrum.f90 \
 		def_std_io_icf.f90 \
 		def_data_in_icf.f90 \
-		errormessagelength_mod.f90 \
-		file_manager.f90 \
 		file_type_pcf.f90 \
-		filenamelength_mod.f90 \
 		error_pcf.f90 \
-		gas_list_pcf.f90 \
 		input_head_pcf.f90 \
 		interp_mode_pcf.f90 \
 		mcica_mod.f90 \
-		missing_data_mod.f90 \
 		rad_pcf.f90 \
-		rad_ccf.f90 \
 		scatter_pp_pcf.f90 \
 		weighting_pcf.f90 \
 		unit_list_pcf.f90 \
-		dimensions_field_ucf.f90 \
-		parkind1.f90 \
-		vectlib_mod.f90 \
-		yomhook.f90 \
-		ereport_mod.f90
+		dimensions_field_ucf.f90
 
 MODULES_CDF =	dimensions_cdf_ucf.f90 \
 		dimensions_field_cdf_ucf.f90

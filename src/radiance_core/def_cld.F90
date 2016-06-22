@@ -51,6 +51,10 @@ TYPE StrCld
   REAL (RealK), ALLOCATABLE :: condensed_param_list(:, :, :)
 !   Coefficients in parametrizations of condensed phases
 
+  REAL (RealK), ALLOCATABLE :: condensed_rel_var_dens(:, :, :)
+!   Relative variance of cloud density used to correct single scattering
+!   parameters for cloud inhomogeneity using ip_cairns
+
 ! Prescribed optical properties
   INTEGER :: n_opt_level_drop_prsc
 !   Number of levels of prescribed optical properties of droplets
@@ -140,6 +144,11 @@ IF (.NOT. ALLOCATED(cld%condensed_param_list))                                 &
   ALLOCATE(cld%condensed_param_list ( sp%dim%nd_cloud_parameter,               &
                                       dimen%nd_cloud_component,                &
                                       sp%dim%nd_band                         ))
+
+IF (.NOT. ALLOCATED(cld%condensed_rel_var_dens))                               &
+  ALLOCATE(cld%condensed_rel_var_dens ( dimen%nd_profile,                      &
+                                        dimen%id_cloud_top : dimen%nd_layer,   &
+                                        dimen%nd_cloud_component             ))
 
 END SUBROUTINE allocate_cld
 !------------------------------------------------------------------------------
@@ -235,6 +244,8 @@ IMPLICIT NONE
 
 TYPE (StrCld), INTENT(INOUT) :: cld
 
+IF (ALLOCATED(cld%condensed_rel_var_dens)) &
+  DEALLOCATE(cld%condensed_rel_var_dens)
 IF (ALLOCATED(cld%condensed_param_list)) DEALLOCATE(cld%condensed_param_list)
 IF (ALLOCATED(cld%condensed_dim_char))   DEALLOCATE(cld%condensed_dim_char)
 IF (ALLOCATED(cld%condensed_mix_ratio))  DEALLOCATE(cld%condensed_mix_ratio)

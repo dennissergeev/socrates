@@ -51,6 +51,8 @@ TYPE StrDim
 !   Number of BRDF basis functions
   INTEGER :: nd_brdf_trunc
 !   Maximum order of BRDF truncation
+  INTEGER :: nd_tile_type
+!   Number of types of tile
   INTEGER :: nd_aerosol_mode
 !   Number of aerosol modes
   INTEGER :: nd_profile_aerosol_prsc

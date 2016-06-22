@@ -197,7 +197,7 @@ SUBROUTINE two_stream(ierr                                              &
   END IF
 
 ! DEPENDS ON: column_solver
-    CALL column_solver(ierr, control, bound                             &
+  CALL column_solver(ierr, control, bound                               &
     , n_profile, n_layer                                                &
     , i_scatter_method, i_solver                                        &
     , trans, reflect, trans_0_noscal, trans_0, source_coeff             &

@@ -609,7 +609,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
   
 ! Set target weights using Gaussian quadrature
   n_esft_red = n_esft_red_in
-  IF (n_esft_red > 0) THEN
+  IF (n_esft_red > 0 .AND. n_gas > 1) THEN
 ! DEPENDS ON: calc_gauss_weight_90
     CALL calc_gauss_weight_90(ierr, n_esft_red,                         &
       gpnt_gauleg(1:n_esft_red), w_esft_gauleg(1:n_esft_red))
@@ -684,7 +684,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                  &
     k_esft_layer_mix_red(:,:,iex) = k_gas_abs(:,:)
   END DO
   
-!  Set current number of reduced ESFT terms
+! Set current number of reduced ESFT terms
   i_band_esft_mix_red = i_band_esft(i_band, i_gas_band)
 ! Set current reduced weights
   w_esft_red(1:i_band_esft_mix_red) =                                   &
