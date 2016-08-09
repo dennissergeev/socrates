@@ -56,7 +56,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
   CHARACTER (LEN=80) :: line
   CHARACTER (LEN=256) :: cmip6_file
   CHARACTER (LEN=4) :: dim_name
-  CHARACTER (LEN=7) :: time_coverage_resolution
+  CHARACTER (LEN=3) :: frequency
   INTEGER :: ncid, varid, dimid_time, dimid_wlen, time_len, wlen_len
   INTEGER :: band, sub_band, number_term
   INTEGER :: sub_bands(Sp%Dim%nd_band)
@@ -353,8 +353,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
       VSol%wavelength = VSol%wavelength * scale_wv
 
       ! Read the start time for each time bin
-      CALL nf(nf90_get_att(ncid, NF90_GLOBAL, 'time_coverage_resolution', &
-                                               time_coverage_resolution))
+      CALL nf(nf90_get_att(ncid, NF90_GLOBAL, 'frequency', frequency))
       ALLOCATE(calyear(time_len))
       ios = nf90_inq_varid(ncid, 'calyear', varid)
       IF (ios == NF90_NOERR) THEN
@@ -398,18 +397,18 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
       DO k = 1, n_times
          i = k + Sp%Var%n_times
          j = jj + k - 1
-        SELECT CASE (TRIM(time_coverage_resolution))
+        SELECT CASE (TRIM(frequency))
         CASE DEFAULT
           Sp%Var%time(1, i) = calyear(j)
           Sp%Var%time(2, i) = calmonth(j)
           Sp%Var%time(3, i) = calday(j)
           Sp%Var%time(4, i) = 0 ! Hardwire seconds since midnight to 0
-        CASE ("monthly")
+        CASE ("mon")
           Sp%Var%time(1, i) = calyear(j)
           Sp%Var%time(2, i) = calmonth(j)
           Sp%Var%time(3, i) = 1 ! Hardwire day of month to 1
           Sp%Var%time(4, i) = 0 ! Hardwire seconds since midnight to 0
-        CASE ("average")
+        CASE ("fx")
           Sp%Var%time(1, i) = 1850
           Sp%Var%time(2, i) = 1
           Sp%Var%time(3, i) = 1
@@ -425,7 +424,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
         VSol%irrad = ssi(1,:) * scale_irr
 
         ! Calculate the normalised solar flux in each sub-band
-        CALL make_block_2_1(SubSp, VSol, .TRUE., .FALSE., ierr)
+        CALL make_block_2_1(SubSp, VSol, filter,.FALSE.,.TRUE.,.FALSE.,ierr)
         Sp%Var%solar_flux_sub_band(:,i) = SubSp%Solar%solar_flux_band
       
         ! Calculate Rayleigh scattering coefficients in each sub-band
