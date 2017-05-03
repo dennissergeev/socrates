@@ -36,9 +36,11 @@ SUBROUTINE make_block_5(Spectrum, ierr)
 !   Type of input file
   INTEGER :: i_index
 !   Index number of absorber
+  INTEGER :: i_index_sb
+!   Index number of absorber in self-broadening arrays
   INTEGER :: i_band
 !   Number of band
-  INTEGER :: i, j, k, l, ip, it
+  INTEGER :: i, j, k, l, ip, it, igf
 !   Loop variables
   LOGICAL :: l_index_band(Spectrum%Dim%nd_band, Spectrum%Gas%n_absorb)
 !   Absorbers present
@@ -99,9 +101,17 @@ SUBROUTINE make_block_5(Spectrum, ierr)
     IF (ALLOCATED(Spectrum%Gas%num_ref_t)) &
         DEALLOCATE(Spectrum%Gas%num_ref_t)
     ALLOCATE(Spectrum%Gas%num_ref_t(nd_species, nd_band))
+    IF (ALLOCATED(Spectrum%Gas%l_self_broadening)) &
+        DEALLOCATE(Spectrum%Gas%l_self_broadening)
+    ALLOCATE(Spectrum%Gas%l_self_broadening(nd_species))
+    IF (ALLOCATED(Spectrum%Gas%index_sb)) &
+        DEALLOCATE(Spectrum%Gas%index_sb)
+    ALLOCATE(Spectrum%Gas%index_sb(nd_species))
     Spectrum%Gas%i_scat=0
     Spectrum%Gas%num_ref_p=0
     Spectrum%Gas%num_ref_t=0
+    Spectrum%Gas%l_self_broadening=.FALSE.
+    Spectrum%Gas%index_sb=0
     DO i=1, Spectrum%Basic%n_band
       DO j=1, Spectrum%Gas%n_band_absorb(i)
         Spectrum%Gas%i_band_k(i, j)=1
@@ -151,7 +161,8 @@ SUBROUTINE make_block_5(Spectrum, ierr)
     END DO inner
     READ(iu_esft, '(15x, i5, //)', IOSTAT=ios) i_input_type
     IF (ios < 0) EXIT
-    IF (i_input_type /= it_file_line_fit) THEN
+    IF (i_input_type /= it_file_line_fit .AND.                          &
+        i_input_type /= it_file_line_fit_self) THEN
       WRITE(*, '(/a)') &
         '***error: the esft data have an invalid file type.'
       ierr=i_err_fatal
@@ -167,6 +178,22 @@ SUBROUTINE make_block_5(Spectrum, ierr)
         Spectrum%Gas%n_band_absorb(i_band)+1
       Spectrum%Gas%index_absorb(Spectrum%Gas%n_band_absorb(i_band),     &
         i_band) = i_index
+    END IF
+
+!   Set self-broadening flag
+    IF (i_input_type == it_file_line_fit_self) THEN
+!     Self-broadening is included
+      IF (Spectrum%Gas%index_sb(i_index) == 0) THEN
+!       Create new index for this gas for use in self-broadened arrays
+        Spectrum%Gas%l_self_broadening(i_index) = .TRUE.
+        i_index_sb =                                                    &
+          MAXVAL(Spectrum%Gas%index_sb(1:Spectrum%Gas%n_absorb)) + 1
+        Spectrum%Gas%index_sb(i_index) = i_index_sb
+        Spectrum%Gas%n_absorb_sb = Spectrum%Gas%n_absorb_sb + 1
+      ELSE
+!       Get the index for this gas in self-broadened arrays
+        i_index_sb = Spectrum%Gas%index_sb(i_index)
+      END IF
     END IF
 
     READ(iu_esft, '(18x, 1pe10.3, 21x, 1pe10.3)')                       &
@@ -213,35 +240,93 @@ SUBROUTINE make_block_5(Spectrum, ierr)
         ALLOCATE(Spectrum%Gas%k_lookup( Spectrum%Dim%nd_tmp,            &
                                         Spectrum%Dim%nd_pre,            &
                                         nd_k_term, nd_species, nd_band ))
-      END IF  
+        IF (ALLOCATED(Spectrum%Gas%k_lookup_sb)) &
+            DEALLOCATE(Spectrum%Gas%k_lookup_sb)
+        ALLOCATE(Spectrum%Gas%k_lookup_sb(Spectrum%Dim%nd_tmp,          &
+                                          Spectrum%Dim%nd_pre,          &
+                                          Spectrum%Dim%nd_gas_frac,     &
+                                          nd_k_term, nd_species,        &
+                                          nd_band ))
+      END IF
+
       DO ip=1, Spectrum%Dim%nd_pre
         READ(iu_esft, '(6(1PE13.6))', IOSTAT=ios)                       &
           Spectrum%Gas%p_lookup(ip), (Spectrum%Gas%t_lookup(it, ip),    &
                                       it=1, Spectrum%Dim%nd_tmp)
         IF (ios /= 0) THEN
-          WRITE(*, '(/A/)') '*** Error in subroutine make_block_5_90'
+          WRITE(*, '(/A/)') '*** Error in subroutine make_block_5'
           WRITE(*,'(a, i4)') 'P/T look-up table entry:', ip
           ierr=i_err_fatal
           RETURN
         END IF
         Spectrum%Gas%p_lookup(ip)=LOG(Spectrum%Gas%p_lookup(ip))
       END DO
+
+      IF (Spectrum%Gas%l_self_broadening(i_index)) THEN
+!       Read gas fraction lookup table.
+        READ(iu_esft, '(/,14x, i4)') Spectrum%Gas%n_gas_frac
+
+        IF (Spectrum%Gas%n_gas_frac > Spectrum%Dim%nd_gas_frac) THEN
+          Spectrum%Dim%nd_gas_frac = Spectrum%Gas%n_gas_frac
+          IF (ALLOCATED(Spectrum%Gas%gf_lookup))                        &
+              DEALLOCATE(Spectrum%Gas%gf_lookup)
+          ALLOCATE(Spectrum%Gas%gf_lookup( Spectrum%Dim%nd_gas_frac ))
+          IF (ALLOCATED(Spectrum%Gas%k_lookup_sb))                      &
+              DEALLOCATE(Spectrum%Gas%k_lookup_sb)
+          ALLOCATE(Spectrum%Gas%k_lookup_sb(Spectrum%Dim%nd_tmp,        &
+                                            Spectrum%Dim%nd_pre,        &
+                                            Spectrum%Dim%nd_gas_frac,   &
+                                            nd_k_term, nd_species,      &
+                                            nd_band ))
+        END IF
+
+        READ(iu_esft, '(6(1PE13.6))', IOSTAT=ios)                       &
+           (Spectrum%Gas%gf_lookup(igf),                                &
+            igf=1, Spectrum%Dim%nd_gas_frac)
+        IF (ios /= 0) THEN
+          WRITE(*, '(/A/)') '*** Error in subroutine make_block_5'
+          WRITE(*,'(a, i4)') 'Gas fraction look-up table is corrupt.'
+          ierr=i_err_fatal
+          RETURN
+        END IF
+      END IF
+
 !     Skip over the headers.
       READ(iu_esft, '(/)')
-      DO k=1, Spectrum%Gas%i_band_k(i_band, i_index)
-        DO ip=1, Spectrum%Dim%nd_pre
-          READ(iu_esft, '(6(1PE13.6))', IOSTAT=ios)                     &
-            (Spectrum%Gas%k_lookup(it,ip,k,i_index,i_band),             &
-             it=1, Spectrum%Dim%nd_tmp)
-          IF (ios /= 0) THEN
-            WRITE(*, '(/A/)') '*** Error in subroutine make_block_5_90'
-            WRITE(*,'(a, 4i4)') 'Look-up table entry:',            &
-              i_band, k, i_index, ip
-            ierr=i_err_fatal
-            RETURN
-          END IF
+      IF (Spectrum%Gas%l_self_broadening(i_index)) THEN
+        DO k=1, Spectrum%Gas%i_band_k(i_band, i_index)
+          DO igf=1, Spectrum%Gas%n_gas_frac
+            DO ip=1, Spectrum%Dim%nd_pre
+              READ(iu_esft, '(6(1PE13.6))', IOSTAT=ios)                 &
+                (Spectrum%Gas%k_lookup_sb(it,ip,igf,k,                  &
+                                          i_index_sb,i_band),           &
+                 it=1, Spectrum%Dim%nd_tmp)
+              IF (ios /= 0) THEN
+                WRITE(*, '(/A/)') '*** Error in subroutine make_block_5'
+                WRITE(*,'(a, 4i4)') 'Look-up table entry:',             &
+                  i_band, k, i_index, ip
+                ierr=i_err_fatal
+                RETURN
+              END IF
+            END DO
+          END DO
         END DO
-      END DO
+      ELSE
+        DO k=1, Spectrum%Gas%i_band_k(i_band, i_index)
+          DO ip=1, Spectrum%Dim%nd_pre
+            READ(iu_esft, '(6(1PE13.6))', IOSTAT=ios)                   &
+              (Spectrum%Gas%k_lookup(it,ip,k,i_index,i_band),           &
+               it=1, Spectrum%Dim%nd_tmp)
+            IF (ios /= 0) THEN
+              WRITE(*, '(/A/)') '*** Error in subroutine make_block_5'
+              WRITE(*,'(a, 4i4)') 'Look-up table entry:',               &
+                i_band, k, i_index, ip
+              ierr=i_err_fatal
+              RETURN
+            END IF
+          END DO
+        END DO
+      END IF
     END IF
   END DO outer
 

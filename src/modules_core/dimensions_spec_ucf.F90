@@ -46,6 +46,8 @@ INTEGER, PARAMETER :: npd_cloud_parameter = 504
 ! Number of cloud parameters
 INTEGER, PARAMETER :: npd_humidities = 21
 ! Number of humidities
+INTEGER, PARAMETER :: npd_gas_frac = 21
+! Number of gas fractions
 INTEGER, PARAMETER :: npd_phase_term = 501
 ! Number of terms in the phase function
 INTEGER, PARAMETER :: npd_aod_wavel = 6

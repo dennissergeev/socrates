@@ -7,7 +7,8 @@
 !+ Subroutine to write a formatted file containing k-fits.
 !
 SUBROUTINE write_fit_90 &
-(iu_k_out, l_continuum, l_cont_gen, i_band, i_index, i_index_1, i_index_2, &
+(iu_k_out, l_continuum, l_cont_gen, l_self_broadening, &
+ i_band, i_index, i_index_1, i_index_2, &
  p_fit, t_fit, &
  n_points, amount, transmittance, trans_calc, &
  n_k, k, w_k, i_scale, &
@@ -54,6 +55,8 @@ SUBROUTINE write_fit_90 &
 !   Continuum flag
   LOGICAL, Intent(IN) :: l_cont_gen
 !   Generalised continuum flag
+  LOGICAL, Intent(IN) :: l_self_broadening
+!   Self-broadening flag
   REAL  (RealK), Intent(IN) :: p_fit
 !   Pressure of fit
   REAL  (RealK), Intent(IN) :: t_fit
@@ -94,9 +97,15 @@ SUBROUTINE write_fit_90 &
       'in band ', i_band, ': for gas indices ', i_index_1, &
        ' and ', i_index_2
   ELSE
-    WRITE(iu_k_out, '(a13, i5, //a)') &
-      '*FILE TYPE = ', it_file_line_fit, &
-      'Fitted gaseous transmissions and k-terms.'
+    IF (l_self_broadening) THEN
+      WRITE(iu_k_out, '(a13, i5, //a)') &
+        '*FILE TYPE = ', it_file_line_fit_self, &
+        'Fitted gaseous transmissions and k-terms.'
+    ELSE
+      WRITE(iu_k_out, '(a13, i5, //a)') &
+        '*FILE TYPE = ', it_file_line_fit, &
+        'Fitted gaseous transmissions and k-terms.'
+    END IF
     WRITE(iu_k_out, '(6x, a8, i5, a21, i5)') &
       'in band ', i_band, ': for absorber index ', i_index
   ENDIF

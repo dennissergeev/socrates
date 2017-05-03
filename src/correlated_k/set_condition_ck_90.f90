@@ -23,6 +23,7 @@ SUBROUTINE set_condition_ck_90 &
  i_ck_fit, tol, max_path, max_path_wgt, n_k, nu_inc_0, line_cutoff, &
  l_ckd_cutoff, l_scale_pT, i_type_residual, i_scale_fnc, p_ref, t_ref, &
  l_load_map, l_load_wgt, l_save_map, file_map, &
+ i_line_prof_corr, l_self_broadening, n_gas_frac, gas_frac, nd_gas_frac, &
  ierr &
 )
 !
@@ -57,6 +58,8 @@ SUBROUTINE set_condition_ck_90 &
 !   Size allocated for absorbing species
   INTEGER, Intent(IN) :: nd_continuum
 !   Size allocated for continua
+  INTEGER, Intent(IN) :: nd_gas_frac
+!   Size allocated for gas fractions
 !
   LOGICAL, Intent(IN) :: l_interactive
 !   Flag for interactive operation
@@ -170,6 +173,16 @@ SUBROUTINE set_condition_ck_90 &
   REAL  (RealK), Intent(OUT) :: t_ref(nd_band)
 !   Reference temperatures for scaling
 !
+  INTEGER, Intent(OUT) :: i_line_prof_corr
+!   Line profile correction type
+!
+  LOGICAL, Intent(OUT) :: l_self_broadening
+!   Flags to include effects of self-broadening
+  INTEGER, Intent(OUT) :: n_gas_frac
+!   Number of gas fractions at which to tabulate ESFT terms
+  REAL  (RealK), Intent(OUT) :: gas_frac(nd_gas_frac)
+!   List of gas fractions at which to tabulate ESFT terms
+!
   LOGICAL, Intent(OUT) :: l_load_map
 !   Use pre-defined mapping of wavenumbers to g-space
   LOGICAL, Intent(OUT) :: l_load_wgt
@@ -265,6 +278,13 @@ SUBROUTINE set_condition_ck_90 &
 !
   IF (l_access_HITRAN .OR. l_access_xsc .OR. l_fit_cont_data) &
     CALL select_line_details_int
+!
+  IF (l_fit_line_data) THEN
+    CALL select_self_broadening
+  ELSE
+    n_gas_frac=1
+    gas_frac=0.0_RealK
+  END IF
 !
   IF (l_fit_self_continuum .OR. l_fit_frn_continuum) &
     CALL select_cont_details_int
@@ -888,7 +908,7 @@ CONTAINS
 !
   SUBROUTINE select_line_details_int
 !
-!
+    USE line_prof_corr_mod, ONLY: ip_lpc_unity
 !
     l_ckd_cutoff = .FALSE.
     include_h2o_foreign_continuum=.FALSE.
@@ -952,6 +972,18 @@ CONTAINS
           CALL check_ios_int
         ENDIF
       ENDDO
+!
+      WRITE(iu_stdout, '(/a, i1, a)') &
+        'Enter the type of line profile correction (enter ', &
+        ip_lpc_unity, ' for no correction to the Voigt profile).'
+      DO
+        READ(iu_stdin, *, IOSTAT=ios) i_line_prof_corr
+        IF (ios == 0) THEN
+          EXIT
+        ELSE
+          CALL check_ios_int
+        ENDIF
+      ENDDO
     END IF
 !
     WRITE(iu_stdout, '(/a)') &
@@ -968,6 +1000,84 @@ CONTAINS
 !
 !
   END SUBROUTINE select_line_details_int
+!
+!
+!
+  SUBROUTINE select_self_broadening
+!
+    LOGICAL :: l_data_region
+!     Flag for input of data
+!
+    WRITE(iu_stdout, '(/a)') 'Is self-broadening required?'
+    DO
+      READ(iu_stdin, '(a)') char_yn
+      IF ( (char_yn == 'Y') .OR. (char_yn.eq.'y') ) THEN
+        l_self_broadening =  .TRUE. 
+        WRITE(iu_stdout, '(a)') &
+          'A list of gas fractions must also be supplied.'
+        EXIT
+      ELSE IF ( (char_yn == 'N') .OR. (char_yn.eq.'n') ) THEN
+        l_self_broadening =  .FALSE. 
+        n_gas_frac = 1
+        EXIT
+      ELSE
+        WRITE(iu_err, '(a)') '+++ Erroneous response.'
+        IF (l_interactive) THEN
+          WRITE(iu_stdout, '(a)') 'Please re-enter.'
+        ELSE
+          STOP
+        ENDIF
+      ENDIF
+    ENDDO
+!
+    WRITE(iu_stdout, '(/)')
+!
+    IF (l_self_broadening) THEN
+!     Set a unit number for generic input
+      CALL get_free_unit(ierr, iu_file_in)
+      IF (ierr /= i_normal) RETURN
+
+      CALL open_file_in(ierr, iu_file_in, &
+        'Specify the file with gas fractions.')
+      IF (ierr /= i_normal) RETURN
+      l_data_region = .FALSE. 
+      n_gas_frac = 0
+      DO
+        READ(iu_file_in, '(a)', IOSTAT=ios) line
+        IF (ios /= 0) EXIT
+        IF (l_data_region) THEN
+          IF (line(1:4) /= '*END') THEN
+            BACKSPACE(iu_file_in)
+            n_gas_frac = n_gas_frac + 1
+            IF (n_gas_frac > nd_gas_frac) THEN
+              WRITE(iu_err, '(/a)')  &
+                '*** Error: There are too many gas fractions: ' // &
+                'increase npd_gas_frac and recompile.'
+              ierr=i_err_fatal
+              RETURN
+            ENDIF
+            READ(iu_file_in, *) gas_frac(n_gas_frac)
+          ELSE
+            l_data_region = .FALSE. 
+          ENDIF
+        ELSE
+          IF (line(1:11) == '*BEGIN_DATA') THEN
+            l_data_region= .TRUE. 
+          ENDIF
+        ENDIF
+      ENDDO
+!
+      CLOSE(iu_file_in)
+!
+    ELSE
+!     No self-broadening, set all gas fractions to zero
+      gas_frac = 0.0_RealK
+!
+    END IF
+!
+!
+!
+  END SUBROUTINE select_self_broadening
 !
 !
 !

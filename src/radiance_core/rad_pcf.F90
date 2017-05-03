@@ -14,9 +14,6 @@ MODULE rad_pcf
 !   configuration files. The original file names are indicated at the
 !   head of each section.
 
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiation Control
-
 IMPLICIT NONE
 
 ! aerosol_parametrization_pcf, aerprm3a

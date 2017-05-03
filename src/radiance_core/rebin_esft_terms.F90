@@ -7,12 +7,6 @@
 !  Subroutine to rebin ESFT terms using the random overlap method with
 !  resorting and rebinning.
 !
-! Method:
-!   Straight forward.
-!
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
-!
 !- ---------------------------------------------------------------------
 SUBROUTINE rebin_esft_terms(i_band_esft_mix, n_esft_red                 &
     , i_profile, i_layer                                                &

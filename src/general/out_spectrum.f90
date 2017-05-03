@@ -419,14 +419,12 @@ CONTAINS
     TYPE  (StrSpecGas) :: SpGas
 !
 !   Local variables.
-    INTEGER :: i
-!     Loop variable
-    INTEGER :: j
-!     Loop variable
-    INTEGER :: k
-!     Loop variable
+    INTEGER :: i, j, k, igf
+!     Loop variables
     INTEGER :: i_index
 !     Index of gas
+    INTEGER :: i_index_sb
+!     Index of gas in arrays with self-broadening
 !
 !
 !
@@ -434,6 +432,14 @@ CONTAINS
       '*BLOCK: TYPE =    5', ': SUBTYPE =    0', ': version =    1'
     WRITE(iu_spc, '(a)') &
       'Exponential sum fiting coefficients: (exponents: m2/kg)'
+!
+    IF (ANY(Spectrum%Gas%l_self_broadening)) THEN
+      WRITE(iu_spc,'(a)') 'Self-broadened indexing numbers of all absorbers.'
+      WRITE(iu_spc,'(a)') '(Zero means no self-broadening.)'
+      WRITE(iu_spc,'(6(2x, i3))') &
+        Spectrum%Gas%index_sb(1:Spectrum%Gas%n_absorb)
+    END IF
+!
     WRITE(iu_spc, '(a4, 8x, a58, /, 12x, a48)') 'Band', &
       'Gas, Number of k-terms, Scaling type and scaling function,', &
       ' followed by reference pressure and temperature,'
@@ -449,8 +455,15 @@ CONTAINS
         WRITE(iu_spc1,'(6(1PE13.6))') EXP(Spectrum%Gas%p_lookup(ip)), &
           Spectrum%Gas%t_lookup(1:Spectrum%Dim%nd_tmp,ip)
       END DO
+
+      IF (ANY(Spectrum%Gas%l_self_broadening)) THEN
+        WRITE(iu_spc1,'(/,a,i4,a)') 'Lookup table: ', &
+          Spectrum%Gas%n_gas_frac, ' gas fractions.'
+        WRITE(iu_spc1,'(6(1PE13.6))') , &
+          Spectrum%Gas%gf_lookup(1:Spectrum%Gas%n_gas_frac)
+      END IF
     END IF
-    
+!
     DO i=1, SpBasic%n_band
       DO j=1, SpGas%n_band_absorb(i)
         i_index=SpGas%index_absorb(j, i)
@@ -483,12 +496,24 @@ CONTAINS
         IF (SpGas%i_scale_fnc(i, i_index) == ip_scale_lookup ) THEN
           WRITE(iu_spc1,'(/,3(a,i4))') 'Band: ',i,', gas: ',i_index, &
             ', k-terms: ',SpGas%i_band_k(i, i_index)
-          DO k=1, SpGas%i_band_k(i, i_index)
-            DO ip=1, Spectrum%Dim%nd_pre
-              WRITE(iu_spc1,'(6(1PE13.6))') &
-                SpGas%k_lookup(:,ip,k,i_index,i)
+          IF (SpGas%l_self_broadening(i_index)) THEN
+            i_index_sb = SpGas%index_sb(i_index)
+            DO k=1, SpGas%i_band_k(i, i_index)
+              DO igf=1, SpGas%n_gas_frac
+                DO ip=1, Spectrum%Dim%nd_pre
+                  WRITE(iu_spc1,'(6(1PE13.6))') &
+                    SpGas%k_lookup_sb(:,ip,igf,k,i_index_sb,i)
+                END DO
+              END DO
             END DO
-          END DO
+          ELSE
+            DO k=1, SpGas%i_band_k(i, i_index)
+              DO ip=1, Spectrum%Dim%nd_pre
+                WRITE(iu_spc1,'(6(1PE13.6))') &
+                  SpGas%k_lookup(:,ip,k,i_index,i)
+              END DO
+            END DO
+          END IF
         END IF
       ENDDO
     ENDDO

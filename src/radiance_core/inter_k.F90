@@ -9,9 +9,6 @@
 ! Method:
 !   Interpolation of gas and continuum absorption coefficients.
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiation Service
-!
 !-----------------------------------------------------------------------
 SUBROUTINE inter_k(n_profile, n_layer, n_band_absorb                    &
   , mix_gas_band, n_mix_gas, index_mix_gas                              &

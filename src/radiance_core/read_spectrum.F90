@@ -110,6 +110,10 @@ INTEGER :: nd_t_lookup_cont
 !   Size allocated for temperatures in generalised continua look-up table
 INTEGER :: nd_k_term_cont
 !   Size allocated for continuum k-terms
+INTEGER :: nd_species_sb
+! Size allocated for gaseous species with self-broadening
+INTEGER :: nd_gas_frac
+! Size allocated for gas fractions (for self-broadening)
 
 CHARACTER (LEN=errormessagelength) :: cmessage
 CHARACTER (LEN=*), PARAMETER       :: RoutineName = 'READ_SPECTRUM'
@@ -141,12 +145,15 @@ nd_times = 0
 nd_cont = 0
 nd_t_lookup_cont = 0
 nd_k_term_cont = 0
+nd_species_sb = 0
+nd_gas_frac = 0
 
 Sp%Dim%nd_type = npd_type
 
 ! Initialise other integer values to zero
 Sp%Basic%n_band = 0
 Sp%Gas%n_absorb = 0
+Sp%Gas%n_absorb_sb = 0
 Sp%Planck%n_deg_fit = 0
 Sp%Aerosol%n_aerosol = 0
 Sp%Aerosol%n_aerosol_mr = 0
@@ -281,6 +288,8 @@ Sp%Dim%nd_times = nd_times
 Sp%Dim%nd_cont = nd_cont
 Sp%Dim%nd_t_lookup_cont = nd_t_lookup_cont
 Sp%Dim%nd_k_term_cont = nd_k_term_cont
+Sp%Dim%nd_species_sb = nd_species_sb
+Sp%Dim%nd_gas_frac = nd_gas_frac
 
 ! Allocate spectrum arrays that remain unallocated
 CALL allocate_spectrum(Sp)
@@ -1173,7 +1182,7 @@ IMPLICIT NONE
 ! Local variables.
 INTEGER :: idum_band
 !   Dummy integer
-INTEGER :: idum_species, jspecies(nd_species, nd_band)
+INTEGER :: idum_species, jspecies(nd_species, nd_band), idum_species_sb
 !   Dummy integer
 INTEGER :: idum_scale
 !   Dummy integer
@@ -1181,7 +1190,7 @@ INTEGER :: idum_fnc
 !   Dummy integer
 INTEGER :: number_term
 !   Number of ESFT terms
-INTEGER :: j, i_term, l, it, ip
+INTEGER :: j, i_term, l, it, ip, igf
 !   Loop variables
 LOGICAL :: l_lookup
 !   True if a k-table is used
@@ -1203,13 +1212,48 @@ ALLOCATE(Sp%Gas%scale(nd_scale_variable, nd_k_term, &
 ALLOCATE(Sp%Gas%i_scat(nd_k_term, nd_band, nd_species))
 ALLOCATE(Sp%Gas%num_ref_p(nd_species, nd_band))
 ALLOCATE(Sp%Gas%num_ref_t(nd_species, nd_band))
+ALLOCATE(Sp%Gas%index_sb(nd_species))
+ALLOCATE(Sp%Gas%l_self_broadening(nd_species))
 Sp%Gas%num_ref_p=0
 Sp%Gas%num_ref_t=0
+Sp%Gas%index_sb=0
 l_lookup=.FALSE.
 
-! Skip over the headers.
-READ(iu_spc, '(///)')
+DO
+  READ(iu_spc, '(a80)', IOSTAT=ios) line
+  IF (line(1:4) == '*END') THEN
+    cmessage = '*** Error in subroutine read_block_5_0_1.\n' // &
+      'No data found.'
+    ierr=i_err_fatal
+    RETURN
+  END IF
 
+  SELECT CASE (TRIM(line))
+
+  CASE ('Self-broadened indexing numbers of all absorbers.')
+    READ(iu_spc,'(/,8(2x, i3))',IOSTAT=ios, IOMSG=iomessage) &
+      Sp%Gas%index_sb(1:Sp%Gas%n_absorb)
+
+  CASE ('Band        Gas, Number of k-terms, ' // &
+        'Scaling type and scaling function,')
+    EXIT
+
+  END SELECT
+  IF (ios /= 0) THEN
+    cmessage = 'Error in subroutine read_block_5_0_1: ' //              &
+               TRIM(iomessage)
+    ierr=i_err_fatal
+    RETURN
+  END IF
+
+END DO
+
+Sp%Gas%l_self_broadening = Sp%Gas%index_sb > 0
+Sp%Gas%n_absorb_sb=COUNT(Sp%Gas%l_self_broadening)
+nd_species_sb=Sp%Gas%n_absorb_sb
+
+! Skip over the headers.
+READ(iu_spc, '(/)')
 ! Read in the number of k-terms in each band.
 DO i=1, Sp%Basic%n_band
   DO j=1, Sp%Gas%n_band_absorb(i)
@@ -1317,6 +1361,8 @@ IF (l_lookup) THEN
 
   ! Skip over the headers.
   READ(iu_spc1, '(/)')
+
+! Read P/T look-up table.
   DO ip=1, nd_pre
     READ(iu_spc1, '(6(1PE13.6))', IOSTAT=ios, IOMSG=iomessage) &
       Sp%Gas%p_lookup(ip), (Sp%Gas%t_lookup(it, ip), it=1, nd_tmp)
@@ -1329,6 +1375,25 @@ IF (l_lookup) THEN
     END IF
     Sp%Gas%p_lookup(ip)=LOG(Sp%Gas%p_lookup(ip))
   END DO
+
+! Read gas fraction look-up table
+  IF (ANY(Sp%Gas%l_self_broadening)) THEN
+    READ(iu_spc1, '(/,14X,I4)') Sp%Gas%n_gas_frac
+    nd_gas_frac=Sp%Gas%n_gas_frac
+    ALLOCATE(Sp%Gas%gf_lookup( nd_gas_frac ))
+    ALLOCATE(Sp%Gas%k_lookup_sb( nd_tmp, nd_pre, nd_gas_frac, &
+                                 nd_k_term, nd_species_sb, nd_band ))
+    READ(iu_spc1, '(6(1PE13.6))', IOSTAT=ios, IOMSG=iomessage) &
+      Sp%Gas%gf_lookup(1:Sp%Gas%n_gas_frac)
+    IF (ios /= 0) THEN
+      WRITE(cmessage,'(A)') &
+        '*** Error in subroutine read_block_5_0_1.\n' // &
+        'Gas fraction table is corrupt.\nError: ' // TRIM(iomessage)
+      ierr=i_err_fatal
+      RETURN
+    END IF
+  END IF
+
   DO i=1, Sp%Basic%n_band
     DO j=1, Sp%Gas%n_band_absorb(i)
       idum_species = jspecies(j,i)
@@ -1343,21 +1408,42 @@ IF (l_lookup) THEN
         END IF
         ! Skip over the headers.
         READ(iu_spc1, '(/)')
-        DO i_term=1, Sp%Gas%i_band_k(i, idum_species)
-          DO ip=1, nd_pre
-            READ(iu_spc1, '(6(1PE13.6))', IOSTAT=ios, IOMSG=iomessage) &
-              (Sp%Gas%k_lookup(it,ip,i_term,idum_species,i), &
-               it=1, nd_tmp)
-            IF (ios /= 0) THEN
-              WRITE(cmessage,'(a, 4i4, A)') &
-                '*** Error in subroutine read_block_5_0_1:\n' // &
-                'Look-up table entry:', i, i_term, idum_species, ip, &
-                '\nError: ' // TRIM(iomessage)
-              ierr=i_err_fatal
-              RETURN
-            END IF
+        IF (Sp%Gas%l_self_broadening(idum_species)) THEN
+          idum_species_sb = Sp%Gas%index_sb(idum_species)
+          DO i_term=1, Sp%Gas%i_band_k(i, idum_species)
+            DO igf=1, Sp%Gas%n_gas_frac
+              DO ip=1, nd_pre
+                READ(iu_spc1, '(6(1PE13.6))', IOSTAT=ios, IOMSG=iomessage) &
+                  (Sp%Gas%k_lookup_sb(it,ip,igf,i_term,idum_species_sb,i), &
+                   it=1, nd_tmp)
+                IF (ios /= 0) THEN
+                  WRITE(cmessage,'(a, 5i4, A)') &
+                    '*** Error in subroutine read_block_5_0_1:\n' // &
+                    'Look-up table entry:', i, i_term, idum_species, igf, ip, &
+                    '\nError: ' // TRIM(iomessage)
+                  ierr=i_err_fatal
+                  RETURN
+                END IF
+              END DO
+            END DO
           END DO
-        END DO
+        ELSE
+          DO i_term=1, Sp%Gas%i_band_k(i, idum_species)
+            DO ip=1, nd_pre
+              READ(iu_spc1, '(6(1PE13.6))', IOSTAT=ios, IOMSG=iomessage) &
+                (Sp%Gas%k_lookup(it,ip,i_term,idum_species,i), &
+                 it=1, nd_tmp)
+              IF (ios /= 0) THEN
+                WRITE(cmessage,'(a, 4i4, A)') &
+                  '*** Error in subroutine read_block_5_0_1:\n' // &
+                  'Look-up table entry:', i, i_term, idum_species, ip, &
+                  '\nError: ' // TRIM(iomessage)
+                ierr=i_err_fatal
+                RETURN
+              END IF
+            END DO
+          END DO
+        END IF
       END IF
     END DO
   END DO

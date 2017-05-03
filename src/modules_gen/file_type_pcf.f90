@@ -71,5 +71,7 @@ MODULE file_type_pcf
 !           including higher momnets of the phase function
   INTEGER, Parameter :: it_file_cont_gen_fit            = 25
 !           File of fits to generalised continuum data
+  INTEGER, Parameter :: it_file_line_fit_self           = 26
+!           File of fits to line data that includes self-broadening
 
 END MODULE file_type_pcf

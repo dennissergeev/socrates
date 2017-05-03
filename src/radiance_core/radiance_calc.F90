@@ -12,9 +12,6 @@
 !   are set and an appropriate subroutine is called to treat
 !   the gaseous overlaps. The final radiances are assigned.
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
-!
 !------------------------------------------------------------------------------
 SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
@@ -29,7 +26,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
   USE def_bound,    ONLY: StrBound
   USE def_out,      ONLY: StrOut, allocate_out
   USE def_ss_prop
-  USE gas_list_pcf, ONLY: ip_air, molar_weight
+  USE gas_list_pcf, ONLY: ip_h2o, ip_air, molar_weight
   USE rad_ccf,      ONLY: mol_weight_air
   USE errormessagelength_mod, ONLY: errormessagelength
   USE yomhook,      ONLY: lhook, dr_hook
@@ -77,6 +74,8 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 !       Single variable for gas in band
     , i_cont_band                                                              &
 !       Single variable for generalised continuum in band
+    , i_gas_band_sb                                                            &
+!       Single variable for index of gas in arrays with self-broadening
     , n_continuum                                                              &
 !       Number of continua in band
     , i_continuum                                                              &
@@ -171,8 +170,10 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 !       Flag to include generalised continuum absorption in a particular band
     , l_moist_aerosol                                                          &
 !       Flag for moist aerosol
-    , l_clear_band
+    , l_clear_band                                                             &
 !       Flag to calculate clear-sky fluxes for this band
+    , l_water
+!       Flag for water vapour present in spectral file
 
   REAL (RealK) ::                                                              &
       solar_irrad_band(dimen%nd_profile)                                       &
@@ -373,8 +374,16 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 !       such that the actual temperature is between JTO2C and JTO2C+1
     , jtswo3(dimen%nd_profile, dimen%nd_layer)                                 &
 !       Index of sw o3 reference temp
-    , jt_ct(dimen%nd_profile,dimen%nd_layer)
+    , jt_ct(dimen%nd_profile,dimen%nd_layer)                                   &
 !       Index for temperature interpolation of generalised continuum
+    , jgf(dimen%nd_profile, dimen%nd_layer, spectrum%dim%nd_species_sb)        &
+!       Index of reference gas fraction such that the actual gas
+!       fraction is between jgf and jgf+1
+    , jgfp1(dimen%nd_profile, dimen%nd_layer, spectrum%dim%nd_species_sb)      &
+!       Equal to jgf + 1, except if n_gas_frac == 1, in which case it
+!       is equal to jgf to avoid out of bounds errors in interpolation.
+    , jgf0, jgf1
+!       Temporary storage of jgf and jgfp1
 
   REAL (RealK) ::                                                              &
       fac00(dimen%nd_profile, dimen%nd_layer),                                 &
@@ -390,8 +399,10 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
       facc00(dimen%nd_profile, dimen%nd_layer),                                &
       facc01(dimen%nd_profile, dimen%nd_layer),                                &
 !       Multiplication factors for O2 continuum T interpolation
-      wt_ct(dimen%nd_profile, dimen%nd_layer)
+      wt_ct(dimen%nd_profile, dimen%nd_layer),                                 &
 !       Weight of jt_ct-term in generalised continuum interpolation
+      fgf(dimen%nd_profile, dimen%nd_layer, spectrum%dim%nd_species_sb)
+!       Multiplication factors for gas fraction interpolation
 
   LOGICAL :: l_grey_cont
 !       Flag to add continuum in grey_opt_prop
@@ -527,6 +538,9 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 ! for cases where water vapour is not included in the spectral file.
   i_pointer_water=MAX(spectrum%cont%index_water, 1)
 
+! Set flag for the presence of water vapor in the spectral file.
+  l_water=ANY(spectrum%gas%type_absorb(1:spectrum%gas%n_absorb) == ip_h2o)
+
 
 ! Initial calculations for aerosols:
 
@@ -661,9 +675,14 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
     control%first_band : control%last_band, :) == ip_scale_lookup) ) THEN
 ! DEPENDS ON: inter_pt_lookup
     CALL inter_pt_lookup(dimen%nd_profile, dimen%nd_layer, spectrum%dim%nd_pre &
-      , spectrum%dim%nd_tmp, atm%n_profile, atm%n_layer, atm%p, atm%t          &
-      , spectrum%gas%p_lookup, spectrum%gas%t_lookup                           &
-      , fac00, fac01, fac10, fac11, jp, jt, jtt)
+      , spectrum%dim%nd_tmp, spectrum%dim%nd_gas_frac, spectrum%dim%nd_species &
+      , spectrum%dim%nd_species_sb, atm%n_profile, atm%n_layer                 &
+      , spectrum%gas%n_gas_frac, spectrum%gas%n_absorb                         &
+      , spectrum%gas%type_absorb, spectrum%gas%l_self_broadening               &
+      , spectrum%gas%index_sb, l_water, control%l_mixing_ratio                 &
+      , i_pointer_water, atm%p, atm%t, atm%gas_mix_ratio                       &
+      , spectrum%gas%p_lookup, spectrum%gas%t_lookup, spectrum%gas%gf_lookup   &
+      , fac00, fac01, fac10, fac11, jp, jt, jtt, fgf, jgf, jgfp1)
   END IF
 
 ! Calculate temperature interpolation factor for continuum ESFT terms
@@ -1096,28 +1115,62 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
     ELSE
 
       DO j=1, spectrum%gas%n_band_absorb(i_band)
-      i_gas_band=spectrum%gas%index_absorb(j, i_band)
-      IF (spectrum%gas%i_scale_fnc(i_band, i_gas_band)                         &
-        == ip_scale_lookup) THEN
-        DO k=1, spectrum%gas%i_band_k(i_band, i_gas_band)
-          DO i=1, atm%n_layer
-            DO l=1, atm%n_profile
-              jp1=jp(l,i)+1
-              jt1=jt(l,i)+1
-              jtt1=jtt(l,i)+1
-              k_esft_layer(l,i,k,i_gas_band) = MAX(0.0_RealK,                  &
-                  fac00(l,i)*spectrum%gas%k_lookup(                            &
-                  jt(l,i),  jp(l,i), k, i_gas_band, i_band )                   &
-                + fac10(l,i)*spectrum%gas%k_lookup(                            &
-                  jtt(l,i), jp1,     k, i_gas_band, i_band )                   &
-                + fac01(l,i)*spectrum%gas%k_lookup(                            &
-                  jt1,      jp(l,i), k, i_gas_band, i_band )                   &
-                + fac11(l,i)*spectrum%gas%k_lookup(                            &
-                  jtt1,     jp1,     k, i_gas_band, i_band ) )
+        i_gas_band=spectrum%gas%index_absorb(j, i_band)
+        IF (spectrum%gas%i_scale_fnc(i_band, i_gas_band)                       &
+          == ip_scale_lookup) THEN
+          IF (spectrum%gas%l_self_broadening(i_gas_band)) THEN
+            i_gas_band_sb=spectrum%gas%index_sb(i_gas_band)
+            DO k=1, spectrum%gas%i_band_k(i_band, i_gas_band)
+              DO i=1, atm%n_layer
+                DO l=1, atm%n_profile
+                  jp1=jp(l,i)+1
+                  jt1=jt(l,i)+1
+                  jtt1=jtt(l,i)+1
+                  jgf0=jgf(l,i,i_gas_band_sb)
+                  jgf1=jgfp1(l,i,i_gas_band_sb)
+                  k_esft_layer(l,i,k,i_gas_band) = MAX(0.0_RealK,              &
+                      fgf(l,i,i_gas_band_sb)                                   &  
+                    *(fac00(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jt(l,i),  jp(l,i), jgf0, k, i_gas_band_sb, i_band )      &
+                    + fac10(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jtt(l,i), jp1,     jgf0, k, i_gas_band_sb, i_band )      &
+                    + fac01(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jt1,      jp(l,i), jgf0, k, i_gas_band_sb, i_band )      &
+                    + fac11(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jtt1,     jp1,     jgf0, k, i_gas_band_sb, i_band ) )    &
+                    +(1.0_RealK - fgf(l,i,i_gas_band_sb))                      &
+                    *(fac00(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jt(l,i),  jp(l,i), jgf1, k, i_gas_band_sb, i_band )      &
+                    + fac10(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jtt(l,i), jp1,     jgf1, k, i_gas_band_sb, i_band )      &
+                    + fac01(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jt1,      jp(l,i), jgf1, k, i_gas_band_sb, i_band )      &
+                    + fac11(l,i)*spectrum%gas%k_lookup_sb(                     &
+                      jtt1,     jp1,     jgf1, k, i_gas_band_sb, i_band ) ) )
+                END DO
+              END DO
             END DO
-          END DO
-        END DO
-      END IF
+          ELSE
+            DO k=1, spectrum%gas%i_band_k(i_band, i_gas_band)
+              DO i=1, atm%n_layer
+                DO l=1, atm%n_profile
+                  jp1=jp(l,i)+1
+                  jt1=jt(l,i)+1
+                  jtt1=jtt(l,i)+1
+                  k_esft_layer(l,i,k,i_gas_band) = MAX(0.0_RealK,              &
+                      fac00(l,i)*spectrum%gas%k_lookup(                        &
+                      jt(l,i),  jp(l,i), k, i_gas_band, i_band )               &
+                    + fac10(l,i)*spectrum%gas%k_lookup(                        &
+                      jtt(l,i), jp1,     k, i_gas_band, i_band )               &
+                    + fac01(l,i)*spectrum%gas%k_lookup(                        &
+                      jt1,      jp(l,i), k, i_gas_band, i_band )               &
+                    + fac11(l,i)*spectrum%gas%k_lookup(                        &
+                      jtt1,     jp1,     k, i_gas_band, i_band ) )
+                END DO
+              END DO
+            END DO
+          END IF
+        END IF
       END DO
 
       IF (control%isolir == ip_solar) THEN

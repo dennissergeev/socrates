@@ -21,6 +21,7 @@ SUBROUTINE corr_k_single &
  l_fit_line_data, l_fit_self_continuum, l_fit_frn_continuum, &
  l_fit_cont_data, n_path_c, umin_c, umax_c, n_pp, &
  include_instrument_response, filter, &
+ i_line_prof_corr, l_self_broadening, n_gas_frac, gas_frac, &
  i_ck_fit, tol, max_path, max_path_wgt, &
  nd_k_term, n_k, w_k, k_ave, k_opt, &
  k_opt_self, k_opt_frn, &
@@ -43,6 +44,7 @@ SUBROUTINE corr_k_single &
   USE hitran_cnst
   USE gas_list_pcf
   USE caviar_continuum_v1_0
+  USE line_prof_corr_mod, ONLY: line_prof_corr, set_line_prof_corr_cnst
 
   IMPLICIT NONE 
 
@@ -51,6 +53,8 @@ SUBROUTINE corr_k_single &
     REAL  (RealK) :: line_centre
     REAL  (RealK) :: S_adj
     REAL  (RealK) :: alpha_lorentz
+    REAL  (RealK) :: alpha_lorentz_air
+    REAL  (RealK) :: alpha_lorentz_self
     REAL  (RealK) :: alpha_doppler
   END TYPE StrLineParam
 !
@@ -177,6 +181,17 @@ SUBROUTINE corr_k_single &
   TYPE  (StrFiltResp), Intent(IN) :: filter
 !   Instrumental response function
 !
+  INTEGER, Intent(IN) :: i_line_prof_corr
+!   Line profile correction type
+!
+! Self-broadening options
+  LOGICAL, Intent(IN) :: l_self_broadening
+!   Flags to include effects of self-broadening
+  INTEGER, Intent(IN) :: n_gas_frac
+!   Number of gas fractions at which to tabulate ESFT terms
+  REAL  (RealK), Intent(IN), Dimension(:) :: gas_frac
+!   List of gas fractions at which to tabulate ESFT terms
+!
   INTEGER, Intent(IN) :: n_omp_threads
 !   Number of OpenMP threads to use
 !
@@ -243,6 +258,8 @@ SUBROUTINE corr_k_single &
 !   Loop variable for bands
   INTEGER :: ip, it, ipt
 !   Loop variable for pressure and temperature
+  INTEGER :: igf
+!   Loop variable for gas fraction
   INTEGER :: jx
 !   Loop variable for k-terms
   INTEGER :: ik
@@ -287,7 +304,7 @@ SUBROUTINE corr_k_single &
 !   Number of frequencies for weighting
   REAL  (RealK), Allocatable :: nu_wgt(:), nu_wgt_all(:)
 !   Frequencies of weighting points
-  REAL  (RealK), Allocatable :: kabs(:), kabs_all(:,:)
+  REAL  (RealK), Allocatable :: kabs(:), kabs_all(:,:), kabs_all_sb(:,:,:)
 !   Absorption coefficients at weighting frequencies
   REAL  (RealK), Allocatable :: kabs_lines(:), kabs_all_lines(:,:)
 !   Line absorption coefficients at weighting frequencies
@@ -301,7 +318,7 @@ SUBROUTINE corr_k_single &
   INTEGER, Allocatable :: map(:), gmap(:), pmap(:)
 !   Mapping array in frequency space used to order the absorption
 !   coefficients
-  REAL  (RealK), Allocatable :: wgt(:), wgt_sum(:), wgt_ref(:)
+  REAL  (RealK), Allocatable :: wgt(:), wgt_sum(:), wgt_ref(:), wgt_sv(:)
 !   Weightings at different frequencies
   REAL  (RealK), Allocatable :: wgt_k(:)
 !   Product of weighting and absorption coefficients
@@ -388,7 +405,9 @@ SUBROUTINE corr_k_single &
 !   Optimal k-value across the band: temporary value at conditions
 !   other than the reference
   REAL  (RealK) :: kopt_all(nd_k_term, n_pt_pair, n_selected_band)
-  REAL  (RealK), ALLOCATABLE :: k_lookup(:,:,:)
+  REAL  (RealK) :: kopt_all_sb(nd_k_term, n_pt_pair, &
+                               n_gas_frac, n_selected_band)
+  REAL  (RealK), ALLOCATABLE :: k_lookup(:,:,:,:)
   REAL  (RealK), ALLOCATABLE :: p_lookup(:), t_lookup(:,:)
   REAL  (RealK) :: ln_p_calc(n_pt_pair), max_p_calc
   REAL  (RealK), Pointer :: k_cont
@@ -414,7 +433,6 @@ SUBROUTINE corr_k_single &
   LOGICAL :: l_debug = .FALSE.
 !  LOGICAL :: l_debug = .TRUE.
   LOGICAL :: l_output_reference_weight = .FALSE.
-
 !
 ! Functions called:
 !
@@ -553,7 +571,7 @@ SUBROUTINE corr_k_single &
 !
 !
     SUBROUTINE write_fit_90 &
-      (iu_k_out, l_continuum, l_cont_gen, i_band, &
+      (iu_k_out, l_continuum, l_cont_gen, l_self_broadening, i_band, &
        i_index, i_index_1, i_index_2, &
        p, t, n_points, amount, transmittance, trans_calc, &
        n_k, k, w_k, i_scale, i_scale_function, scale_vector)
@@ -572,6 +590,7 @@ SUBROUTINE corr_k_single &
       INTEGER, Intent(IN) :: i_scale_function
       LOGICAL, Intent(IN) :: l_continuum
       LOGICAL, Intent(IN) :: l_cont_gen
+      LOGICAL, Intent(IN) :: l_self_broadening
       REAL  (RealK), Intent(IN) :: p
       REAL  (RealK), Intent(IN) :: t
       REAL  (RealK), Intent(IN), Dimension(:) :: amount
@@ -644,6 +663,15 @@ SUBROUTINE corr_k_single &
     RETURN
   END IF
 
+! Check that the scaling is a look-up table if self-broadening is included
+  IF (l_fit_line_data.AND.l_self_broadening.AND.  &
+      i_scale_function /= IP_scale_lookup) THEN
+    WRITE(*,'(a)') 'Scaling must be a look-up table when self-broadening ' // &
+        'is included.'
+    ierr = i_err_fatal
+    RETURN
+  ENDIF
+
 ! Perform preliminary allocation of arrays.
   IF (l_fit_line_data .OR. l_fit_cont_data) THEN
     ALLOCATE(u_l(2*nd_k_term+1, n_pt_pair))
@@ -653,6 +681,7 @@ SUBROUTINE corr_k_single &
   w_k=0.0_RealK
   k_opt_tmp=0.0_RealK
   kopt_all=0.0_RealK
+  kopt_all_sb=0.0_RealK
 
   IF ( l_fit_self_continuum .OR. l_fit_frn_continuum ) THEN
 !
@@ -796,7 +825,11 @@ SUBROUTINE corr_k_single &
       l_transparent_fit=.FALSE.
       IF (l_lbl_exist) THEN
         CALL input_lbl_band_cdf ! Read lbl file for current band
-        l_transparent_fit=sum(kabs_all) < EPSILON(kabs_all)
+        IF (l_self_broadening) THEN
+          l_transparent_fit=SUM(kabs_all_sb) < EPSILON(kabs_all_sb)
+        ELSE
+          l_transparent_fit=SUM(kabs_all) < EPSILON(kabs_all)
+        END IF
       ELSE IF (l_access_hitran) THEN
         CALL access_hitran_int
         IF (ierr /= i_normal) RETURN
@@ -857,52 +890,66 @@ SUBROUTINE corr_k_single &
 !         this will be reused each time T and p change.
           ALLOCATE(adj_line_parm(num_lines_in_band))
 
-!         Loop over each pair of pressure and temperature
-          P_and_T: DO ipt=1, n_pt_pair
+!         Loop over gas fractions
+          DO igf=1, n_gas_frac
 
-!           Adjust the line parameters of each line for the particular
-!           ambient conditions.
-            DO i = 1, num_lines_in_band
-              CALL adjust_path ( &
-                hitran_data(i) % mol_num,         &
-                hitran_data(i) % iso_num,         &
-                hitran_data(i) % frequency,       &
-                hitran_data(i) % intensity,       &
-                hitran_data(i) % air_broadhw,     &
-                hitran_data(i) % lstate_energy,   &
-                hitran_data(i) % air_broad_coeff, &
-                t_calc(ipt), p_calc(ipt),         &
-                adj_line_parm(i) % line_centre,   &
-                adj_line_parm(i) % S_adj,         &
-                adj_line_parm(i) % alpha_lorentz, &
-                adj_line_parm(i) % alpha_doppler)
-            ENDDO
-!           
-!           If using the CKD continuum we now calculate the absorption
-!           of each line at its cutoff: the check on i_gas is used for
-!           safety.
-            IF ( l_ckd_cutoff .AND. (i_gas == IP_H2O) ) THEN
-              ALLOCATE(k_cutoff(num_lines_in_band))
+!           Loop over each pair of pressure and temperature
+            P_and_T: DO ipt=1, n_pt_pair
+
+!             Adjust the line parameters of each line for the particular
+!             ambient conditions.
               DO i = 1, num_lines_in_band
-                CALL voigt_profile ( &
-                  adj_line_parm(i) % line_centre+line_cutoff,  &
+                CALL adjust_path ( &
+                  hitran_data(i) % mol_num, &
+                  hitran_data(i) % iso_num, &
+                  hitran_data(i) % frequency, &
+                  hitran_data(i) % intensity, &
+                  hitran_data(i) % air_broadhw, &
+                  hitran_data(i) % lstate_energy, &
+                  hitran_data(i) % air_broad_coeff, &
+                  hitran_data(i) % self_broadhw, &
+                  t_calc(ipt), p_calc(ipt), &
+                  gas_frac(igf), &
                   adj_line_parm(i) % line_centre, &
                   adj_line_parm(i) % S_adj, &
                   adj_line_parm(i) % alpha_lorentz, &
-                  adj_line_parm(i) % alpha_doppler, &
-                  k_cutoff(i))
+                  adj_line_parm(i) % alpha_lorentz_air, &
+                  adj_line_parm(i) % alpha_lorentz_self, &
+                  adj_line_parm(i) % alpha_doppler)
               ENDDO
-            ENDIF
-            
-            CALL calc_line_abs_int
-            IF (ierr /= i_normal) RETURN
-            kabs_all(:,ipt)=kabs
+!
+!             If using the CKD continuum we now calculate the absorption
+!             of each line at its cutoff: the check on i_gas is used for
+!             safety.
+              IF ( l_ckd_cutoff .AND. (i_gas == IP_H2O) ) THEN
+                ALLOCATE(k_cutoff(num_lines_in_band))
+                DO i = 1, num_lines_in_band
+                  CALL voigt_profile ( &
+                    adj_line_parm(i) % line_centre+line_cutoff,  &
+                    adj_line_parm(i) % line_centre, &
+                    adj_line_parm(i) % S_adj, &
+                    adj_line_parm(i) % alpha_lorentz, &
+                    adj_line_parm(i) % alpha_doppler, &
+                    k_cutoff(i))
+                ENDDO
+              ENDIF
 
-            IF ( l_ckd_cutoff .AND. (i_gas == IP_H2O) ) THEN
-              DEALLOCATE(k_cutoff)
-            ENDIF
+!             Set line profile correction parameters for current condition
+              CALL set_line_prof_corr_cnst(t_calc(ipt), i_line_prof_corr)
 
-          ENDDO p_and_T
+              CALL calc_line_abs_int
+              IF (ierr /= i_normal) RETURN
+              kabs_all(:,ipt)=kabs
+              IF (l_self_broadening) &
+                kabs_all_sb(:,ipt,igf)=kabs
+
+              IF ( l_ckd_cutoff .AND. (i_gas == IP_H2O) ) THEN
+                DEALLOCATE(k_cutoff)
+              ENDIF
+
+            END DO p_and_T
+
+          END DO
 
           DEALLOCATE(adj_line_parm)
 
@@ -961,6 +1008,10 @@ SUBROUTINE corr_k_single &
 
         IF (l_fit_line_data .OR. l_fit_cont_data) THEN
 !         Define the mapping for correlated-k.
+
+!         If self-broadening is included, use middle gas fraction.
+          IF (l_self_broadening) &
+            kabs_all=kabs_all_sb(:,:,n_gas_frac/2+1)
 
           ALLOCATE(kabs_rank1(n_nu))
           ALLOCATE(kabs_rank2(n_nu))
@@ -1188,7 +1239,6 @@ SUBROUTINE corr_k_single &
           CALL rad_weight_90(i_weight, nu_wgt, SolarSpec, t_calc(ipt), wgt)
           CALL apply_response_int
 
-          kabs=kabs_all(1:n_nu,ipt)
           IF (l_fit_cont_data .AND. l_cont_line_abs_weight) &
             kabs_lines=kabs_all_lines(1:n_nu,ipt)
 
@@ -1198,16 +1248,29 @@ SUBROUTINE corr_k_single &
 
 !         Perform the appropriate fits.
           IF (l_fit_self_continuum) THEN
+             kabs=kabs_all(1:n_nu,ipt)
              integ_wgt=nu_inc * SUM(wgt(1:n_nu))
              CALL calc_self_trans_int
              IF (ierr /= i_normal) RETURN
-          ENDIF
-          IF (l_fit_frn_continuum) THEN
+          ELSE IF (l_fit_frn_continuum) THEN
+             kabs=kabs_all(1:n_nu,ipt)
              integ_wgt=nu_inc * SUM(wgt(1:n_nu))
              CALL calc_frn_trans_int
              IF (ierr /= i_normal) RETURN
-          ENDIF
-          IF (l_fit_line_data .OR. l_fit_cont_data) CALL ck_fit_k
+          ELSE IF (l_fit_line_data .OR. l_fit_cont_data) THEN
+            IF (l_self_broadening) THEN
+              wgt_sv=wgt
+              DO igf=1, n_gas_frac
+                wgt=wgt_sv
+                kabs=kabs_all_sb(:,ipt,igf)
+                CALL ck_fit_k
+                kopt_all_sb(:,ipt,igf,ibb)=kopt_all(:,ipt,ibb)
+              END DO
+            ELSE
+              kabs=kabs_all(1:n_nu,ipt)
+              CALL ck_fit_k
+            END IF
+          END IF
         ENDDO
 
         IF (l_fit_frn_continuum) k_cont => k_opt_frn(ib)
@@ -1239,6 +1302,7 @@ SUBROUTINE corr_k_single &
     ENDIF
 !
     DEALLOCATE(wgt)
+    IF (l_self_broadening) DEALLOCATE(wgt_sv)
     DEALLOCATE(kabs)
     DEALLOCATE(map)
     DEALLOCATE(gmap)
@@ -1247,8 +1311,9 @@ SUBROUTINE corr_k_single &
 !
 !   Write out the calculated fit.
     IF (l_fit_line_data .OR. l_fit_cont_data) THEN
-      CALL write_fit_90(iu_k_out, .FALSE., l_fit_cont_data, ib, &
-        i_index, i_index_1, i_index_2, p_calc(ipt_ref), t_calc(ipt_ref), &
+      CALL write_fit_90(iu_k_out, .FALSE., l_fit_cont_data, &
+        l_self_broadening, ib, i_index, i_index_1, i_index_2, &
+        p_calc(ipt_ref), t_calc(ipt_ref), &
         n_path, u_l_ref, trans_ref, trans_calc, &
         n_k(ib), k_opt(:, ib), w_k(:, ib), IP_scale_term, &
         i_scale_function, scale_vector(:, :, ib))
@@ -1256,7 +1321,7 @@ SUBROUTINE corr_k_single &
 !       Write look-up table to file:
         ALLOCATE(p_lookup( n_p ))
         ALLOCATE(t_lookup( MAXVAL(n_t(1:n_p)), n_p ))
-        ALLOCATE(k_lookup( MAXVAL(n_t(1:n_p)), n_p, n_k(ib) ))
+        ALLOCATE(k_lookup( MAXVAL(n_t(1:n_p)), n_p, n_gas_frac, n_k(ib) ))
         DO ik=1, n_k(ib)
           ipt=0
           DO ip=1, n_p
@@ -1264,7 +1329,13 @@ SUBROUTINE corr_k_single &
             DO it=1, n_t(ip)
               ipt=ipt+1
               t_lookup(it,ip)=t_calc(ipt)
-              k_lookup(it,ip,ik)=kopt_all(ik,ipt,ibb)
+              IF (l_self_broadening) THEN
+                DO igf=1, n_gas_frac
+                  k_lookup(it,ip,igf,ik)=kopt_all_sb(ik,ipt,igf,ibb)
+                END DO
+              ELSE
+                k_lookup(it,ip,1,ik)=kopt_all(ik,ipt,ibb)
+              END IF
             END DO
           END DO
         END DO
@@ -1274,11 +1345,18 @@ SUBROUTINE corr_k_single &
           WRITE(iu_k_out,'(6(1PE13.6))') p_lookup(ip), &
             t_lookup(1:n_t(ip),ip)
         END DO
+        IF (l_self_broadening) THEN
+          WRITE(iu_k_out,'(/,a,i4,a)') 'Lookup table: ', &
+            n_gas_frac, ' gas fractions.'
+          WRITE(iu_k_out,'(6(1PE13.6))') gas_frac(1:n_gas_frac)
+        END IF
         WRITE(iu_k_out,'(/,3(a,i4))') 'Band: ',ib,', gas: ',i_gas, &
           ', k-terms: ',n_k(ib)
         DO ik=1, n_k(ib)
-          DO ip=1, n_p
-            WRITE(iu_k_out,'(6(1PE13.6))') k_lookup(1:n_t(ip),ip,ik)
+          DO igf=1, n_gas_frac
+            DO ip=1, n_p
+              WRITE(iu_k_out,'(6(1PE13.6))') k_lookup(1:n_t(ip),ip,igf,ik)
+            END DO
           END DO
         END DO
         DEALLOCATE(k_lookup)
@@ -1302,7 +1380,8 @@ SUBROUTINE corr_k_single &
     IF (l_fit_frn_continuum .OR. l_fit_self_continuum) THEN
       ALLOCATE(trans_app_c(n_path_c*n_pp))
       trans_app_c(:) = EXP( -k_cont * u_fit_c(:, ipt_ref) )
-      CALL write_fit_90(iu_k_out, .TRUE., .FALSE., ib, i_index_c, 0, 0, &
+      CALL write_fit_90(iu_k_out, .TRUE., .FALSE., &
+        .FALSE., ib, i_index_c, 0, 0, &
         p_calc(ipt_ref), t_calc(ipt_ref), &
         n_path_c*n_pp, u_fit_c(:, ipt_ref), &
         trans_fit_c(:, ipt_ref), trans_app_c(:), &
@@ -1318,6 +1397,7 @@ SUBROUTINE corr_k_single &
     DEALLOCATE(nu_wgt)
     DEALLOCATE(kabs_all)
     IF (l_fit_cont_data .AND. l_cont_line_abs_weight) DEALLOCATE(kabs_all_lines)
+    IF (l_self_broadening) DEALLOCATE(kabs_all_sb)
 !
     CLOSE(iu_k_out)
     CLOSE(iu_monitor)
@@ -1651,8 +1731,10 @@ CONTAINS
       ENDIF
     ENDDO
     ALLOCATE(kabs_all(n_nu,n_pt_pair))
+    IF (l_self_broadening) ALLOCATE(kabs_all_sb(n_nu,n_pt_pair,n_gas_frac))
     ALLOCATE(wgt_ref(n_nu))
     ALLOCATE(wgt(n_nu))
+    IF (l_self_broadening) ALLOCATE(wgt_sv(n_nu))
     ALLOCATE(kabs(n_nu))
     ALLOCATE(map(n_nu))
     ALLOCATE(gmap(n_nu))
@@ -1707,12 +1789,23 @@ CONTAINS
 !
 !   Calculate the monochromatic absorption coefficients at each
 !   wavenumber.
-    WRITE(*, '(A, 1PE10.3, A8, 1PE10.3, A2)') &
-      'Calculation of absorption coefficients at ', p_calc(ipt), &
-      ' Pa and ', t_calc(ipt), ' K.'
-    WRITE(iu_monitor, '(A, 1PE10.3, A8, 1PE10.3, A2)') &
-      'Calculation of absorption coefficients at ', p_calc(ipt), &
-      ' Pa and ', t_calc(ipt), ' K.'
+    IF (l_self_broadening) THEN
+      WRITE(*, '(A, 1PE10.3, A, 1PE10.3, A, 0PF4.2, A)') &
+        'Calculation of absorption coefficients at ', p_calc(ipt), &
+        ' Pa, ', t_calc(ipt), ' K and ',  gas_frac(igf), &
+        ' gas fraction.'
+      WRITE(iu_monitor, '(A, 1PE10.3, A, 1PE10.3, A, 0PF4.2, A)') &
+        'Calculation of absorption coefficients at ', p_calc(ipt), &
+        ' Pa, ', t_calc(ipt), ' K and ', gas_frac(igf), &
+        ' gas fraction.'
+    ELSE
+      WRITE(*, '(A, 1PE10.3, A8, 1PE10.3, A2)') &
+        'Calculation of absorption coefficients at ', p_calc(ipt), &
+        ' Pa and ', t_calc(ipt), ' K.'
+      WRITE(iu_monitor, '(A, 1PE10.3, A8, 1PE10.3, A2)') &
+        'Calculation of absorption coefficients at ', p_calc(ipt), &
+        ' Pa and ', t_calc(ipt), ' K.'
+    END IF
     kabs(1:n_nu)=0.0_RealK
 !
     DO i = 1, num_lines_in_band
@@ -1768,11 +1861,18 @@ CONTAINS
           adj_line_parm(i) % alpha_lorentz, &
           adj_line_parm(i) % alpha_doppler, &
           kabs_line)
+!
 !       If using the CKD continuum model, we reduce the line
 !       absorption by its value at the cut-off: we should never
 !       be in a situation where this is applied outside the cut-off.
         IF (l_ckd_cutoff) kabs_line = kabs_line-k_cutoff(i)
-        kabs(j) = kabs(j) + kabs_line
+!
+        kabs(j) = kabs(j) + kabs_line*line_prof_corr( &
+          nu_wgt(j), &
+          adj_line_parm(i) % line_centre, &
+          adj_line_parm(i) % alpha_lorentz_air, &
+          adj_line_parm(i) % alpha_lorentz_self, &
+          i_line_prof_corr)
 !
       END DO
 !$OMP END PARALLEL DO
@@ -2603,6 +2703,7 @@ CONTAINS
     INTEGER :: dim_len                 ! Length of wavenumber dimension
     REAL (RealK) :: p_calc_in(n_pt_pair), t_calc_in(n_pt_pair)
     REAL (RealK) :: max_nu_wgt, min_nu_wgt
+    REAL (RealK) :: gas_frac_in(n_gas_frac)
 
 !   Open the file for reading
     CALL nf(nf90_open(TRIM(file_lbl),NF90_NOWRITE,ncidin_lbl))
@@ -2658,6 +2759,23 @@ CONTAINS
       ENDIF
     END DO
 
+    IF (l_self_broadening) THEN
+!     Read gas fractions
+      CALL nf(nf90_inq_varid(ncidin_lbl,'gas_frac',varid)) 
+      CALL nf(nf90_get_var(ncidin_lbl,varid,gas_frac_in))
+
+!     Check gas fractions in lbl file
+      DO igf=1,n_gas_frac
+!       Correct in case single precision is used in file
+        IF (ABS(gas_frac_in(igf)-gas_frac(igf)) > &
+          gas_frac(igf)*EPSILON(REAL(1e+0))) THEN
+          WRITE(*,'(a)') 'Gas fractions in lbl file do not match input values.'
+          ierr = i_err_fatal
+          RETURN
+        ENDIF
+      END DO
+    END IF
+
   END SUBROUTINE input_lbl_band_cdf_init
 
 
@@ -2702,10 +2820,17 @@ CONTAINS
       END DO
       WRITE(*,'(2(a,f12.2))') 'Reading wavenumbers:', &
         nu_wgt(i_nu),' to', nu_wgt(i_nu+nu_count-1)
-      CALL nf(nf90_get_var(ncidin_lbl,varid, &
-        kabs_all(i_nu:i_nu+nu_count-1,:), &
-        start=(/nu_index, 1/), &
-        count=(/nu_count, n_pt_pair/)))
+      IF (l_self_broadening) THEN
+        CALL nf(nf90_get_var(ncidin_lbl,varid, &
+          kabs_all_sb(i_nu:i_nu+nu_count-1,:,:), &
+          start=(/nu_index, 1, 1/), &
+          count=(/nu_count, n_pt_pair, n_gas_frac/)))
+      ELSE
+        CALL nf(nf90_get_var(ncidin_lbl,varid, &
+          kabs_all(i_nu:i_nu+nu_count-1,:), &
+          start=(/nu_index, 1/), &
+          count=(/nu_count, n_pt_pair/)))
+      END IF
       i_nu=i_nu+nu_count
     END DO
 
@@ -2798,7 +2923,7 @@ CONTAINS
 
     USE netcdf
     IMPLICIT NONE
-    INTEGER :: dimid1, dimid2          ! dimension ID
+    INTEGER :: dimid1, dimid2, dimid3  ! dimension ID
     INTEGER :: varid                   ! variable ID
     INTEGER :: n_nu_tot                ! Total number of frequency points
 
@@ -2821,6 +2946,8 @@ CONTAINS
 !   Create dimensions
     CALL nf(nf90_def_dim(ncidout_lbl, 'nu', n_nu_tot, dimid1))
     CALL nf(nf90_def_dim(ncidout_lbl, 'pt_pair', n_pt_pair, dimid2))
+    IF (l_self_broadening) &
+      CALL nf(nf90_def_dim(ncidout_lbl, 'gas_frac', n_gas_frac, dimid3))
 
 !   Create variables and write p_calc and t_calc
     CALL nf(nf90_def_var(ncidout_lbl, 'p_calc', NF90_FLOAT, dimid2, varid))
@@ -2845,14 +2972,29 @@ CONTAINS
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'units', 'm-1'))
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'step', nu_inc_0))
 
+    IF (l_self_broadening) THEN
+      CALL nf(nf90_def_var(ncidout_lbl, 'gas_frac', NF90_FLOAT, dimid3, varid))
+      CALL nf(nf90_put_att(ncidout_lbl, varid, 'title', 'gas fraction'))
+      CALL nf(nf90_put_att(ncidout_lbl, varid, 'long_name', 'gas fraction'))
+      CALL nf(nf90_enddef(ncidout_lbl))
+      CALL nf(nf90_put_var(ncidout_lbl, varid, &
+        gas_frac(1:n_gas_frac) ))
+      CALL nf(nf90_redef(ncidout_lbl))
+    END IF
+
     IF (l_output_reference_weight) THEN
       CALL nf(nf90_def_var(ncidout_lbl, 'wgt', NF90_FLOAT, dimid1, varid))
       CALL nf(nf90_put_att(ncidout_lbl, varid, 'title', 'weight'))
       CALL nf(nf90_put_att(ncidout_lbl, varid, 'long_name', 'reference weight'))
     END IF
 
-    CALL nf(nf90_def_var(ncidout_lbl, 'kabs', NF90_FLOAT, &
-      (/dimid1,dimid2/), varid))
+    IF (l_self_broadening) THEN
+      CALL nf(nf90_def_var(ncidout_lbl, 'kabs', NF90_FLOAT, &
+        (/dimid1,dimid2,dimid3/), varid))
+    ELSE
+      CALL nf(nf90_def_var(ncidout_lbl, 'kabs', NF90_FLOAT, &
+        (/dimid1,dimid2/), varid))
+    END IF
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'title', 'absorption' ))
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'long_name', 'absorption' ))
     IF (l_fit_cont_data) THEN
@@ -2885,8 +3027,14 @@ CONTAINS
         start=(/n_nu_written+1/), count=(/n_nu/)))
     END IF
     CALL nf(nf90_inq_varid(ncidout_lbl,'kabs',varid))
-    CALL nf(nf90_put_var(ncidout_lbl,varid,kabs_all, &
-      start=(/n_nu_written+1, 1/), count=(/n_nu,n_pt_pair/)))
+    IF (l_self_broadening) THEN
+      CALL nf(nf90_put_var(ncidout_lbl,varid,kabs_all_sb, &
+        start=(/n_nu_written+1, 1, 1/), &
+        count=(/n_nu ,n_pt_pair, n_gas_frac/)))
+    ELSE
+      CALL nf(nf90_put_var(ncidout_lbl,varid,kabs_all, &
+        start=(/n_nu_written+1, 1/), count=(/n_nu,n_pt_pair/)))
+    END IF
 
     n_nu_written=n_nu_written+n_nu
 
@@ -3036,9 +3184,9 @@ CONTAINS
 
     USE netcdf
     IMPLICIT NONE
-    Integer :: ncid                    ! netCDF file ID
-    Integer :: dimid1, dimid2, dimid3  ! dimension ID
-    Integer :: varid                   ! variable ID
+    Integer :: ncid                            ! netCDF file ID
+    Integer :: dimid1, dimid2, dimid3, dimid4  ! dimension ID
+    Integer :: varid                           ! variable ID
 
 !   Create the file and open for writing
     Call nf(nf90_create(Trim(file_k)//'.nc',NF90_NOCLOBBER,ncid))
@@ -3046,20 +3194,31 @@ CONTAINS
 !   Write dimensions
     Call nf(nf90_def_dim(ncid, 'nd_k_term', nd_k_term, dimid1))
     Call nf(nf90_def_dim(ncid, 'pt_pair', n_pt_pair, dimid2))
-    Call nf(nf90_def_dim(ncid, 'band', n_selected_band, dimid3))
+    IF (l_self_broadening) &
+      CALL nf(nf90_def_dim(ncid, 'gas_frac', n_gas_frac, dimid3))
+    Call nf(nf90_def_dim(ncid, 'band', n_selected_band, dimid4))
 
-    Call nf(nf90_def_var(ncid, 'band', NF90_INT, dimid3, varid))
+    Call nf(nf90_def_var(ncid, 'band', NF90_INT, dimid4, varid))
     Call nf(nf90_put_att(ncid, varid, 'title', 'band number' ))
     Call nf(nf90_enddef(ncid))
     Call nf(nf90_put_var(ncid, varid, list_band(1:n_selected_band) ))
     Call nf(nf90_redef(ncid))
 
 !   Write variables
-    Call nf(nf90_def_var(ncid, 'n_k', NF90_INT, dimid3, varid))
+    Call nf(nf90_def_var(ncid, 'n_k', NF90_INT, dimid4, varid))
     Call nf(nf90_put_att(ncid, varid, 'title', 'number of k-terms' ))
     Call nf(nf90_enddef(ncid))
     Call nf(nf90_put_var(ncid, varid, n_k(list_band(1:n_selected_band)) ))
     Call nf(nf90_redef(ncid))
+
+    IF (l_self_broadening) THEN
+      Call nf(nf90_def_var(ncid, 'gas_frac', NF90_FLOAT, dimid3, varid))
+      Call nf(nf90_put_att(ncid, varid, 'title', 'gas fraction'))
+      Call nf(nf90_put_att(ncid, varid, 'long_name', 'gas fraction'))
+      Call nf(nf90_enddef(ncid))
+      Call nf(nf90_put_var(ncid, varid, gas_frac(1:n_gas_frac) ))
+      Call nf(nf90_redef(ncid))
+    END IF
 
     Call nf(nf90_def_var(ncid, 'p_calc', NF90_FLOAT, dimid2, varid))
     Call nf(nf90_put_att(ncid, varid, 'title', 'pressure' ))
@@ -3076,17 +3235,27 @@ CONTAINS
     Call nf(nf90_enddef(ncid))
     Call nf(nf90_put_var(ncid, varid, t_calc(1:n_pt_pair) ))
     Call nf(nf90_redef(ncid))
-   
+
     Call nf(nf90_def_var(ncid, 'w_k', NF90_FLOAT, &
-      (/dimid1,dimid3/), varid))
+      (/dimid1,dimid4/), varid))
     Call nf(nf90_put_att(ncid, varid, 'title', 'weights' ))
     Call nf(nf90_put_att(ncid, varid, 'long_name', 'weights' ))
     Call nf(nf90_enddef(ncid))
     Call nf(nf90_put_var(ncid, varid, w_k(:,list_band(1:n_selected_band)) ))
-    Call nf(nf90_redef(ncid))
 
-    Call nf(nf90_def_var(ncid, 'kopt', NF90_FLOAT, &
-      (/dimid1,dimid2,dimid3/), varid))
+    Call nf(nf90_redef(ncid))
+    IF (l_self_broadening) THEN
+      Call nf(nf90_def_var(ncid, 'kopt', NF90_FLOAT, &
+        (/dimid1,dimid2,dimid3,dimid4/), varid))
+      Call nf(nf90_enddef(ncid))
+      Call nf(nf90_put_var(ncid, varid, kopt_all_sb ))
+    ELSE
+      Call nf(nf90_def_var(ncid, 'kopt', NF90_FLOAT, &
+        (/dimid1,dimid2,dimid4/), varid))
+      Call nf(nf90_enddef(ncid))
+      Call nf(nf90_put_var(ncid, varid, kopt_all ))
+    END IF
+    Call nf(nf90_redef(ncid))
     Call nf(nf90_put_att(ncid, varid, 'title', 'k-term' ))
     Call nf(nf90_put_att(ncid, varid, 'long_name', 'k-term' ))
     IF (l_fit_cont_data) THEN
@@ -3094,8 +3263,6 @@ CONTAINS
     ELSE
       Call nf(nf90_put_att(ncid, varid, 'units', 'm2 kg-1' ))
     END IF
-    Call nf(nf90_enddef(ncid))
-    Call nf(nf90_put_var(ncid, varid, kopt_all ))
 
     Call nf(nf90_close(ncid))
 

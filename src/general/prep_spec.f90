@@ -141,7 +141,7 @@ PROGRAM prep_spec
 
   DO
 !   Now decide which blocks are to be written.
-    WRITE(*, '(/a/,11(6x, a/),/)')                                      &
+    WRITE(*, '(/a/,12(6x, a/),/)')                                      &
       'Select from the following types of data:',                       &
       '2.   Block 2: Solar spectrum in each band.',                     &
       '3.   Block 3: Rayleigh scattering in each band.',                &

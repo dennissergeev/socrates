@@ -7,8 +7,11 @@
 !+ Temperature and pressure adjustment for line parameters
 !
 SUBROUTINE adjust_path ( &
-       mol, iso, wave_num, S, abhw, lse, abcoeff, T, p, & ! input arguments
-       line_centre, S_adj, alpha_lorentz, alpha_doppler)  ! output arguments
+!      Input arguments
+       mol, iso, wave_num, S, abhw, lse, abcoeff, sbhw, T, p, gf, &
+!      Output arguments
+       line_centre, S_adj, alpha_lorentz, alpha_lorentz_air, &
+       alpha_lorentz_self, alpha_doppler)
 
 ! Description:
 !
@@ -36,16 +39,20 @@ SUBROUTINE adjust_path ( &
 
   REAL  (RealK), Intent(IN) :: T
   REAL  (RealK), Intent(IN) :: p
+  REAL  (RealK), Intent(IN) :: gf
   REAL  (RealK), Intent(IN) :: S
   REAL  (RealK), Intent(IN) :: lse
   REAL  (RealK), Intent(IN) :: wave_num
   REAL  (RealK), Intent(IN) :: abhw
   REAL  (RealK), Intent(IN) :: abcoeff
+  REAL  (RealK), Intent(IN) :: sbhw
 
 ! Scalar arguments with intent(out):
   REAL  (RealK), Intent(OUT) :: line_centre
   REAL  (RealK), Intent(OUT) :: S_adj
   REAL  (RealK), Intent(OUT) :: alpha_lorentz
+  REAL  (RealK), Intent(OUT) :: alpha_lorentz_air
+  REAL  (RealK), Intent(OUT) :: alpha_lorentz_self
   REAL  (RealK), Intent(OUT) :: alpha_doppler
 
 ! Local parameters:
@@ -58,6 +65,7 @@ SUBROUTINE adjust_path ( &
   REAL  (RealK) :: boltzmann_fact
   REAL  (RealK) :: stim_emiss_fact
   REAL  (RealK) :: abhw_SI
+  REAL  (RealK) :: sbhw_SI
   REAL  (RealK) :: lse_SI
   REAL  (RealK) :: S_SI
 
@@ -82,6 +90,7 @@ SUBROUTINE adjust_path ( &
        (iso_mass(reqd_species)*atomic_mass_unit * 100.0) ! now in m kg-1
 
   abhw_SI = abhw * 100.0 ! now in m-1/atm
+  sbhw_SI = sbhw * 100.0 ! now in m-1/atm
 
   lse_SI = lse * 100.0   ! now in m-1
 
@@ -101,6 +110,10 @@ SUBROUTINE adjust_path ( &
                     (2.0*LOG(2.0)*molar_gas_constant*T / &
                     (iso_mass(reqd_species)*1.0e-3))**0.5
 
-  alpha_lorentz   = abhw_SI * (p/p_ref) * (T_ref/T) ** abcoeff
+! The temperature dependence of the air-broadened width is also used for the
+! self-broadened width at present.
+  alpha_lorentz_air  = (1.0-gf) * abhw_SI * (p/p_ref) * (T_ref/T) ** abcoeff
+  alpha_lorentz_self = gf * sbhw_SI * (p/p_ref) * (T_ref/T) ** abcoeff
+  alpha_lorentz      = alpha_lorentz_air + alpha_lorentz_self
 
 END SUBROUTINE adjust_path

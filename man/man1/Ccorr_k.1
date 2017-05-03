@@ -9,7 +9,8 @@ Ccorr_k \fB\-D\fR \fIhitran\-par\-file\fR | \fB\-X\fR \fIhitran\-xsc\-file\fR
         [\fB\-l\fR \fIgas\fR \fImax\-path\fR | \fB\-ct\fR \fIgas1\fR \fIgas2\fR \fImax\-path\fR [\fB\-cw\fR \fIgas\fR \fImax\-path\fR]
         \fB\-n\fR \fIk_terms\fR \fB| \-t\fR \fItol\fR \fB| \-b\fR \fItol\fR]
         \fB\-p|\-q|\-d|-p2|\-q2|\-d2|-lk\fR
-        [\fB\-k\fR] [\fB\-x\fR \fIfilename\fR] [\fB\-c\fR \fIwavenumber\fR] \fB\-i\fR \fIincrement\fR
+        [\fB\-k\fR] [\fB\-x\fR \fIfilename\fR] \fB\-i\fR \fIincrement\fR
+        [\fB\-c\fR \fIwavenumber\fR] [\fB\-lp\fR \fIline-profile\fR] [\fB\-sb\fR \fIfilename\fR]
         [\fB\-f\fR \fIfilename\fR] [\fB\-e\fR \fIname1\fR \fIname2\fR] [\fB\-C\fR \fIn1\fR \fIn2\fR \fIn3\fR] [\fB\-P\fR \fIn1\fR]
         \fB\+S\fR \fIfilename\fR \fB| \+p | \+d | \-u\fR
         \fB\-o\fR \fIfilename\fR \fB\-m\fR \fIfilename\fR \fB\-L\fR \fIfilename\fR
@@ -121,12 +122,28 @@ Adjust for use with the CKD continuum (optional). Note the CKD continuum model s
 Include the foreign continuum with the lines (optional): \fIfilename\fR = pathname of file containing the foreign-broadened CKD data. Although the foreign broadened continuum depends on (p-e), e/p is generally small in regions of interest, so for fast application in a GCM we can effectively treat the foreign continuum as depending on the amount of water vapour with a pressure scaling, which means that it may be counted along with line data.
 
 .TP
+\fB\-i\fR \fIincrement\fR
+Frequency increment for integration in m-1.
+
+.TP
 \fB\-c\fR \fIwavenumber\fR
 Line cut-off in m-1. Note the CKD continuum model should be used only with a line cut-off of 2500 m-1.
 
 .TP
-\fB\-i\fR \fIincrement\fR
-Frequency increment for integration in m-1.
+\fB\-lp\fR \fIline-profile\fR
+Line profile to be used. The following corrections to the Voigt profile is supported:
+.RS
+.TP
+.B 1
+No correction applied to Voigt profile (default).
+.TP
+.B 2
+Corrections to CO2 line profiles from Perrin & Hartmann (1989).
+.RE
+
+.TP
+\fB\-sb\fR \fIfilename\fR
+Include self-broadening with number fractions of the gas specified in \fIfilename\fR. Data in the file should be preceded by the directive "*BEGIN_DATA", with each line specifying a new gas fraction in ascending order. The last line of data should be followed by an "*END" directive. An example is located in data/gases/gas_fractions.
 
 .TP
 \fB\-f\fR \fIfilename\fR

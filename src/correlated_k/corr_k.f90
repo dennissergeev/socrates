@@ -129,6 +129,16 @@ PROGRAM corr_k
   REAL  (RealK), Allocatable :: t_ref(:)
 !   Reference temperature for the scaling in each band
 !
+  INTEGER :: i_line_prof_corr
+!   Line profile correction type
+!
+  LOGICAL :: l_self_broadening
+!   Flags to include effects of self-broadening
+  INTEGER :: n_gas_frac
+!   Number of gas fractions at which to tabulate ESFT terms
+  REAL  (RealK) :: gas_frac(npd_gas_frac)
+!   List of gas fractions at which to tabulate ESFT terms
+!
   TYPE  (StrSolarSpec) :: SolarSpec
 !   Solar Spectrum
 !
@@ -225,6 +235,7 @@ PROGRAM corr_k
        l_fit_line_data, l_fit_self_continuum, l_fit_frn_continuum, &
        l_fit_cont_data, n_path_c, umin_c, umax_c, n_pp, &
        include_instrument_response, filter, &
+       i_line_prof_corr, l_self_broadening, n_gas_frac, gas_frac, &
        i_ck_fit, tol, max_path, max_path_wgt, &
        nd_k_term, n_k, w_k, k_ave, k_opt, &
        k_opt_self, k_opt_frn, &
@@ -288,6 +299,10 @@ PROGRAM corr_k
       INTEGER, Intent(IN) :: n_pp
       LOGICAL, Intent(IN) :: include_instrument_response
       TYPE  (StrFiltResp), Intent(IN) :: filter
+      INTEGER, Intent(IN) :: i_line_prof_corr
+      LOGICAL, Intent(IN) :: l_self_broadening
+      INTEGER, Intent(IN) :: n_gas_frac
+      REAL  (RealK), Intent(IN), Dimension(:) :: gas_frac
       INTEGER, Intent(IN) :: n_omp_threads
       INTEGER, Intent(INOUT) :: ierr
       INTEGER, Intent(IN) :: nd_k_term
@@ -481,7 +496,9 @@ PROGRAM corr_k
     n_selected_band, list_band, &
     i_ck_fit, tol, max_path, max_path_wgt, n_k, nu_inc_0, line_cutoff, &
     l_ckd_cutoff, l_scale_pT, i_type_residual, i_scale_fnc, p_ref, t_ref, &
-    l_load_map, l_load_wgt, l_save_map, file_map, ierr)
+    l_load_map, l_load_wgt, l_save_map, file_map, &
+    i_line_prof_corr, l_self_broadening, n_gas_frac, gas_frac, npd_gas_frac, &
+    ierr)
 !
 ! Allocate arrays for the k-fit, now that the size of the scaling 
 ! vector is known.
@@ -562,6 +579,7 @@ PROGRAM corr_k
     l_fit_line_data, l_fit_self_continuum, l_fit_frn_continuum, &
     l_fit_cont_data, n_path_c, umin_c, umax_c, n_pp, &
     include_instrument_response, filter, &
+    i_line_prof_corr, l_self_broadening, n_gas_frac, gas_frac, &
     i_ck_fit, tol, max_path, max_path_wgt, &
     npd_k_term, n_k, w_k, k_ave, k_opt, &
     k_opt_self, k_opt_frn, &

@@ -393,6 +393,49 @@ term since this more accurate.
 All these choices are determined 
 from the data in the spectral file.
 
+\subsubsection{Self-broadening of gases}
+
+If the mixing ratio of a gaseous absorber is close to unity,
+pressure broadening due to collisions between molecules of the same
+species will become important. The pressure-broadened width of a line
+will depend on the volume mixing ratio of the gas, which is in the code
+termed the gas fraction, and can be derived from the mass mixing ratios.
+
+If dry mixing ratios are provided to the radiation code, then the gas
+fraction of species $i$ is given by
+\begin{equation}
+\frac{n_i}{n_\text{tot}}
+=\frac{n_i}{n_\text{tot, dry} + n_\text{H$_2$O}}
+=\frac{\frac{n_i}{n_\text{tot, dry}}}
+{1 + \frac{n_\text{H$_2$O}}{n_\text{tot, dry}}}
+=\frac{\zeta_i \frac{m_\text{air, dry}}{m_i}}{1 + \zeta_\text{H$_2$O}
+\frac{m_\text{air, dry}}{m_\text{H$_2$O}}},
+\end{equation}
+%
+where $n_i$ is the number density of species $i$, $n_\text{tot}$ and
+$n_\text{tot, dry}$ are the total air and dry air number density,
+respectively, $\zeta_i$ is the mass mixing ratio
+of species $i$, respectively, $m_i$ is the molar weight of species $i$
+and $m_\text{air, dry}$ is the mean molar weight of dry air.
+
+If mixing ratios include water vapour in the total density, then the
+gas fraction is given by
+\begin{equation}
+\frac{n_i}{n_\text{tot}} =
+\zeta_i \frac{m_\text{air, wet}}{m_i},
+\end{equation}
+%
+where $m_\text{air, wet}$ is the mean molar weight of wet air. It is
+given by
+\begin{equation}
+m_\text{air, wet}
+=\frac{n_\text{tot, dry}}{n_\text{tot}} m_\text{air, dry}
++\frac{n_\text{H$_2$O}}{n_\text{tot}} m_\text{H$_2$O}
+=\frac{m_\text{air, dry}}{1
++\left( \frac{m_\text{air, dry}}{m_\text{H$_2$O}} - 1 \right)
+\zeta_\text{H$_2$O}} .
+\end{equation}
+
 \subsubsection{Continuum Absorption}
 
 Theoretical models of gaseous absorption agree well with observations

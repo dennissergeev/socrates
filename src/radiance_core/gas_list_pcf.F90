@@ -11,9 +11,6 @@
 !   of each molecular absorbing species.
 !   The numbering 1-12 agrees with HITRAN.
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiation Control
-!
 !- ---------------------------------------------------------------------
 MODULE gas_list_pcf
 

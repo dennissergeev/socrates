@@ -11,9 +11,6 @@
 !   Output variables: FAC00, FAC01, FAC10, FAC11, JP, JT
 !   Zhian Sun   JUN.  1997
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiation Control
-!
 !-----------------------------------------------------------------------
 
 SUBROUTINE inter_pt(nd_profile, nd_layer                                &

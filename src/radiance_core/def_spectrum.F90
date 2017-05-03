@@ -21,9 +21,9 @@ USE realtype_rd
 IMPLICIT NONE
 
 
-INTEGER, PARAMETER :: n_dim = 28
+INTEGER, PARAMETER :: n_dim = 30
 !   Number of dimensions in StrSpecDim
-INTEGER, PARAMETER :: n_int = 15
+INTEGER, PARAMETER :: n_int = 17
 !   Number of (non-allocatable) integers
 INTEGER, PARAMETER :: n_real = 1
 !   Number of (non-allocatable) reals
@@ -87,7 +87,11 @@ TYPE StrSpecDim
 !   Number of temperatures in generalised continuum look-up tables
   INTEGER :: nd_k_term_cont
 !   Size allocated for continuum k-terms
-END TYPE StrSpecDim
+  INTEGER :: nd_species_sb
+!   Size allocated for gaseous species with self-broadening
+  INTEGER :: nd_gas_frac
+!   Size allocated for gas fractions (for self-broadening)
+END TYPE StrSPecDim
 
 
 TYPE StrSpecBasic
@@ -133,10 +137,16 @@ END TYPE StrSpecRayleigh
 TYPE StrSpecGas
   INTEGER  :: n_absorb
 !   Total number of gaseous absorbers
+  INTEGER  :: n_absorb_sb
+!   Number of gaseous absorbers with self-broadening
+  INTEGER  :: n_gas_frac
+!   Number of gas fractions in look-up table
   INTEGER, ALLOCATABLE      :: n_band_absorb(:)
 !   Number of gaseous absorbers in each band
   INTEGER, ALLOCATABLE      :: index_absorb(:, :)
 !   Number of gaseous absorbers
+  INTEGER, ALLOCATABLE      :: index_sb(:)
+!   Index of gases in self-broadening arrays
   INTEGER, ALLOCATABLE      :: type_absorb(:)
 !   Actual types of each gas in the spectral file
   INTEGER, ALLOCATABLE      :: n_mix_gas(:)
@@ -163,6 +173,9 @@ TYPE StrSpecGas
   INTEGER, ALLOCATABLE      :: i_scat(:, :, :)
 !   Method of scattering treatment for each k-term
 
+  LOGICAL, ALLOCATABLE      :: l_self_broadening(:)
+!   Flag for self-broadening of gaseous absorbers
+
   REAL (RealK), ALLOCATABLE :: k(:, :, :)
 !   Absorption coefficients of k-terms
   REAL (RealK), ALLOCATABLE :: w(:, :, :)
@@ -176,7 +189,9 @@ TYPE StrSpecGas
 
   REAL (RealK), ALLOCATABLE :: p_lookup(:)
   REAL (RealK), ALLOCATABLE :: t_lookup(:, :)
+  REAL (RealK), ALLOCATABLE :: gf_lookup(:)
   REAL (RealK), ALLOCATABLE :: k_lookup(:, :, :, :, :)
+  REAL (RealK), ALLOCATABLE :: k_lookup_sb(:, :, :, :, :, :)
   REAL (RealK), ALLOCATABLE :: w_ses(:, :)
   REAL (RealK), ALLOCATABLE :: k_mix_gas(:, :, :, :, :)
 !   Absorption coefficients for mixture species
@@ -471,6 +486,13 @@ IF (.NOT. ALLOCATED(Sp%Gas%index_absorb)) &
 Sp%Dim%nd_alloc_int = &
 Sp%Dim%nd_alloc_int + SIZE(Sp%Gas%index_absorb)
 
+IF (.NOT. ALLOCATED(Sp%Gas%index_sb)) THEN
+  ALLOCATE(Sp%Gas%index_sb( Sp%Dim%nd_species ))
+  Sp%Gas%index_sb=0
+END IF
+Sp%Dim%nd_alloc_int = &
+Sp%Dim%nd_alloc_int + SIZE(Sp%Gas%index_sb)
+
 IF (.NOT. ALLOCATED(Sp%Gas%type_absorb)) &
   ALLOCATE(Sp%Gas%type_absorb( Sp%Dim%nd_species ))
 Sp%Dim%nd_alloc_int = &
@@ -535,6 +557,13 @@ IF (.NOT. ALLOCATED(Sp%Gas%i_scat)) &
 Sp%Dim%nd_alloc_int = &
 Sp%Dim%nd_alloc_int + SIZE(Sp%Gas%i_scat)
 
+IF (.NOT. ALLOCATED(Sp%Gas%l_self_broadening)) THEN
+  ALLOCATE(Sp%Gas%l_self_broadening( Sp%Dim%nd_species ))
+  Sp%Gas%l_self_broadening=.FALSE.
+END IF
+Sp%Dim%nd_alloc_log = &
+Sp%Dim%nd_alloc_log + SIZE(Sp%Gas%l_self_broadening)
+
 IF (.NOT. ALLOCATED(Sp%Gas%k)) &
   ALLOCATE(Sp%Gas%k( Sp%Dim%nd_k_term, Sp%Dim%nd_band, Sp%Dim%nd_species ))
 Sp%Dim%nd_alloc_real = &
@@ -571,11 +600,23 @@ IF (.NOT. ALLOCATED(Sp%Gas%t_lookup)) &
 Sp%Dim%nd_alloc_real = &
 Sp%Dim%nd_alloc_real + SIZE(Sp%Gas%t_lookup)
 
+IF (.NOT. ALLOCATED(Sp%Gas%gf_lookup)) &
+  ALLOCATE(Sp%Gas%gf_lookup( Sp%Dim%nd_gas_frac ))
+Sp%Dim%nd_alloc_real = &
+Sp%Dim%nd_alloc_real + SIZE(Sp%Gas%gf_lookup)
+
 IF (.NOT. ALLOCATED(Sp%Gas%k_lookup)) &
   ALLOCATE(Sp%Gas%k_lookup( Sp%Dim%nd_tmp, Sp%Dim%nd_pre, Sp%Dim%nd_k_term, &
                             Sp%Dim%nd_species, Sp%Dim%nd_band ))
 Sp%Dim%nd_alloc_real = &
 Sp%Dim%nd_alloc_real + SIZE(Sp%Gas%k_lookup)
+
+IF (.NOT. ALLOCATED(Sp%Gas%k_lookup_sb)) &
+  ALLOCATE(Sp%Gas%k_lookup_sb( Sp%Dim%nd_tmp, Sp%Dim%nd_pre, &
+                               Sp%Dim%nd_gas_frac, Sp%Dim%nd_k_term, &
+                               Sp%Dim%nd_species_sb, Sp%Dim%nd_band ))
+Sp%Dim%nd_alloc_real = &
+Sp%Dim%nd_alloc_real + SIZE(Sp%Gas%k_lookup_sb)
 
 IF (.NOT. ALLOCATED(Sp%Gas%w_ses)) &
   ALLOCATE(Sp%Gas%w_ses( Sp%Dim%nd_k_term, Sp%Dim%nd_band ))
@@ -1061,8 +1102,12 @@ IF (ALLOCATED(Sp%Gas%k_mix_gas)) &
    DEALLOCATE(Sp%Gas%k_mix_gas)
 IF (ALLOCATED(Sp%Gas%w_ses)) &
    DEALLOCATE(Sp%Gas%w_ses)
+IF (ALLOCATED(Sp%Gas%k_lookup_sb)) &
+   DEALLOCATE(Sp%Gas%k_lookup_sb)
 IF (ALLOCATED(Sp%Gas%k_lookup)) &
    DEALLOCATE(Sp%Gas%k_lookup)
+IF (ALLOCATED(Sp%Gas%gf_lookup)) &
+   DEALLOCATE(Sp%Gas%gf_lookup)
 IF (ALLOCATED(Sp%Gas%t_lookup)) &
    DEALLOCATE(Sp%Gas%t_lookup)
 IF (ALLOCATED(Sp%Gas%p_lookup)) &
@@ -1077,6 +1122,8 @@ IF (ALLOCATED(Sp%Gas%w)) &
    DEALLOCATE(Sp%Gas%w)
 IF (ALLOCATED(Sp%Gas%k)) &
    DEALLOCATE(Sp%Gas%k)
+IF (ALLOCATED(Sp%Gas%l_self_broadening)) &
+   DEALLOCATE(Sp%Gas%l_self_broadening)
 IF (ALLOCATED(Sp%Gas%i_scat)) &
    DEALLOCATE(Sp%Gas%i_scat)
 IF (ALLOCATED(Sp%Gas%i_scale_fnc)) &
@@ -1101,6 +1148,8 @@ IF (ALLOCATED(Sp%Gas%n_mix_gas)) &
    DEALLOCATE(Sp%Gas%n_mix_gas)
 IF (ALLOCATED(Sp%Gas%type_absorb)) &
    DEALLOCATE(Sp%Gas%type_absorb)
+IF (ALLOCATED(Sp%Gas%index_sb)) &
+   DEALLOCATE(Sp%Gas%index_sb)
 IF (ALLOCATED(Sp%Gas%index_absorb)) &
    DEALLOCATE(Sp%Gas%index_absorb)
 IF (ALLOCATED(Sp%Gas%n_band_absorb)) &

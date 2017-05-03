@@ -72,6 +72,8 @@ do case $1 in
       -lm) LOAD_MAP=y ; MAP_FILE=$2 ; shift 2 ;;
       -sm) SAVE_MAP=y ; MAP_FILE=$2 ; shift 2 ;;
       -lw) LOAD_WEIGHT=y ; MAP_FILE=$2 ; shift 2 ;;
+      -sb) SELF_BROADENING=y ; GAS_FRAC_FILE=$2 ; shift 2 ;;
+      -lp) LINE_PROF_CORR=$2 ; shift 2 ;;
       -np) N_OMP_THREADS=$2 ; shift 2 ;;
       -*) echo "Error: invalid option" ; exit 1 ;;
       +*) echo "Error: invalid option" ; exit 1 ;;
@@ -221,10 +223,23 @@ if [ "$DATABASE" ]
                fi
        fi
   echo $CUTOFF >> /tmp/ck.$$
+  if [ "$LINE_PROF_CORR" ]
+    then echo $LINE_PROF_CORR >> /tmp/ck.$$
+  else
+    echo 1 >> /tmp/ck.$$
+  fi
   echo $LINE_INC >> /tmp/ck.$$
 else
   if [ "$XDATABASE" ] || [ "$CONT_DATA" ]
     then echo $LINE_INC >> /tmp/ck.$$
+  fi
+fi
+if [ "$LINE_DATA" ]
+  then if [ "$SELF_BROADENING" ]
+    then echo y >> /tmp/ck.$$
+    echo $GAS_FRAC_FILE >> /tmp/ck.$$
+  else
+    echo n >> /tmp/ck.$$
   fi
 fi
 if [ -z "$CONT_DATA" ] && ([ "$FRN_CF" ] || [ "$SELF_CF" ])
