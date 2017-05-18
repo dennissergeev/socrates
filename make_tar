@@ -16,8 +16,6 @@ export MANPATH
 
 echo 'Creating tar file of radiation code for external distribution.'
 
-# Remove tmp directory left over from previous runs
-rm -rf ${ESTMP}/socrates${stamp} 2> /dev/null
 mkdir ${ESTMP}/socrates${stamp}
 
 # Copy package files
@@ -35,12 +33,12 @@ cd ${ESTMP}/socrates${stamp}/ && find . -name \.svn -exec rm -rf {} \; 2> /dev/n
 
 echo 'Building documentation pdfs.'
 cd ${ESTMP}/socrates${stamp}/docs/techguide
-./lx > /dev/null
+. ${ESTMP}/socrates${stamp}/docs/techguide/lx > /dev/null
 mv socrates_techguide.pdf ../.
 cd ..
 rm -rf techguide
 cd ${ESTMP}/socrates${stamp}/docs/userguide
-./lx > /dev/null
+. ${ESTMP}/socrates${stamp}/docs/userguide/lx > /dev/null
 mv socrates_userguide.pdf ../.
 cd ..
 rm -rf userguide
@@ -50,5 +48,8 @@ cd ${ESTMP}
 tar cJf socrates${stamp}.tar.xz socrates${stamp}/
 mv ${ESTMP}/socrates${stamp}.tar.xz ${DISTDIR}/.
 echo "Created file ${DISTDIR}/socrates${stamp}.tar.xz"
+
+# Remove tmp directory
+rm -rf ${ESTMP}/socrates${stamp} 2> /dev/null
 
 exit 0

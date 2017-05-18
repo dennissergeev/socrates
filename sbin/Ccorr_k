@@ -39,7 +39,7 @@ do case $1 in
       -L) LBL_FILE=$2 ; shift 2 ;;
       -F) FILE_PT=$2 ; shift 2 ;;
       -I) INST_FILE=$2 ; shift 2 ;;
-      -T) DRYRUN=y ; shift ;;
+      -T) DRYRUN=y ; CFILE=$2 ; shift 2 ;;
       -P) CTN_NUM_PP=$2 ; shift 2 ;;
       -R) BAND_1=$2 ; BAND_2=$3 ; shift 3 ;;
       -c) CUTOFF=$2 ; shift 2 ;;
@@ -297,9 +297,10 @@ else
   echo 1 >> /tmp/ck.$$
 fi
 if [ "$DRYRUN" ]
-  then echo /tmp/ck.$$
+  then mv /tmp/ck.$$ $CFILE
 else
   ( corr_k < /tmp/ck.$$ )
 #> /dev/null
 fi
 rm -f $LOCK_FILE
+rm -f /tmp/ck.$$

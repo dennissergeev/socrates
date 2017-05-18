@@ -15,7 +15,7 @@ Ccorr_k \fB\-D\fR \fIhitran\-par\-file\fR | \fB\-X\fR \fIhitran\-xsc\-file\fR
         \fB\+S\fR \fIfilename\fR \fB| \+p | \+d | \-u\fR
         \fB\-o\fR \fIfilename\fR \fB\-m\fR \fIfilename\fR \fB\-L\fR \fIfilename\fR
         [\fB\-lm\fR \fIfilename\fR | \fB\-lw\fR \fIfilename\fR | \fB\-sm\fR \fIfilename\fR]
-        [\fB\-np\fR \fIomp_threads\fR] [\fB\-T\fR]
+        [\fB\-np\fR \fIomp_threads\fR] [\fB\-T\fR \fIcommand\-file\fR]
 
 .SH DESCRIPTION
 This program calculates correlated-k coefficients for prescribed
@@ -206,8 +206,8 @@ Save mapping from wavenumber- to g-space and corresponding k-term weights to the
 Number of OpenMP threads. Defaults to 1.
 
 .TP
-\fB\-T\fR
-Dry Run (optional). Creates a temporary file with the input values for the corr_k routine.
+\fB\-T\fR \fIcommand\-file\fR
+Dry Run (optional). Save the file with the input values for the corr_k routine.
 
 
 .SH SEE ALSO

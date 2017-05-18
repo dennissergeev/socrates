@@ -6,7 +6,7 @@ Cscatter_average \fB\-s\fR \fIspectral\-file\fR [\fB\-i\fR \fIinstrument\-file\f
                  \fB\-S\fR \fIsolar\-file\fR \fB| \-p\fR \fItemperature\fR \fB| \-d\fR \fItemperature\fR \fB| -u\fR
                  \fB\-P\fR \fImoments\fR \fB\-w|\-t\fR
                  \fB\-a\fR \fIfilename\fR \fB|\fR \fB\-f\fR \fIfit\fR \fIfit\-file\fR \fImon\-file\fR \fIdensity\fR
-                 [\fB\-v\fR] \fIinput\-file\fR
+                 [\fB\-v\fR] [\fB\-x\fR \fIcommand\-file\fR] \fIinput\-file\fR
 
 .SH DESCRIPTION
 This program reads a file of monochromatic single-scattering
@@ -82,6 +82,10 @@ Output filenames are given for the parametrized fit (\fIfit\-file\fR) and monito
 .TP
 \fB\-v\fR
 Show verbose output from the Fortran routine (optional).
+
+.TP
+\fB\-x\fR \fIcommand\-file\fR
+Retain input to scatter_average_90 in a named file.
 
 .TP
 \fIinput\-file\fR

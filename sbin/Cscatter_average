@@ -36,6 +36,7 @@ do case $1 in
       -f) PARAMETRIZE=T ; FIT=$2 ; FIT_FILE=$3 ; \
             MON_FILE=$4 ; DENSITY=$5 ; shift 5 ;;
       -v) verbose=T ; shift ;;
+      -x) RETAIN=T ; CFILE=$2 ; shift 2 ;;
        *) INPUT=$1 ; shift ;;
    esac
 done
@@ -94,6 +95,11 @@ if [ "$verbose" ]
   then scatter_average_90 < /tmp/sa.$$
 else
   scatter_average_90 < /tmp/sa.$$ > /dev/null
+fi
+if [ ! "$RETAIN" ]
+  then rm -f /tmp/sa.$$
+else
+  mv /tmp/sa.$$ $CFILE
 fi
 #echo /tmp/sa.$$
 rm -f $LOCK_FILE
