@@ -3,7 +3,10 @@
 ! For further details please refer to the file COPYRIGHT.txt
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
-!
+MODULE interp1d_mod
+IMPLICIT NONE
+CONTAINS
+
 ! One-dimensional linear interpolation function.
 !
 ! Description:
@@ -51,3 +54,4 @@ FUNCTION interp1d(x ,y, xi, n) RESULT(yi)
   END IF
 
 END FUNCTION interp1d
+END MODULE interp1d_mod

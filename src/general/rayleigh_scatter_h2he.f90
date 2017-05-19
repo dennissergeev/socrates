@@ -13,9 +13,10 @@
 FUNCTION rayleigh_scatter_h2he(lambda, wavelength_refract_index_H2,            &
   refract_index_H2, n_points)
 
-  USE realtype_rd, ONLY: RealK
-  USE rad_ccf,     ONLY: pi, n_avogadro, A_H, A_He, mol_weight_h2he,           &
-                         rho_h2he_stp, rho_n_h2he
+  USE realtype_rd,  ONLY: RealK
+  USE rad_ccf,      ONLY: pi, n_avogadro, A_H, A_He, mol_weight_h2he,          &
+                          rho_h2he_stp, rho_n_h2he
+  USE interp1d_mod, ONLY: interp1d
 
   IMPLICIT NONE
 
@@ -52,9 +53,8 @@ FUNCTION rayleigh_scatter_h2he(lambda, wavelength_refract_index_H2,            &
   REAL  (RealK) :: &
       temp
 !           Temporary storage of RHS in Lorentz-Lorentz equation
-!
-  REAL  (RealK), EXTERNAL :: interp1d
-!
+
+
 ! Refractive index at 0C for H2 and He
   lambda_m2=1.0_RealK/(lambda*lambda)
   refract_index_H2_lambda = interp1d(wavelength_refract_index_H2, &

@@ -229,13 +229,14 @@ CONTAINS
 ! Wrapper for the interpolation function.
   REAL(RealK) FUNCTION planck(tmp)
 
+    USE interp1d_mod, ONLY: interp1d
+
+    IMPLICIT NONE
+
 !   Input variables
     REAL(RealK), INTENT(IN) :: tmp
 !     Temperature at which to evaluate Planck function
 
-    REAL(RealK), EXTERNAL :: interp1d
-
-! DEPENDS ON: interp1d
     planck=interp1d(theta_planck_tbl, thermal_coefficient,              &
       tmp/t_ref_planck, nd_thermal_coeff)
 

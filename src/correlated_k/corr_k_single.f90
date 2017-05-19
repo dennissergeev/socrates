@@ -1993,6 +1993,10 @@ CONTAINS
 
   SUBROUTINE calc_cia_abs_int
 
+    USE interp1d_mod, ONLY: interp1d
+
+    IMPLICIT NONE
+
     REAL(RealK) :: waveno
 !     Wavenumber in cm-1
     REAL(RealK) :: t_cia(num_cia_lines_in_band)
@@ -2004,7 +2008,6 @@ CONTAINS
     REAL(RealK) :: wgt_t1, wgt_t2
 !     Temperature interpolation weights
 
-    REAL(RealK), EXTERNAL :: interp1d
 
 !   Calculate the monochromatic absorption coefficients at each
 !   wavenumber.
@@ -2068,6 +2071,8 @@ CONTAINS
 
 
   SUBROUTINE calc_k_opt_ref
+
+    IMPLICIT NONE
 
 !   Calculate for a fixed set of quadrature points.
     DO ik=1, n_k(ib)

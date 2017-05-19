@@ -12,7 +12,7 @@ Contents:
 4) Compilation of scripts in sbin
 5) Running the code
 6) Tested compilers
-7) Reporting bugs
+7) Reporting bugs and receiving updates
 
 
 0) BSD 3-Clause licence
@@ -151,11 +151,19 @@ To use these compilers within the Met Office Mk_cmd should be a symbolic
 link to the appropriate Mk_cmd_<compiler> file.
 
 
-7) Reporting bugs
------------------
+7) Reporting bugs and receiving updates
+---------------------------------------
 
 Please report any bugs or suggestions to
 James Manners <james.manners@metoffice.gov.uk>.
 
+The code is held in a subversion repository here:
 
-James Manners 5.3.15
+https://code.metoffice.gov.uk/trac/socrates
+
+Accounts to access the repository are given on request. Please provide
+your name and the email address you wish to use for the account to either
+Scientific_Partnerships@metoffice.gov.uk or james.manners@metoffice.gov.uk.
+Tutorials and package updates are provided on the repository trac pages.
+
+James Manners 19.5.17
