@@ -4,18 +4,12 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to calculate the solar flux and source terms.
-!
-! Method:
-!   Straightforward.
-!
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
+! Subroutine to calculate the solar flux and source terms.
 !
 !- ---------------------------------------------------------------------
 SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
      , flux_inc_direct                                                  &
-     , trans_0_noscal, trans_0, source_coeff                            &
+     , trans_0_dir, trans_0, source_coeff                               &
      , l_scale_solar, adjust_solar_ke                                   &
      , flux_direct                                                      &
      , s_down, s_up                                                     &
@@ -65,8 +59,8 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
 !       Incident solar flux
     , trans_0(nd_profile, nd_layer)                                     &
 !       Direct transmission coefficient
-    , trans_0_noscal(nd_profile, nd_layer)                              &
-!       Unscaled Direct transmission coefficient
+    , trans_0_dir(nd_profile, nd_layer)                                 &
+!       Direct transmission using direct tau
     , source_coeff(nd_profile, nd_layer, nd_source_coeff)               &
 !       Reflection coefficient
     , adjust_solar_ke(nd_profile, nd_layer)
@@ -90,7 +84,7 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
 !       Loop variable
 
   REAL (RealK) ::                                                       &
-      flux_direct_noscal(nd_profile, 0: nd_layer)
+      flux_direct_dir(nd_profile, 0: nd_layer)
 !       Direct flux without scaling
 
 
@@ -106,9 +100,10 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
   DO l=1, n_profile
     flux_direct(l, 0)=flux_inc_direct(l)
   END DO
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
     DO l=1, n_profile
-      flux_direct_noscal(l, 0)=flux_inc_direct(l)
+      flux_direct_dir(l, 0)=flux_inc_direct(l)
     END DO
   END IF
 
@@ -129,12 +124,13 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
           +flux_direct(l, i)
       END DO
     END DO
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_layer
         DO l=1, n_profile
 !         The unscaled direct flux is calculated separately.
-          flux_direct_noscal(l, i)                                      &
-            =flux_direct_noscal(l, i-1)*trans_0_noscal(l, i)            &
+          flux_direct_dir(l, i)                                         &
+            =flux_direct_dir(l, i-1)*trans_0_dir(l, i)                  &
             *adjust_solar_ke(l, i)
         END DO
       END DO
@@ -152,22 +148,24 @@ SUBROUTINE solar_source(control, bound, n_profile, n_layer              &
           *flux_direct(l, i-1)
       END DO
     END DO
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_layer
         DO l=1, n_profile
-          flux_direct_noscal(l, i)                                      &
-           =flux_direct_noscal(l, i-1)*trans_0_noscal(l, i)
+          flux_direct_dir(l, i)                                         &
+           =flux_direct_dir(l, i-1)*trans_0_dir(l, i)
         END DO
       END DO
     END IF
   END IF
 
 
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
 !   From this point, use the unscaled direct flux as the direct component.
     DO i= 0, n_layer
       DO l=1, n_profile
-        flux_direct(l, i)=flux_direct_noscal(l, i)
+        flux_direct(l, i)=flux_direct_dir(l, i)
       END DO
     END DO
   END IF

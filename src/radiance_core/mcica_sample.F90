@@ -4,7 +4,7 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to sample the cloud field for a single k-term
+! Subroutine to sample the cloud field for a single k-term
 !
 ! Method:
 !   Returns the fluxes for a single k-term. A number of cloudy
@@ -92,7 +92,7 @@ SUBROUTINE mcica_sample(ierr                                            &
   USE def_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
   USE rad_pcf, ONLY: ip_solar, ip_cloud_homogen, ip_cloud_ice_water,    &
-    ip_no_scatter_abs,  ip_no_scatter_ext
+    ip_no_scatter_abs,  ip_no_scatter_ext, ip_direct_csr_scaling
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 
@@ -688,6 +688,18 @@ SUBROUTINE mcica_sample(ierr                                            &
                   /MAX(ss_prop%k_ext_scat(l, i,k)                       &
                     ,eps)
               END DO
+
+              IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
+! Calculate forward scattering fraction of direct flux within 
+! the instrument FOV 
+! DEPENDS ON: circumsolar_fraction
+                 CALL circumsolar_fraction(n_cloud_profile(i)           &
+                  , i_cloud_profile(1, i), control%half_angle           &
+                  , ss_prop%phase_fnc(1, i, 1, k)                       &
+                  , ss_prop%forward_scatter_csr(1, i, k)                &
+                  , nd_profile                                          &
+                  ) 
+              END IF
             END DO
           END DO
         ELSE

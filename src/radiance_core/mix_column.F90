@@ -235,7 +235,7 @@ SUBROUTINE mix_column(ierr                                              &
 !       Free reflectance of layer
     , trans_0_free(nd_profile, nd_layer)                                &
 !       Free direct transmission of layer
-    , trans_0_free_noscal(nd_profile, nd_layer)                         &
+    , trans_0_free_dir(nd_profile, nd_layer)                            &
 !       Free direct transmission of layer without scaling
     , source_coeff_free(nd_profile, nd_layer, nd_source_coeff)          &
 !       Free source coefficients
@@ -256,7 +256,7 @@ SUBROUTINE mix_column(ierr                                              &
 !       Cloudy reflectance of layer
     , trans_0_cloud(nd_profile, nd_layer)                               &
 !       Cloudy direct transmission of layer
-    , trans_0_cloud_noscal(nd_profile, nd_layer)                        &
+    , trans_0_cloud_dir(nd_profile, nd_layer)                           &
 !       Cloudy direct transmission of layer without scaling
     , source_coeff_cloud(nd_profile, nd_layer, nd_source_coeff)         &
 !       Cloudy source coefficients
@@ -304,9 +304,9 @@ SUBROUTINE mix_column(ierr                                              &
     , n_profile, 1, n_cloud_top-1                                       &
     , i_2stream, l_ir_source_quad                                       &
     , ss_prop%phase_fnc_clr                                             &
-    , ss_prop%omega_clr, ss_prop%tau_clr_noscal, ss_prop%tau_clr        &
+    , ss_prop%omega_clr, ss_prop%tau_clr_dir, ss_prop%tau_clr           &
     , isolir, sec_0, sph%common%path_div                                &
-    , trans_free, reflect_free, trans_0_free_noscal, trans_0_free       &
+    , trans_free, reflect_free, trans_0_free_dir, trans_0_free          &
     , source_coeff_free                                                 &
     , nd_profile, 1, nd_layer_clr, 1, nd_layer, nd_source_coeff         &
     )
@@ -315,9 +315,9 @@ SUBROUTINE mix_column(ierr                                              &
     , i_2stream, l_ir_source_quad                                       &
     , ss_prop%phase_fnc(:, :, :, 0)                                     &
     , ss_prop%omega(:, :, 0)                                            &
-    , ss_prop%tau_noscal(:, :, 0), ss_prop%tau(:, :, 0)                 &
+    , ss_prop%tau_dir(:, :, 0), ss_prop%tau(:, :, 0)                    &
     , isolir, sec_0, sph%common%path_div                                &
-    , trans_free, reflect_free, trans_0_free_noscal, trans_0_free       &
+    , trans_free, reflect_free, trans_0_free_dir, trans_0_free          &
     , source_coeff_free                                                 &
     , nd_profile, id_ct, nd_layer, 1, nd_layer, nd_source_coeff         &
     )
@@ -374,9 +374,9 @@ SUBROUTINE mix_column(ierr                                              &
     , n_cloud_type, frac_cloud                                          &
     , ss_prop%phase_fnc(:, :, :, 1:)                                    &
     , ss_prop%omega(:, :, 1:)                                           &
-    , ss_prop%tau_noscal(:, :, 1:), ss_prop%tau(:, :, 1:)               &
+    , ss_prop%tau_dir(:, :, 1:), ss_prop%tau(:, :, 1:)                  &
     , isolir, sec_0, sph                                                &
-    , trans_cloud, reflect_cloud, trans_0_cloud_noscal, trans_0_cloud   &
+    , trans_cloud, reflect_cloud, trans_0_cloud_dir, trans_0_cloud      &
     , source_coeff_cloud                                                &
     , nd_profile, nd_layer, id_ct, nd_max_order                         &
     , nd_source_coeff, nd_cloud_type                                    &
@@ -412,12 +412,12 @@ SUBROUTINE mix_column(ierr                                              &
       , n_profile, n_layer, n_cloud_top                                 &
       , flux_inc_direct                                                 &
       , l_scale_solar, adjust_solar_ke                                  &
-      , trans_0_free_noscal, trans_0_free, source_coeff_free            &
+      , trans_0_free_dir, trans_0_free, source_coeff_free               &
       , cloud_overlap(1, id_ct-1, i_ovp_dn_ff)                          &
       , cloud_overlap(1, id_ct-1, i_ovp_dn_cf)                          &
       , cloud_overlap(1, id_ct-1, i_ovp_dn_fc)                          &
       , cloud_overlap(1, id_ct-1, i_ovp_dn_cc)                          &
-      , trans_0_cloud_noscal, trans_0_cloud, source_coeff_cloud         &
+      , trans_0_cloud_dir, trans_0_cloud, source_coeff_cloud            &
       , flux_direct                                                     &
       , flux_direct_ground_cloud                                        &
       , s_up_free, s_down_free                                          &
@@ -537,7 +537,7 @@ SUBROUTINE mix_column(ierr                                              &
     CALL column_solver(ierr, control, bound, sph%common, sph%clear      &
       , n_profile, n_layer                                              &
       , i_scatter_method, i_solver_clear                                &
-      , trans_free, reflect_free, trans_0_free_noscal                   &
+      , trans_free, reflect_free, trans_0_free_dir                      &
       , trans_0_free, source_coeff_free                                 &
       , isolir, flux_inc_direct, flux_inc_down                          &
       , s_down_clear, s_up_clear                                        &

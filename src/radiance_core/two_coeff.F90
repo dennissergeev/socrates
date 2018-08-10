@@ -16,9 +16,9 @@
 SUBROUTINE two_coeff(ierr, control                                      &
      , n_profile, i_layer_first, i_layer_last                           &
      , i_2stream, l_ir_source_quad                                      &
-     , asymmetry, omega, tau_noscal, tau                                &
+     , asymmetry, omega, tau_dir, tau                                   &
      , isolir, sec_0, path_div                                          &
-     , trans, reflect, trans_0_noscal, trans_0                          &
+     , trans, reflect, trans_0_dir, trans_0                             &
      , source_coeff                                                     &
      , nd_profile                                                       &
      , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                         &
@@ -81,7 +81,7 @@ SUBROUTINE two_coeff(ierr, control                                      &
 !       Albedo of single scattering
     , tau(nd_profile, id_op_lt: id_op_lb)                               &
 !       Optical depth
-    , tau_noscal(nd_profile, id_op_lt: id_op_lb)
+    , tau_dir(nd_profile, id_op_lt: id_op_lb)
 !       Unscaled optical depth 
 
 ! Solar beam
@@ -99,7 +99,7 @@ SUBROUTINE two_coeff(ierr, control                                      &
 !       Diffuse reflection coefficient
     , trans_0(nd_profile, id_trs_lt: id_trs_lb)                         &
 !       Direct transmission coefficient
-    , trans_0_noscal(nd_profile, id_trs_lt: id_trs_lb)                  &
+    , trans_0_dir(nd_profile, id_trs_lt: id_trs_lb)                     &
 !       Direct transmission coefficient without scaling
     , source_coeff(nd_profile, id_trs_lt: id_trs_lb                     &
         , nd_source_coeff)
@@ -178,9 +178,9 @@ SUBROUTINE two_coeff(ierr, control                                      &
 ! DEPENDS ON: trans_source_coeff
   CALL trans_source_coeff(control                                       &
     , n_profile, i_layer_first, i_layer_last                            &
-    , tau_noscal, tau, sum, diff, lambda, sec_0, path_div               &
+    , tau_dir, tau, sum, diff, lambda, sec_0, path_div                  &
     , gamma_up, gamma_down                                              &
-    , trans, reflect, trans_0_noscal, trans_0, source_coeff             &
+    , trans, reflect, trans_0_dir, trans_0, source_coeff                &
     , nd_profile                                                        &
     , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                          &
     , nd_source_coeff                                                   &

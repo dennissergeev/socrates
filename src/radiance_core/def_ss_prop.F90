@@ -46,6 +46,8 @@ MODULE def_ss_prop
 !     (Held as moments)
     REAL (RealK), POINTER :: forward_scatter_clr(:, :)         => NULL()
 !     Forward scattering in clear-sky region above clouds
+    REAL (RealK), POINTER :: forward_scatter_clr_csr(:, :)     => NULL()
+!     CSR Forward scattering in clear-sky region above clouds
     REAL (RealK), POINTER :: phase_fnc_solar_clr(:, :, :)      => NULL()
 !     Solar phase function in clear-sky region above clouds
 !     (Held as the actual phase function in the viewing direction)
@@ -54,7 +56,7 @@ MODULE def_ss_prop
 
     REAL (RealK), POINTER :: tau_clr(:, :)                     => NULL()
 !     Optical depth in clear-sky region above clouds
-    REAL (RealK), POINTER :: tau_clr_noscal(:, :)              => NULL()
+    REAL (RealK), POINTER :: tau_clr_dir(:, :)                 => NULL()
 !     Optical depth for direct flux in clear-sky region above clouds
     REAL (RealK), POINTER :: omega_clr(:, :)                   => NULL()
 !     Albedo of single scattering in clear-sky region above clouds
@@ -68,6 +70,8 @@ MODULE def_ss_prop
 !     (Held as moments)
     REAL (RealK), POINTER :: forward_scatter(:, :, :)          => NULL()
 !     Forward scattering in potentially cloudy regions
+    REAL (RealK), POINTER :: forward_scatter_csr(:, :, :)      => NULL()
+!     CSR Forward scattering in potentially cloudy regions
     REAL (RealK), POINTER :: phase_fnc_solar(:, :, :, :)       => NULL()
 !     Solar phase function in potentially cloudy regions
 !     (Held as the actual phase function in the viewing direction)
@@ -76,7 +80,7 @@ MODULE def_ss_prop
 
     REAL (RealK), POINTER :: tau(:, :, :)                      => NULL()
 !     Optical depth in potentially cloudy regions
-    REAL (RealK), POINTER :: tau_noscal(:, :, :)               => NULL()
+    REAL (RealK), POINTER :: tau_dir(:, :, :)                  => NULL()
 !     Optical depth for direct flux in potentially cloudy regions
     REAL (RealK), POINTER :: omega(:, :, :)                    => NULL()
 !     Albedo of single scattering in potentially cloudy regions

@@ -524,7 +524,7 @@
         ENDIF
 !
 
-        IF (control%l_noscal_tau) THEN
+        IF (control%i_direct_tau == ip_direct_noscaling) THEN
           DO i=1, n_layer
             DO l=1, n_profile
               tau_noscal(l, i) = tau(l, i)
@@ -608,7 +608,7 @@
           omega(l, i)=min(omega(l, i), 1.0_RealK-eps_r)
         ENDDO
       ENDDO
-      IF (control%l_noscal_tau) THEN
+      IF (control%i_direct_tau == ip_direct_noscaling) THEN
         DO i=1, n_layer
           DO l=1, n_profile
             tau_noscal(l, i)=                                            

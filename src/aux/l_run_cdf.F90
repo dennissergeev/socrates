@@ -463,11 +463,15 @@ PROGRAM l_run_cdf
 ! Scaling of optical depth for direct flux
 ! ------------------------------------------------------------------
   WRITE(iu_stdout, '(/a)')                                              &
-    'Determine direct flux using unscaled optical depth? (y/n)'
-  READ(iu_stdin, '(a)') char_yn
-  IF ( (char_yn == 'Y').OR.(char_yn == 'y') ) THEN
-    control%l_noscal_tau=.TRUE.
-  END IF
+    'Entre treatment of optical depth for direct solar flux (0/1/2)'                            
+  WRITE(iu_stdout, '(/a)')                                              &
+    '0: no scaling; 1: delta-scaling; 2: circumsolar scaling'
+  READ(iu_stdin, *) control%i_direct_tau 
+  IF (control%i_direct_tau == 2 ) then
+    WRITE(iu_stdout, '(/a)')                                            &
+    'Entre half angle of FOV, between 0.25 and 5 degree'
+    READ(iu_stdin, *) control%half_angle
+  ENDIF
 
 ! ------------------------------------------------------------------
 ! Options:

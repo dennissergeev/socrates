@@ -317,6 +317,30 @@ g & \rightarrow & (g-f)/(1-f)
 \label{p2_eq25}
 \eeqn
 
+However, the forward scattering fraction is too large for the determination of
+the direct solar beam radiation because the scattering contribution to the
+direct beam component is only confined within the circumsolar (aureole) area.
+The above transformation leads to substantial overestimation of the direct
+solar flux at the surface. Sun (\cite{Sun18}) proposed a new forward scattering
+fraction $f_{csr}$ based on an integration of a scattering phase function over
+a solid angle of the field of view (FOV) of an instrument,
+\beqn
+f_{csr} &= & \frac{1}{2}\{(1-\mu)+\sum_{l=1}^{n} g^{l}[P_{l-1}(\mu) - P_{l+1}(\mu)]\} \nonumber \\
+\mu &= & cos(\alpha),
+\label{p2_eq25.1}
+\eeqn
+where $\alpha$ is the half angle of FOV (usually $2.5^{\circ}$), $g$ is asymmetry
+factor, $P_{l}$ is the Legendre expansion polynomial of a scattering phase
+function. 
+It is found that a stream number of $n = 32$ is sufficient for accurate
+calculation of the phase function. The 32 streams of the Legendre polynomial
+are precalculated for 20 half FOV angles between $0.25^{\circ}$ and $5^{\circ}$
+with an increment of $0.25^{\circ}$ so $f_{csr}$ can be quickly determined for a
+given half angle $\alpha$ and asymmetry factor. Note that this forward
+scattering fraction is only used to scale the optical depth for the direct
+solar beam component when it is invoked by specifying a control parameter
+i\_direct\_tau=2.
+       
 \section{The Calculation of the Single Scattering Properties}
 
 The single scattering properties most easily related to the 

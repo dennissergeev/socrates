@@ -506,6 +506,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
           ss_prop%k_ext_scat_clr(l, i)=rayleigh_coeff(l, i)
           ss_prop%phase_fnc_clr(l, i, 1)=0.0_RealK
           ss_prop%forward_scatter_clr(l, i)=0.0_RealK
+          ss_prop%forward_scatter_clr_csr(l, i)=0.0_RealK
         END DO
       END DO
       DO i=n_cloud_top, n_layer
@@ -515,6 +516,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
           ss_prop%k_ext_scat(l, i, 0)=rayleigh_coeff(l, i)
           ss_prop%phase_fnc(l, i, 1, 0)=0.0_RealK
           ss_prop%forward_scatter(l, i, 0)=0.0_RealK
+          ss_prop%forward_scatter_csr(l, i, 0)=0.0_RealK
         END DO
       END DO
     ELSE
@@ -598,6 +600,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
           ss_prop%k_ext_scat_clr(l, i)=0.0_RealK
           ss_prop%phase_fnc_clr(l, i, 1)=0.0_RealK
           ss_prop%forward_scatter_clr(l, i)=0.0_RealK
+          ss_prop%forward_scatter_clr_csr(l, i)=0.0_RealK
         END DO
       END DO
       DO i=n_cloud_top, n_layer
@@ -607,6 +610,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
           ss_prop%k_ext_scat(l, i, 0)=0.0_RealK
           ss_prop%phase_fnc(l, i, 1, 0)=0.0_RealK
           ss_prop%forward_scatter(l, i, 0)=0.0_RealK
+          ss_prop%forward_scatter_csr(l, i, 0)=0.0_RealK
         END DO
       END DO
     ELSE
@@ -834,30 +838,64 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
 
     IF (control%l_rescale) THEN
       DO i=1, n_cloud_top-1
+        n_index=0
         DO l=1, n_profile
           IF (ss_prop%k_ext_scat_clr(l, i) > tiny_k) THEN
-            tmp_inv(l)=1.0_RealK/ss_prop%k_ext_scat_clr(l, i)
-            ss_prop%forward_scatter_clr(l, i)                           &
-              =ss_prop%forward_scatter_clr(l, i)*tmp_inv(l)
-            DO ls=1, n_order_phase
-              ss_prop%phase_fnc_clr(l, i, ls)                           &
-                =ss_prop%phase_fnc_clr(l, i, ls)*tmp_inv(l)
-            END DO
+            n_index=n_index+1
+            indx(n_index)=l
           END IF
         END DO
+        DO l=1, n_index 
+          tmp_inv(l)=1.0_RealK/ss_prop%k_ext_scat_clr(indx(l), i)
+          ss_prop%forward_scatter_clr(indx(l), i)                       &
+            =ss_prop%forward_scatter_clr(indx(l), i)*tmp_inv(l)
+          DO ls=1, n_order_phase
+            ss_prop%phase_fnc_clr(indx(l), i, ls)                       &
+              =ss_prop%phase_fnc_clr(indx(l), i, ls)*tmp_inv(l)
+          END DO
+        END DO
+!----------------------------------------------------------------------
+! Calculate forward scattering fraction due to the CircumSolar Radiation
+! (CSR) within a FOV of pyrheliometer. This fraction replaces g^2 
+! in the Delta-Eddington scaling in the direct flux calculation.
+!---------------------------------------------------------------------- 
+        IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
+! Above cloud top.
+! DEPENDS ON: circumsolar_fraction
+          CALL circumsolar_fraction(n_index                             &
+           , indx, control%half_angle                                   &
+           , ss_prop%phase_fnc_clr(1, i, 1)                             &
+           , ss_prop%forward_scatter_clr_csr(1, i)                      &
+           , nd_profile                                                 &
+           )
+        END IF
       END DO
       DO i=n_cloud_top, n_layer
+        n_index=0
         DO l=1, n_profile
           IF (ss_prop%k_ext_scat(l, i, 0) > tiny_k) THEN
-            tmp_inv(l)=1.0_RealK/ss_prop%k_ext_scat(l, i, 0)
-            ss_prop%forward_scatter(l, i, 0)                            &
-              =ss_prop%forward_scatter(l, i, 0)*tmp_inv(l)
-            DO ls=1, n_order_phase
-              ss_prop%phase_fnc(l, i, ls, 0)                            &
-                =ss_prop%phase_fnc(l, i, ls, 0)*tmp_inv(l)
-            END DO
+            n_index=n_index+1
+            indx(n_index)=l
           END IF
         END DO
+        DO l=1, n_index
+          tmp_inv(l)=1.0_RealK/ss_prop%k_ext_scat(indx(l), i, 0)
+          ss_prop%forward_scatter(indx(l), i, 0)                         &
+            =ss_prop%forward_scatter(indx(l), i, 0)*tmp_inv(l)
+          DO ls=1, n_order_phase
+            ss_prop%phase_fnc(indx(l), i, ls, 0)                         &
+              =ss_prop%phase_fnc(indx(l), i, ls, 0)*tmp_inv(l)
+          END DO
+        END DO
+        IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
+  ! Below cloud top.
+          CALL circumsolar_fraction(n_index                               &
+           , indx, control%half_angle                                     &
+           , ss_prop%phase_fnc(1, i, 1, 0)                                &
+           , ss_prop%forward_scatter_csr(1, i, 0)                         &
+           , nd_profile                                                   &
+           )
+        END IF 
       END DO
     ELSE
       DO ls=1, n_order_phase
@@ -947,6 +985,8 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
         ss_prop%k_ext_scat(l, i, k)=ss_prop%k_ext_scat(l, i, 0)
         ss_prop%forward_scatter(l, i, k)                                &
           =ss_prop%forward_scatter(l, i, 0)
+        ss_prop%forward_scatter_csr(l, i, k)                            &
+          =ss_prop%forward_scatter_csr(l, i, 0)
       END DO
       DO ls=1, n_order_phase
         DO l=1, n_profile
@@ -1341,6 +1381,14 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
             =ss_prop%phase_fnc_clr(indx(k), i, ls)*tmp_inv(k)
         END DO
       END DO
+      IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
+        CALL circumsolar_fraction(n_index                               &
+           , indx, control%half_angle                                   &
+           , ss_prop%phase_fnc_clr(1, i, 1)                             &
+           , ss_prop%forward_scatter_clr_csr(1, i)                      &
+           , nd_profile                                                 &
+           )
+      END IF
     ELSE
       DO ls=1, n_order_phase
 !CDIR NODEP
@@ -1390,6 +1438,14 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
             =ss_prop%phase_fnc(indx(k), i, ls, 0)*tmp_inv(k)
         END DO
       END DO
+      IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
+        CALL circumsolar_fraction(n_index                               &
+           , indx, control%half_angle                                   &
+           , ss_prop%phase_fnc(1, i, 1, 0)                              &
+           , ss_prop%forward_scatter_csr(1, i, 0)                       &
+           , nd_profile                                                 &
+           )
+      END IF
     ELSE
       DO ls=1, n_order_phase
 !CDIR NODEP
@@ -1466,6 +1522,15 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
               /ss_prop%k_ext_scat(indx(j), i, k)
           END DO
         END DO
+      END IF
+      IF ( control%l_rescale .AND.                                      &
+        control%i_direct_tau == ip_direct_csr_scaling ) THEN
+        CALL circumsolar_fraction(n_index                               &
+           , indx, control%half_angle                                   &
+           , ss_prop%phase_fnc(1, i, 1, k)                              &
+           , ss_prop%forward_scatter_csr(1, i, k)                       &
+           , nd_profile                                                 &
+           )
       END IF
 
     END DO

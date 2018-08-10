@@ -1,4 +1,4 @@
-.TH Cl_run_cdl 1 "4-4-2016"
+.TH Cl_run_cdl 1 "10-8-2018"
 .SH NAME
 Cl_run_cdl \- Driver for the SOCRATES Radiative Transfer Code
 .SH USAGE
@@ -15,7 +15,8 @@ Cl_run_cdl \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
            [\fB\-z\fR \fIscattering\-option\fR] [\fB\-dbg\fR]
            \fB[\fR \fB\+S\fR \fIn1 n2 n3 n4\fR \fB\-G\fR \fIbasis truncation\fR
              \fB\+F\fR \fB\+P\fR \fB\-H\fR \fB\-e\fR \fB\-Y\fR \fB\-T\fR \fB\-Z\fR \fIorder\fR \fB]\fR
-            \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR \fB\-ns\fR \fB]\fR
+            \fB|\fR \fB[\fR \fB\-t\fR \fItwo\-stream\-scheme\fR \fB\-v\fR \fIsolver\fR 
+            \fB\-ds\fR \fIdir_scal\fR \fB\-ha\fR \fIhalf_angle\fR \fB]\fR
             \fB|\fR \fB[\fR \fB\-Q\fR \fIGaussian\-order\fR \fB]\fR
            [\fB\-F\fR \fIfilter\-file\fR] [\fB\-ch\fR \fInum-channels\fR]
 
@@ -192,7 +193,7 @@ Prescribed profiles of aerosols are provided as input files
 Include continuum absorption
 
 .TP
-\fB\-c\fR 
+\fB\-u\fR 
 Include generalised continuum absorption
 
 .TP
@@ -312,8 +313,12 @@ Direct solution for coupled overlap with separation between convective and strat
 .RE
 
 .TP
-\fB\-ns\fR
-Determine direct flux using unscaled optical depth
+\fB\-ds\fR \fIdir_scal\fR
+Scaling method for direct flux - three options: 0 no scaling, 1 delta-scaling, 2 phase function scaling
+
+.TP
+\fB\-ha\fR \fIhalf_angle\fR
+If dir_scal=2 specify half viewing angle: 0.25 - 5.0 degree
 
 .TP
 \fB\-Q\fR \fIGaussian\-order\fR

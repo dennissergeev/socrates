@@ -20,11 +20,11 @@ SUBROUTINE two_coeff_region(ierr, control                               &
      , n_cloud_type, frac_cloud                                         &
      , n_region, i_region_cloud, frac_region                            &
      , phase_fnc_clr, omega_clr                                         &
-     , tau_clr_noscal, tau_clr                                          &
+     , tau_clr_dir, tau_clr                                             &
      , phase_fnc, omega                                                 &
-     , tau_noscal, tau                                                  &
+     , tau_dir, tau                                                     &
      , isolir, sec_0, sph                                               &
-     , trans, reflect, trans_0_noscal, trans_0, source_coeff            &
+     , trans, reflect, trans_0_dir, trans_0, source_coeff               &
      , nd_profile, nd_layer, nd_layer_clr, id_ct                        &
      , nd_max_order, nd_source_coeff                                    &
      , nd_cloud_type, nd_region                                         &
@@ -106,11 +106,11 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 !       Clear-sky albedo of single scattering
     , tau_clr(nd_profile, nd_layer_clr)                                 &
 !       Clear-sky optical depth
-    , tau_clr_noscal(nd_profile, nd_layer_clr)                          &
+    , tau_clr_dir(nd_profile, nd_layer_clr)                             &
 !       Unscaled Clear-sky optical depth
     , tau(nd_profile, id_ct: nd_layer, 0: nd_cloud_type)                &
 !       Optical depth
-    , tau_noscal(nd_profile, id_ct: nd_layer, 0: nd_cloud_type)         &
+    , tau_dir(nd_profile, id_ct: nd_layer, 0: nd_cloud_type)            &
 !       Unscaled Optical depth
     , omega(nd_profile, id_ct: nd_layer, 0: nd_cloud_type)              &
 !       Albedo of single scattering
@@ -135,7 +135,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 !       Diffuse reflection coefficient
     , trans_0(nd_profile, nd_layer, nd_region)                          &
 !       Direct transmission coefficient
-    , trans_0_noscal(nd_profile, nd_layer, nd_region)                   &
+    , trans_0_dir(nd_profile, nd_layer, nd_region)                      &
 !       Unscaled Direct transmission coefficient
     , source_coeff(nd_profile, nd_layer                                 &
       , nd_source_coeff, nd_region)
@@ -162,7 +162,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 !       Temporary diffuse reflection coefficient
     , trans_0_temp(nd_profile, 1)                                       &
 !       Temporary direct transmission coefficient
-    , trans_0_temp_noscal(nd_profile, 1)                                &
+    , trans_0_temp_dir(nd_profile, 1)                                   &
 !       Unscaled Temporary direct transmission coefficient
     , source_coeff_temp(nd_profile, 1, nd_source_coeff)
 !       Temporary source coefficients in two-stream equations
@@ -178,7 +178,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
   REAL (RealK) ::                                                       &
       tau_gathered(nd_profile, 1)                                       &
 !       Gathered optical depth
-    , tau_gathered_noscal(nd_profile, 1)                                &
+    , tau_gathered_dir(nd_profile, 1)                                   &
 !       Unscaled Gathered optical depth
     , omega_gathered(nd_profile, 1)                                     &
 !       Gathered alebdo of single scattering
@@ -210,11 +210,11 @@ SUBROUTINE two_coeff_region(ierr, control                               &
   CALL two_coeff(ierr, control                                          &
     , n_profile, 1, n_cloud_top-1                                       &
     , i_2stream, l_ir_source_quad                                       &
-    , phase_fnc_clr, omega_clr, tau_clr_noscal, tau_clr                 &
+    , phase_fnc_clr, omega_clr, tau_clr_dir, tau_clr                    &
     , isolir, sec_0, sph%common%path_div                                &
     , trans(1, 1, ip_region_clear)                                      &
     , reflect(1, 1, ip_region_clear)                                    &
-    , trans_0_noscal(1, 1, ip_region_clear)                             &
+    , trans_0_dir(1, 1, ip_region_clear)                                &
     , trans_0(1, 1, ip_region_clear)                                    &
     , source_coeff(1, 1, 1, ip_region_clear)                            &
     , nd_profile, 1, nd_layer_clr, 1, nd_layer, nd_source_coeff         &
@@ -223,11 +223,11 @@ SUBROUTINE two_coeff_region(ierr, control                               &
   CALL two_coeff(ierr, control                                          &
     , n_profile, n_cloud_top, n_layer                                   &
     , i_2stream, l_ir_source_quad                                       &
-    , phase_fnc, omega, tau_noscal, tau                                 &
+    , phase_fnc, omega, tau_dir, tau                                    &
     , isolir, sec_0, sph%common%path_div                                &
     , trans(1, 1, ip_region_clear)                                      &
     , reflect(1, 1, ip_region_clear)                                    &
-    , trans_0_noscal(1, 1, ip_region_clear)                             &
+    , trans_0_dir(1, 1, ip_region_clear)                                &
     , trans_0(1, 1, ip_region_clear)                                    &
     , source_coeff(1, 1, 1, ip_region_clear)                            &
     , nd_profile, id_ct, nd_layer, 1, nd_layer                          &
@@ -247,7 +247,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
             trans(l, i, i_region)=0.0e+00_RealK
             reflect(l, i, i_region)=0.0e+00_RealK
             trans_0(l, i, i_region)=0.0e+00_RealK
-            trans_0_noscal(l, i, i_region)=0.0e+00_RealK
+            trans_0_dir(l, i, i_region)=0.0e+00_RealK
           END DO
         END DO
       ELSE
@@ -308,10 +308,11 @@ SUBROUTINE two_coeff_region(ierr, control                               &
           asymmetry_gathered(l, 1)                                      &
             =phase_fnc(l_list(l), i, 1, k)
         END DO
-        IF (control%l_noscal_tau) THEN
+        IF (control%i_direct_tau == ip_direct_noscaling .OR.            &
+            control%i_direct_tau == ip_direct_csr_scaling) THEN
           DO l=1, n_list
-          tau_gathered_noscal(l, 1)                                     &
-            =tau_noscal(l_list(l), i, k)
+          tau_gathered_dir(l, 1)                                        &
+            =tau_dir(l_list(l), i, k)
           END DO
         END IF
         IF (isolir == ip_solar) THEN
@@ -332,10 +333,10 @@ SUBROUTINE two_coeff_region(ierr, control                               &
           , n_list, i, i                                                &
           , i_2stream, l_ir_source_quad                                 &
           , asymmetry_gathered, omega_gathered                          &
-          , tau_gathered_noscal, tau_gathered                           &
+          , tau_gathered_dir, tau_gathered                              &
           , isolir, sec_0_gathered, path_div_gathered                   &
           , trans_temp, reflect_temp                                    &
-          , trans_0_temp_noscal, trans_0_temp                           &
+          , trans_0_temp_dir, trans_0_temp                              &
           , source_coeff_temp                                           &
           , nd_profile, i, i, i, i, nd_source_coeff                     &
           )
@@ -367,12 +368,13 @@ SUBROUTINE two_coeff_region(ierr, control                               &
               +frac_cloud(ll, i, k)*trans_0_temp(l, 1)
           END DO
 !
-          IF (control%l_noscal_tau) THEN
+          IF (control%i_direct_tau == ip_direct_noscaling .OR.          &
+              control%i_direct_tau == ip_direct_csr_scaling) THEN
             DO l=1, n_list
               ll=l_list(l)
-              trans_0_noscal(ll, i, i_region)                           &
-                =trans_0_noscal(ll, i, i_region)                        &
-                +frac_cloud(ll, i, k)*trans_0_temp_noscal(l, 1)
+              trans_0_dir(ll, i, i_region)                              &
+                =trans_0_dir(ll, i, i_region)                           &
+                +frac_cloud(ll, i, k)*trans_0_temp_dir(l, 1)
             END DO
           END IF
 !
@@ -410,11 +412,12 @@ SUBROUTINE two_coeff_region(ierr, control                               &
               *tmp_inv(l)
           END DO
 !
-          IF (control%l_noscal_tau) THEN
+          IF (control%i_direct_tau == ip_direct_noscaling .OR.          &
+              control%i_direct_tau == ip_direct_csr_scaling) THEN
             DO l=1, n_list
               ll=l_list(l)
-              trans_0_noscal(ll, i, i_region)                           &
-                =trans_0_noscal(ll, i, i_region)*tmp_inv(l)
+              trans_0_dir(ll, i, i_region)                              &
+                =trans_0_dir(ll, i, i_region)*tmp_inv(l)
             END DO
           END IF
         ELSE

@@ -505,6 +505,16 @@ INTEGER, PARAMETER :: ip_scatter_approx = 4
 INTEGER, PARAMETER :: ip_scatter_hybrid = 5
 !   Scattering treatment depends on k-term (specified in spectral file)
 
+! -----------------------------------------------------------------
+! Scaling optical depth for direct solar flux calculation
+! ------------------------------------------------------------------
+INTEGER, PARAMETER :: ip_direct_noscaling = 0
+!   No scaling optical depth for direct flux calculation
+INTEGER, PARAMETER :: ip_direct_delta_scaling = 1
+!   Delta-Eddington scaling for direct flux calculation
+INTEGER, PARAMETER :: ip_direct_csr_scaling = 2
+!   Circumsolar fraction scaling for direct flux calculation
+
 ! ------------------------------------------------------------------
 ! solver_pcf, solver3a
 ! ------------------------------------------------------------------

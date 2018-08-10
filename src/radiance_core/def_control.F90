@@ -215,12 +215,12 @@ TYPE StrCtrl
 !   i_solar_src = 5  Kurucz modtran
 !   i_solar_src = 6  Labs Neckel
 !                         Z. Sun
+  INTEGER :: i_direct_tau                                         = imdi
+!   Method of scaling optical depth for direct flux calculation
   LOGICAL :: l_ir_source_quad                                     = .FALSE.
 !   Flag to use a quadratic source function in the IR
   LOGICAL :: l_rescale                                            = .FALSE.
 !   Flag for rescaling
-  LOGICAL :: l_noscal_tau                                         = .FALSE.
-!   Flag to remove the scaling of optical depth for direct flux calculations
   LOGICAL :: l_spherical_solar                                    = .FALSE.
 !   Flag to use spherical geometry for the direct beam path
   LOGICAL :: l_henyey_greenstein_pf                               = .FALSE.
@@ -233,7 +233,8 @@ TYPE StrCtrl
 !   Accuracy for adaptive truncation
   REAL (RealK) :: euler_factor                                    = rmdi
 !   Factor applied to the last term of an alternating series
-
+  REAL (RealK) :: half_angle                                      = rmdi
+!   Half angle of FOV used for CSR fraction calculation 
 
 ! Miscallaneous options
   LOGICAL :: l_tile                                               = .FALSE.

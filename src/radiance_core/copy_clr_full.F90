@@ -18,10 +18,10 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
     , control, n_order_phase                                            &
-    , tau_clr, tau_clr_noscal, omega_clr, phase_fnc_clr                 &
-    , tau, tau_noscal                                                   &
+    , tau_clr, tau_clr_dir, omega_clr, phase_fnc_clr                    &
+    , tau, tau_dir                                                      &
     , omega, phase_fnc                                                  &
-    , tau_clr_f, tau_clr_noscal_f, omega_clr_f, phase_fnc_clr_f         &
+    , tau_clr_f, tau_clr_dir_f, omega_clr_f, phase_fnc_clr_f            &
 !                   Sizes of arrays
     , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_max_order           &
     )
@@ -31,6 +31,7 @@ SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE def_control, ONLY: StrCtrl
+  USE rad_pcf, ONLY: ip_direct_noscaling, ip_direct_csr_scaling
 
   IMPLICIT NONE
 
@@ -65,8 +66,8 @@ SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
   REAL (RealK), INTENT(IN) ::                                           &
       tau_clr(nd_profile, nd_layer_clr)                                 &
 !       Optical depth in totally clear region
-    , tau_clr_noscal(nd_profile, nd_layer_clr)                          &
-!       Unscaled optical depth in totally clear region
+    , tau_clr_dir(nd_profile, nd_layer_clr)                             &
+!       Optical depth in direct path in totally clear region
     , omega_clr(nd_profile, nd_layer_clr)                               &
 !       Single scattering albedo in totally clear region
     , phase_fnc_clr(nd_profile, nd_layer_clr, nd_max_order)
@@ -74,7 +75,7 @@ SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
   REAL (RealK), INTENT(IN) ::                                           &
       tau(nd_profile, id_ct: nd_layer)                                  &
 !       Optical depth restricted to clear-sky regions
-    , tau_noscal(nd_profile, id_ct: nd_layer)                           &
+    , tau_dir(nd_profile, id_ct: nd_layer)                              &
 !       Unscaled optical depth restricted to clear-sky regions
     , omega(nd_profile, id_ct: nd_layer)                                &
 !       ALbedo of single scattering restricted to clear-sky regions
@@ -85,8 +86,8 @@ SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
   REAL (RealK), INTENT(OUT) ::                                          &
       tau_clr_f(nd_profile, nd_layer)                                   &
 !       Optical depth
-    , tau_clr_noscal_f(nd_profile, nd_layer)                            &
-!       Unscaled optical depth
+    , tau_clr_dir_f(nd_profile, nd_layer)                               &
+!       Optical depth in direct path
     , omega_clr_f(nd_profile, nd_layer)                                 &
 !       Single scattering albedo
     , phase_fnc_clr_f(nd_profile, nd_layer, nd_max_order)
@@ -140,18 +141,19 @@ SUBROUTINE copy_clr_full(n_profile, n_layer, n_cloud_top                &
     END DO
   END DO
 
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
 ! Above cloud top.
     DO i=1, n_cloud_top-1
       DO l=1, n_profile
-        tau_clr_noscal_f(l, i)=tau_clr_noscal(l, i)
+        tau_clr_dir_f(l, i)=tau_clr_dir(l, i)
       END DO
     END DO
 
 ! Below cloud top.
     DO i=n_cloud_top, n_layer
       DO l=1, n_profile
-        tau_clr_noscal_f(l, i)=tau_noscal(l, i)
+        tau_clr_dir_f(l, i)=tau_dir(l, i)
       END DO
     END DO
   END IF

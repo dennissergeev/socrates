@@ -44,7 +44,8 @@ do case $1 in
       -e) euler_trnf=T ; shift ;;
       +F) sph_flux=T ; shift ;;
       -F) filter=$2; shift 2 ;;
-      -ns) noscal=T ; shift ;;
+      -ds) modify_dir=T ; dir_scal=$2 ; shift 2 ;;
+      -ha) half_angle=$2 ; shift 2 ;;
       -G) brdf_basis=$2 ; ls_brdf_trunc=$3 ; shift 3 ;;
       -g) c_gas=g ; gas_overlap=$2 ; shift 2 ; \
           if [ $gas_overlap -eq $IP_OVERLAP_SINGLE ] ; \
@@ -155,10 +156,14 @@ if [ "$filter" ]
 else
    echo "n" >> /tmp/lrcdl.$$
 fi
-if [ "$noscal" ]
-   then echo "y"  >> /tmp/lrcdl.$$
+if [ "$modify_dir" ]
+# set either 0 for no scaling or 2 for csr scaling
+    then echo $dir_scal >> /tmp/lrcdl.$$
+    if [ $dir_scal -eq 2 ]
+       then echo $half_angle >> /tmp/lrcdl.$$
+    fi 
 else
-   echo "n" >> /tmp/lrcdl.$$
+    echo "1" >> /tmp/lrcdl.$$
 fi
 echo $process_flag >> /tmp/lrcdl.$$
 if [ "$gas_overlap" ] 

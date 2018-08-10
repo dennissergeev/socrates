@@ -182,8 +182,8 @@ SUBROUTINE mcica_column(ierr                                            &
 !       Free reflectance of layer
   , trans_0(nd_profile, nd_layer)                                       &
 !       Free direct transmission of layer
-  , trans_0_noscal(nd_profile, nd_layer)                                &
-!       Free direct transmission of layer without scaling tau
+  , trans_0_dir(nd_profile, nd_layer)                                   &
+!       Free direct transmission of layer using direct tau
   , source_coeff(nd_profile, nd_layer, nd_source_coeff)                 &
 !       Free source coefficients
   , s_down(nd_profile, nd_layer)                                        &
@@ -200,7 +200,7 @@ SUBROUTINE mcica_column(ierr                                            &
 !       Temporary diffuse reflection coefficient
   , trans_0_temp(nd_profile, 1)                                         &
 !       Temporary direct transmission coefficient
-  , trans_0_temp_noscal(nd_profile, 1)                                  &
+  , trans_0_temp_dir(nd_profile, 1)                                     &
 !       Temporary unscaled direct transmission coefficient
   , source_coeff_temp(nd_profile, 1, nd_source_coeff)
 !       Temporary source coefficients in two-stream equations
@@ -218,8 +218,8 @@ SUBROUTINE mcica_column(ierr                                            &
   REAL (RealK) ::                                                       &
     tau_gathered(nd_profile, 1)                                         &
 !       Gathered optical depth
-  , tau_gathered_noscal(nd_profile, 1)                                  &
-!       Unscaled tau
+  , tau_gathered_dir(nd_profile, 1)                                     &
+!       Optical depth for direct flux
   , omega_gathered(nd_profile, 1)                                       &
 !       Gathered alebdo of single scattering
   , asymmetry_gathered(nd_profile, 1)                                   &
@@ -260,9 +260,9 @@ SUBROUTINE mcica_column(ierr                                            &
     , n_profile, 1, n_cloud_top-1                                       &
     , i_2stream, l_ir_source_quad                                       &
     , ss_prop%phase_fnc_clr                                             &
-    , ss_prop%omega_clr, ss_prop%tau_clr_noscal, ss_prop%tau_clr        &
+    , ss_prop%omega_clr, ss_prop%tau_clr_dir, ss_prop%tau_clr           &
     , isolir, sec_0, sph%common%path_div                                &
-    , trans, reflect, trans_0_noscal, trans_0                           &
+    , trans, reflect, trans_0_dir, trans_0                              &
     , source_coeff                                                      &
     , nd_profile, 1, nd_layer_clr, 1, nd_layer, nd_source_coeff         &
     )
@@ -271,9 +271,9 @@ SUBROUTINE mcica_column(ierr                                            &
     , i_2stream, l_ir_source_quad                                       &
     , ss_prop%phase_fnc(:, :, :, 0)                                     &
     , ss_prop%omega(:, :, 0)                                            &
-    , ss_prop%tau_noscal(:, :, 0), ss_prop%tau(:, :, 0)                 &
+    , ss_prop%tau_dir(:, :, 0), ss_prop%tau(:, :, 0)                    &
     , isolir, sec_0, sph%common%path_div                                &
-    , trans, reflect, trans_0_noscal, trans_0                           &
+    , trans, reflect, trans_0_dir, trans_0                              &
     , source_coeff                                                      &
     , nd_profile, id_ct, nd_layer, 1, nd_layer, nd_source_coeff         &
     )
@@ -311,7 +311,7 @@ SUBROUTINE mcica_column(ierr                                            &
     CALL column_solver(ierr, control, bound, sph%common, sph%clear      &
     , n_profile, n_layer                                                &
     , i_scatter_method, i_solver                                        &
-    , trans, reflect, trans_0_noscal, trans_0, source_coeff             &
+    , trans, reflect, trans_0_dir, trans_0, source_coeff                &
     , isolir, flux_inc_direct, flux_inc_down                            &
     , s_down, s_up                                                      &
     , diffuse_albedo, direct_albedo                                     &
@@ -340,7 +340,7 @@ SUBROUTINE mcica_column(ierr                                            &
             trans(l, i)=0.0_RealK
             reflect(l, i)=0.0_RealK
             trans_0(l, i)=0.0_RealK
-            trans_0_noscal(l, i)=0.0_RealK
+            trans_0_dir(l, i)=0.0_RealK
             DO j=1, n_source_coeff
               source_coeff(l, i, j)=0.0_RealK
             END DO
@@ -389,10 +389,11 @@ SUBROUTINE mcica_column(ierr                                            &
             omega_gathered(l, 1)=ss_prop%omega(ll, i, k)
             asymmetry_gathered(l, 1)=ss_prop%phase_fnc(ll, i, 1, k)
           END DO
-          IF (control%l_noscal_tau) THEN
+          IF (control%i_direct_tau == ip_direct_noscaling .OR.          &
+              control%i_direct_tau == ip_direct_csr_scaling) THEN
             DO l=1, n_list(i,k)
               ll=l_list(l,i,k)
-              tau_gathered_noscal(l, 1)=ss_prop%tau_noscal(ll, i, k)
+              tau_gathered_dir(l, 1)=ss_prop%tau_dir(ll, i, k)
             END DO
           END IF
 
@@ -414,10 +415,10 @@ SUBROUTINE mcica_column(ierr                                            &
             , n_list(i,k), i, i                                         &
             , i_2stream, l_ir_source_quad                               &
             , asymmetry_gathered, omega_gathered                        &
-            , tau_gathered_noscal, tau_gathered                         &
+            , tau_gathered_dir, tau_gathered                            &
             , isolir, sec_0_gathered, path_div_gathered                 &
             , trans_temp, reflect_temp                                  &
-            , trans_0_temp_noscal, trans_0_temp                         &
+            , trans_0_temp_dir, trans_0_temp                            &
             , source_coeff_temp                                         &
             , nd_profile, i, i, i, i, nd_source_coeff                   &
             )
@@ -444,12 +445,13 @@ SUBROUTINE mcica_column(ierr                                            &
                 +cld%frac_cloud(ll, i, k)                               &
                 *trans_0_temp(l, 1)
             END DO
-            IF (control%l_noscal_tau) THEN
+            IF (control%i_direct_tau == ip_direct_noscaling .OR.        &
+                control%i_direct_tau == ip_direct_csr_scaling) THEN
               DO l=1, n_list(i,k)
                 ll=l_list(l,i,k)
-                trans_0_noscal(ll, i)=trans_0_noscal(ll, i)             &
+                trans_0_dir(ll, i)=trans_0_dir(ll, i)                   &
                   +cld%frac_cloud(ll, i, k)                             &
-                  *trans_0_temp_noscal(l, 1)
+                  *trans_0_temp_dir(l, 1)
               END DO
             END IF
           END IF
@@ -537,7 +539,7 @@ SUBROUTINE mcica_column(ierr                                            &
   CALL column_solver(ierr, control, bound, sph%common, sph%allsky       &
     , n_profile, n_layer                                                &
     , i_scatter_method, i_solver                                        &
-    , trans, reflect, trans_0_noscal, trans_0, source_coeff             &
+    , trans, reflect, trans_0_dir, trans_0, source_coeff                &
     , isolir, flux_inc_direct, flux_inc_down                            &
     , s_down, s_up                                                      &
     , diffuse_albedo, direct_albedo                                     &

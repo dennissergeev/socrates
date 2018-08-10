@@ -16,6 +16,7 @@ SOURCE_RADCORE=	adjust_ir_radiance.f90 \
 		calculate_density.f90 \
 		cg_kappa_ms.f90 \
 		check_phf_term.f90 \
+		circumsolar_fraction.f90 \
 		cloud_maxcs_split.f90 \
 		column_solver.f90 \
 		copy_clr_full.f90 \
@@ -41,6 +42,7 @@ SOURCE_RADCORE=	adjust_ir_radiance.f90 \
 		ir_source.f90 \
 		layer_part_integ.f90 \
 		legendre_weight.f90 \
+		legendre_mod.f90 \
 		mcica_column.f90 \
 		mcica_sample.f90 \
 		mix_app_scat.f90 \
@@ -64,6 +66,7 @@ SOURCE_RADCORE=	adjust_ir_radiance.f90 \
 		rebin_esft_terms.f90 \
 		rescale_continuum.f90 \
 		rescale_phase_fnc.f90 \
+		rescale_tau_csr.f90 \
 		rescale_tau_omega.f90 \
 		scale_absorb.f90 \
 		scale_wenyi.f90 \

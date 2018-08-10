@@ -9,9 +9,9 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE trans_source_coeff(control, n_profile                        &
      , i_layer_first, i_layer_last                                      &
-     , tau_noscal, tau, sum, diff, lambda, sec_0, path_div              &
+     , tau_dir, tau, sum, diff, lambda, sec_0, path_div                 &
      , gamma_up, gamma_down                                             &
-     , trans, reflect, trans_0_noscal, trans_0, source_coeff            &
+     , trans, reflect, trans_0_dir, trans_0, source_coeff               &
      , nd_profile                                                       &
      , id_op_lt, id_op_lb, id_trs_lt, id_trs_lb                         &
      , nd_source_coeff                                                  &
@@ -59,7 +59,7 @@ SUBROUTINE trans_source_coeff(control, n_profile                        &
   REAL (RealK), INTENT(IN) ::                                           &
       tau(nd_profile, id_op_lt: id_op_lb)                               &
 !       Optical depths of layers
-    , tau_noscal(nd_profile, id_op_lt: id_op_lb)                        &
+    , tau_dir(nd_profile, id_op_lt: id_op_lb)                           &
 !       Unscaled optical depths of layers
     , sum(nd_profile, id_op_lt: id_op_lb)                               &
 !       Sum of alpha_1 and alpha_2
@@ -85,7 +85,7 @@ SUBROUTINE trans_source_coeff(control, n_profile                        &
 !       Diffuse reflection coefficient
     , trans_0(nd_profile, id_trs_lt: id_trs_lb)                         &
 !       Direct transmission coefficient
-    , trans_0_noscal(nd_profile, id_trs_lt: id_trs_lb)                  &
+    , trans_0_dir(nd_profile, id_trs_lt: id_trs_lb)                     &
 !       Direct transmission coefficient without scaling
     , source_coeff(nd_profile, id_trs_lt: id_trs_lb                     &
         , nd_source_coeff)
@@ -187,11 +187,12 @@ SUBROUTINE trans_source_coeff(control, n_profile                        &
           temp(l) = -tau(l,i)*sec_0(l)
         END DO
         CALL exp_v(n_profile,temp,trans_0(1,i))
-        IF (control%l_noscal_tau) THEN
+        IF (control%i_direct_tau == ip_direct_noscaling .OR.            &
+            control%i_direct_tau == ip_direct_csr_scaling) THEN
           DO l=1, n_profile
-             temp(l) = -tau_noscal(l,i)*sec_0(l)
+             temp(l) = -tau_dir(l,i)*sec_0(l)
           END DO
-          CALL exp_v(n_profile,temp,trans_0_noscal(1,i))
+          CALL exp_v(n_profile,temp,trans_0_dir(1,i))
         END IF
         DO l=1, n_profile
           source_coeff(l, i, ip_scf_solar_up)                           &

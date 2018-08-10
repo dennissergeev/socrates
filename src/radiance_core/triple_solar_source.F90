@@ -19,7 +19,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
      , n_profile, n_layer, n_cloud_top                                  &
      , n_region, flux_inc_direct                                        &
      , l_scale_solar, adjust_solar_ke                                   &
-     , trans_0_noscal, trans_0, source_coeff                            &
+     , trans_0_dir, trans_0, source_coeff                               &
      , v11, v12, v13, v21, v22, v23, v31, v32, v33                      &
      , flux_direct                                                      &
      , flux_direct_ground                                               &
@@ -85,8 +85,8 @@ SUBROUTINE triple_solar_source(control, bound                           &
   REAL (RealK), INTENT(IN) ::                                           &
       trans_0(nd_profile, nd_layer, nd_region)                          &
 !       Direct transmission
-    , trans_0_noscal(nd_profile, nd_layer, nd_region)                   &
-!       Unscaled direct transmission coefficients
+    , trans_0_dir(nd_profile, nd_layer, nd_region)                      &
+!       Direct transmission using direct tau
     , source_coeff(nd_profile, nd_layer                                 &
       , nd_source_coeff, nd_region)
 !       Source coefficients
@@ -138,7 +138,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
 !       Solar fluxes at top of layer
     , solar_base(nd_profile, nd_region)                                 &
 !       Solar fluxes at base of layer
-    , flux_direct_noscal(nd_profile, 0: nd_layer)
+    , flux_direct_dir(nd_profile, 0: nd_layer)
 !       Overall unscaled direct flux
 
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
@@ -157,9 +157,10 @@ SUBROUTINE triple_solar_source(control, bound                           &
   DO l=1, n_profile
     flux_direct(l, 0)=flux_inc_direct(l)
   END DO
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                 &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
     DO l=1, n_profile
-      flux_direct_noscal(l, 0)=flux_inc_direct(l)
+      flux_direct_dir(l, 0)=flux_inc_direct(l)
     END DO
   END IF
 
@@ -181,12 +182,13 @@ SUBROUTINE triple_solar_source(control, bound                           &
       END DO
     END DO
 
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_cloud_top-1
         DO l=1, n_profile
-          flux_direct_noscal(l, i)                                      &
-            =flux_direct_noscal(l, i-1)                                 &
-            *trans_0_noscal(l, i, ip_region_clear)                      &
+          flux_direct_dir(l, i)                                         &
+            =flux_direct_dir(l, i-1)                                    &
+            *trans_0_dir(l, i, ip_region_clear)                         &
             *adjust_solar_ke(l, i)
         END DO
       END DO
@@ -207,12 +209,13 @@ SUBROUTINE triple_solar_source(control, bound                           &
       END DO
     END DO
 
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_cloud_top-1
         DO l=1, n_profile
-          flux_direct_noscal(l, i)                                      &
-            =flux_direct_noscal(l, i-1)                                 &
-            *trans_0_noscal(l, i, ip_region_clear)
+          flux_direct_dir(l, i)                                         &
+            =flux_direct_dir(l, i-1)                                    &
+            *trans_0_dir(l, i, ip_region_clear)
         END DO
       END DO
     END IF
@@ -297,12 +300,13 @@ SUBROUTINE triple_solar_source(control, bound                           &
 
 
 ! Repeat for direct flux using trans without scaling
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
 
 !   Clear and cloudy region.
 !   Initialize partial fluxes:
     DO l=1, n_profile
-      solar_base(l, ip_region_clear)=flux_direct_noscal(l, n_cloud_top-1)
+      solar_base(l, ip_region_clear)=flux_direct_dir(l, n_cloud_top-1)
       solar_base(l, ip_region_strat)=0.0e+00_RealK
       solar_base(l, ip_region_conv)=0.0e+00_RealK
     END DO
@@ -335,7 +339,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
           DO l=1, n_profile
             solar_base(l, k)                                            &
               =solar_top(l, k)                                          &
-              *trans_0_noscal(l, i, k)*adjust_solar_ke(l, i)
+              *trans_0_dir(l, i, k)*adjust_solar_ke(l, i)
           END DO
         END DO
     
@@ -344,7 +348,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
         DO k=1, n_region
           DO l=1, n_profile
             solar_base(l, k)=solar_top(l, k)                            &
-              *trans_0_noscal(l, i, k)
+              *trans_0_dir(l, i, k)
           END DO
         END DO
     
@@ -353,7 +357,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
     
 !     Calculate the total direct flux.
       DO l=1, n_profile
-        flux_direct_noscal(l, i)=solar_base(l, ip_region_clear)         &
+        flux_direct_dir(l, i)=solar_base(l, ip_region_clear)            &
           +solar_base(l, ip_region_strat)                               &
           +solar_base(l, ip_region_conv)
       END DO
@@ -364,7 +368,7 @@ SUBROUTINE triple_solar_source(control, bound                           &
 !   From this point, use the unscaled direct flux as the direct component.
     DO i= 0, n_layer
       DO l=1, n_profile
-        flux_direct(l, i)=flux_direct_noscal(l, i)
+        flux_direct(l, i)=flux_direct_dir(l, i)
       END DO
     END DO
 

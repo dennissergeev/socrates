@@ -15,9 +15,9 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
      , n_profile, i_layer_first, i_layer_last                           &
      , i_2stream, l_ir_source_quad, n_source_coeff                      &
      , n_cloud_type, frac_cloud                                         &
-     , phase_fnc_cloud, omega_cloud, tau_cloud_noscal, tau_cloud        &
+     , phase_fnc_cloud, omega_cloud, tau_cloud_dir, tau_cloud           &
      , isolir, sec_0, sph                                               &
-     , trans_cloud, reflect_cloud, trans_0_cloud_noscal, trans_0_cloud  &
+     , trans_cloud, reflect_cloud, trans_0_cloud_dir, trans_0_cloud     &
      , source_coeff_cloud                                               &
      , nd_profile, nd_layer, id_ct, nd_max_order                        &
      , nd_source_coeff, nd_cloud_type                                   &
@@ -87,8 +87,8 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 !       Albedo of single scattering
     , tau_cloud(nd_profile, id_ct: nd_layer, nd_cloud_type)             &
 !       Optical depth
-    , tau_cloud_noscal(nd_profile, id_ct: nd_layer, nd_cloud_type)
-!       Unscaled Optical depth
+    , tau_cloud_dir(nd_profile, id_ct: nd_layer, nd_cloud_type)
+!       Optical depth for direct flux
 
 ! Solar beam
   REAL (RealK), INTENT(IN) ::                                           &
@@ -107,8 +107,8 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 !       Mean diffuse reflection coefficient
     , trans_0_cloud(nd_profile, nd_layer)                               &
 !       Mean direct transmission coefficient
-    , trans_0_cloud_noscal(nd_profile, nd_layer)                        &
-!       Mean direct transmission coefficient without scaling
+    , trans_0_cloud_dir(nd_profile, nd_layer)                           &
+!       Mean direct transmission coefficient with direct tau
     , source_coeff_cloud(nd_profile, nd_layer, nd_source_coeff)
 !       Mean source coefficients in two-stream equations
 
@@ -132,7 +132,7 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 !       Temporary diffuse reflection coefficient
     , trans_0_temp(nd_profile, 1)                                       &
 !       Temporary direct transmission coefficient
-    , trans_0_temp_noscal(nd_profile, 1)                                &
+    , trans_0_temp_dir(nd_profile, 1)                                   &
 !       Temporary direct transmission coefficient
     , source_coeff_temp(nd_profile, 1, nd_source_coeff)
 !       Temporary source coefficients in two-stream equations
@@ -148,8 +148,8 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
   REAL (RealK) ::                                                       &
       tau_gathered(nd_profile, 1)                                       &
 !       Gathered optical depth
-    , tau_gathered_noscal(nd_profile, 1)                                &
-!       Unscaled gathered tau
+    , tau_gathered_dir(nd_profile, 1)                                   &
+!       Direct gathered tau
     , omega_gathered(nd_profile, 1)                                     &
 !       Gathered alebdo of single scattering
     , asymmetry_gathered(nd_profile, 1)                                 &
@@ -189,10 +189,11 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
         trans_0_cloud(l, i)=0.0e+00_RealK
       END DO
     END DO
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=i_layer_first, i_layer_last
         DO l=1, n_profile
-          trans_0_cloud_noscal(l, i)=0.0e+00_RealK
+          trans_0_cloud_dir(l, i)=0.0e+00_RealK
         END DO
       END DO
     END IF
@@ -236,10 +237,11 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
             =phase_fnc_cloud(l_list(l), i, 1, k)
         END DO
 
-        IF (control%l_noscal_tau) THEN
+        IF (control%i_direct_tau == ip_direct_noscaling .OR.            &
+            control%i_direct_tau == ip_direct_csr_scaling) THEN
           DO l=1, n_list
-            tau_gathered_noscal(l, 1)                                   &
-              =tau_cloud_noscal(l_list(l), i, k)
+            tau_gathered_dir(l, 1)                                      &
+              =tau_cloud_dir(l_list(l), i, k)
           END DO
         END IF
         IF (isolir == ip_solar) THEN
@@ -260,9 +262,9 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
           , n_list, i, i                                                &
           , i_2stream, l_ir_source_quad                                 &
           , asymmetry_gathered, omega_gathered                          &
-          , tau_gathered_noscal, tau_gathered                           &
+          , tau_gathered_dir, tau_gathered                              &
           , isolir, sec_0_gathered, path_div_gathered                   &
-          , trans_temp, reflect_temp, trans_0_temp_noscal, trans_0_temp &
+          , trans_temp, reflect_temp, trans_0_temp_dir, trans_0_temp    &
           , source_coeff_temp                                           &
           , nd_profile, i, i, i, i, nd_source_coeff                     &
           )
@@ -289,11 +291,12 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
                +frac_cloud(ll, i, k)*trans_0_temp(l, 1)
           END DO
 
-          IF (control%l_noscal_tau) THEN
+          IF (control%i_direct_tau == ip_direct_noscaling .OR.          &
+              control%i_direct_tau == ip_direct_csr_scaling) THEN
             DO l=1, n_list
               ll=l_list(l)
-              trans_0_cloud_noscal(ll, i)=trans_0_cloud_noscal(ll, i)   &
-                 +frac_cloud(ll, i, k)*trans_0_temp_noscal(l, 1)
+              trans_0_cloud_dir(ll, i)=trans_0_cloud_dir(ll, i)         &
+                 +frac_cloud(ll, i, k)*trans_0_temp_dir(l, 1)
             END DO
           END IF
         END IF

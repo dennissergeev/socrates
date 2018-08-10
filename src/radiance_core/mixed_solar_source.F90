@@ -4,24 +4,21 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to set the solar source terms in a mixed column.
+! Subroutine to set the solar source terms in a mixed column.
 !
 ! Method:
 !   The direct beam is calculated by propagating down through
 !   the column. These direct fluxes are used to `define' the
 !   source terms in each layer.
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
-!
 !- ---------------------------------------------------------------------
 SUBROUTINE mixed_solar_source(control, bound                            &
     , n_profile, n_layer, n_cloud_top                                   &
     , flux_inc_direct                                                   &
     , l_scale_solar, adjust_solar_ke                                    &
-    , trans_0_free_noscal, trans_0_free, source_coeff_free              &
+    , trans_0_free_dir, trans_0_free, source_coeff_free                 &
     , g_ff, g_fc, g_cf, g_cc                                            &
-    , trans_0_cloud_noscal, trans_0_cloud, source_coeff_cloud           &
+    , trans_0_cloud_dir, trans_0_cloud, source_coeff_cloud              &
     , flux_direct                                                       &
     , flux_direct_ground_cloud                                          &
     , s_up_free, s_down_free                                            &
@@ -83,7 +80,7 @@ SUBROUTINE mixed_solar_source(control, bound                            &
   REAL (RealK), INTENT(IN) ::                                           &
       trans_0_free(nd_profile, nd_layer)                                &
 !       Free direct transmission
-    , trans_0_free_noscal(nd_profile, nd_layer)                         &
+    , trans_0_free_dir(nd_profile, nd_layer)                            &
 !       Free unscaled direct transmission
     , source_coeff_free(nd_profile, nd_layer, nd_source_coeff)
 !       Clear-sky source coefficients
@@ -92,7 +89,7 @@ SUBROUTINE mixed_solar_source(control, bound                            &
   REAL (RealK), INTENT(IN) ::                                           &
       trans_0_cloud(nd_profile, nd_layer)                               &
 !       Cloudy direct transmission
-    , trans_0_cloud_noscal(nd_profile, nd_layer)                        &
+    , trans_0_cloud_dir(nd_profile, nd_layer)                           &
 !       Cloudy unscaled direct transmission
     , source_coeff_cloud(nd_profile, nd_layer, nd_source_coeff)
 !       Cloudy reflectance
@@ -140,8 +137,8 @@ SUBROUTINE mixed_solar_source(control, bound                            &
 !       Free solar flux at base of layer
     , solar_base_cloud(nd_profile)                                      &
 !       Cloudy solar flux at base of layer
-    , flux_direct_noscal(nd_profile, 0: nd_layer)
-!       Unscaled Direct flux
+    , flux_direct_dir(nd_profile, 0: nd_layer)
+!       Direct flux using direct tau
 
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
@@ -159,9 +156,10 @@ SUBROUTINE mixed_solar_source(control, bound                            &
   DO l=1, n_profile
     flux_direct(l, 0)=flux_inc_direct(l)
   END DO
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
     DO l=1, n_profile
-      flux_direct_noscal(l, 0)=flux_inc_direct(l)
+      flux_direct_dir(l, 0)=flux_inc_direct(l)
     END DO
   END IF
 
@@ -183,11 +181,12 @@ SUBROUTINE mixed_solar_source(control, bound                            &
       END DO
     END DO
 
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_cloud_top-1
         DO l=1, n_profile
-          flux_direct_noscal(l, i)                                      &
-            =flux_direct_noscal(l, i-1)*trans_0_free_noscal(l, i)       & 
+          flux_direct_dir(l, i)                                         &
+            =flux_direct_dir(l, i-1)*trans_0_free_dir(l, i)             & 
              *adjust_solar_ke(l, i)
         END DO
       END DO
@@ -206,11 +205,12 @@ SUBROUTINE mixed_solar_source(control, bound                            &
           *flux_direct(l, i-1)
       END DO
     END DO
-    IF (control%l_noscal_tau) THEN
+    IF (control%i_direct_tau == ip_direct_noscaling .OR.                &
+        control%i_direct_tau == ip_direct_csr_scaling) THEN
       DO i=1, n_cloud_top-1
         DO l=1, n_profile
-          flux_direct_noscal(l, i)                                      &
-          =flux_direct_noscal(l, i-1)*trans_0_free_noscal(l, i)
+          flux_direct_dir(l, i)                                         &
+          =flux_direct_dir(l, i-1)*trans_0_free_dir(l, i)
         END DO
       END DO
     END IF
@@ -296,12 +296,13 @@ SUBROUTINE mixed_solar_source(control, bound                            &
 
 
 ! Repeat for direct flux using trans without scaling
-  IF (control%l_noscal_tau) THEN
+  IF (control%i_direct_tau == ip_direct_noscaling .OR.                  &
+      control%i_direct_tau == ip_direct_csr_scaling) THEN
 
 !   Clear and cloudy region.
 !   Initialize partial fluxes:
     DO l=1, n_profile
-      solar_base_free(l)=flux_direct_noscal(l, n_cloud_top-1)
+      solar_base_free(l)=flux_direct_dir(l, n_cloud_top-1)
       solar_base_cloud(l)=0.0e+00_RealK
     END DO
 
@@ -311,11 +312,10 @@ SUBROUTINE mixed_solar_source(control, bound                            &
 !     Transfer fluxes across the interface. The use of only one
 !     cloudy flux implicitly forces random overlap of different
 !     subclouds within the cloudy parts of the layer.
-
       DO l=1, n_profile
-        solar_top_cloud(l)=g_cc(l, i-1)*solar_base_cloud(l)               &
+        solar_top_cloud(l)=g_cc(l, i-1)*solar_base_cloud(l)             &
           +g_fc(l, i-1)*solar_base_free(l)
-        solar_top_free(l)=g_ff(l, i-1)*solar_base_free(l)                 &
+        solar_top_free(l)=g_ff(l, i-1)*solar_base_free(l)               &
           +g_cf(l, i-1)*solar_base_cloud(l)
       END DO
 
@@ -324,19 +324,19 @@ SUBROUTINE mixed_solar_source(control, bound                            &
       IF (l_scale_solar) THEN
 
         DO l=1, n_profile
-          solar_base_free(l)=solar_top_free(l)                            &
-            *trans_0_free_noscal(l, i)*adjust_solar_ke(l, i)
-          solar_base_cloud(l)=solar_top_cloud(l)                          &
-            *trans_0_cloud_noscal(l, i)*adjust_solar_ke(l, i)
+          solar_base_free(l)=solar_top_free(l)                          &
+            *trans_0_free_dir(l, i)*adjust_solar_ke(l, i)
+          solar_base_cloud(l)=solar_top_cloud(l)                        &
+            *trans_0_cloud_dir(l, i)*adjust_solar_ke(l, i)
         END DO
 
       ELSE
 
         DO l=1, n_profile
-          solar_base_free(l)=solar_top_free(l)                            &
-            *trans_0_free_noscal(l, i)
-          solar_base_cloud(l)=solar_top_cloud(l)                          &
-            *trans_0_cloud_noscal(l, i)
+          solar_base_free(l)=solar_top_free(l)                          &
+            *trans_0_free_dir(l, i)
+          solar_base_cloud(l)=solar_top_cloud(l)                        &
+            *trans_0_cloud_dir(l, i)
         END DO
 
       END IF
@@ -344,7 +344,7 @@ SUBROUTINE mixed_solar_source(control, bound                            &
 
 !     Calculate the total direct flux.
       DO l=1, n_profile
-        flux_direct_noscal(l, i)=solar_base_free(l)+solar_base_cloud(l)
+        flux_direct_dir(l, i)=solar_base_free(l)+solar_base_cloud(l)
       END DO
 
     END DO
@@ -353,7 +353,7 @@ SUBROUTINE mixed_solar_source(control, bound                            &
 !   From this point, use the unscaled direct flux as the direct component.
     DO i= 0, n_layer
       DO l=1, n_profile
-        flux_direct(l, i)=flux_direct_noscal(l, i)
+        flux_direct(l, i)=flux_direct_dir(l, i)
       END DO
     END DO
 

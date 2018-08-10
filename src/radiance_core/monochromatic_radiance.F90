@@ -414,28 +414,52 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
     , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_cloud_type          &
     )
 
-  IF (control%l_noscal_tau) THEN
-    ! Above cloud top.
-    DO i=1, n_cloud_top-1
-      DO l=1, n_profile
-         ss_prop%tau_clr_noscal(l,i) = ss_prop%tau_clr(l,i)
-      END DO
-    END DO
-    ! Below cloud top.
-    DO k=0, cld%n_cloud_type
-       DO i=n_cloud_top, n_layer
-         DO l=1, n_profile
-           ss_prop%tau_noscal(l,i,k)=ss_prop%tau(l,i,k)
-         END DO
-       END DO
-    END DO
-  END IF
 
   IF ( (i_angular_integration == ip_two_stream).OR.                     &
        (i_angular_integration == ip_spherical_harmonic) ) THEN
 
 !   Rescale the optical depth and albedo of single scattering.
     IF (l_rescale) THEN
+
+      !-----------------------------------------------------------------
+      ! For direct solar flux, the optical depth can be scaled by three
+      ! options: 
+      ! ip_direct_csr_scaling - scaling optical depth with a forward
+      ! scattering fraction with a FOV of pyrheliometer
+      ! ip_direct_noscaling - no scaling 
+      ! ip_direct_delta_scaling - Delta-Eddington scaling
+      !-----------------------------------------------------------------
+      IF (control%i_direct_tau == ip_direct_csr_scaling) THEN
+        ! Rescale tau by CSR forward fraction  
+! DEPENDS ON: rescale_tau_csr
+        ! Above cloud top.
+        CALL rescale_tau_csr(n_profile                                  &
+           , 1, n_cloud_top-1                                           &
+           , ss_prop%forward_scatter_clr_csr                            &
+           , ss_prop%tau_clr, ss_prop%tau_clr_dir                       &
+           , ss_prop%omega_clr                                          &
+           , nd_profile, nd_layer_clr, 1                                &
+           )
+        ! Below cloud top.
+        CALL rescale_tau_csr(n_profile                                  &
+           , n_cloud_top, n_layer                                       &
+           , ss_prop%forward_scatter_csr(1, id_ct, 0)                   &
+           , ss_prop%tau(1, id_ct, 0), ss_prop%tau_dir(1, id_ct, 0)     &
+           , ss_prop%omega(1, id_ct, 0)                                 &
+           , nd_profile, nd_layer, id_ct                                &
+           )
+      ELSE IF (control%i_direct_tau == ip_direct_noscaling) THEN
+        DO i=1, n_cloud_top-1
+          DO l=1, n_profile
+            ss_prop%tau_clr_dir(l,i) = ss_prop%tau_clr(l,i)
+          END DO
+        END DO
+        DO i=n_cloud_top, n_layer
+          DO l=1, n_profile
+            ss_prop%tau_dir(l,i,0)=ss_prop%tau(l,i,0)
+          END DO
+        END DO
+      END IF
 
 ! DEPENDS ON: rescale_tau_omega
       CALL rescale_tau_omega(n_profile, 1, n_cloud_top-1                &
@@ -451,6 +475,26 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 
       IF (l_cloud) THEN
 
+        IF (control%i_direct_tau == ip_direct_csr_scaling) THEN
+          DO k=1, cld%n_cloud_type  
+            CALL rescale_tau_csr(n_profile                              &
+               , n_cloud_top, n_layer                                   &
+               , ss_prop%forward_scatter_csr(1, id_ct, k)               &
+               , ss_prop%tau(1, id_ct, k)                               &
+               , ss_prop%tau_dir(1, id_ct, k)                           &
+               , ss_prop%omega(1, id_ct, k)                             &
+               , nd_profile, nd_layer, id_ct                            &
+               )
+          END DO
+        ELSE IF (control%i_direct_tau == ip_direct_noscaling) THEN
+          DO k=1, cld%n_cloud_type
+            DO i=n_cloud_top, n_layer
+              DO l=1, n_profile
+                ss_prop%tau_dir(l,i,k)=ss_prop%tau(l,i,k)
+              END DO
+            END DO
+          END DO
+        END IF
         DO k=1, cld%n_cloud_type
           CALL rescale_tau_omega(n_profile, n_cloud_top, n_layer        &
             , ss_prop%tau(:, :, k), ss_prop%omega(:, :, k)              &

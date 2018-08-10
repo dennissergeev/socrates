@@ -15,6 +15,7 @@
      &, NPNTS                                                           &
      &  )
 !
+      USE realtype_rd, ONLY: RealK
       USE rad_ccf, ONLY: repsilon
       USE yomhook, ONLY: lhook, dr_hook
       USE parkind1, ONLY: jprb, jpim
@@ -53,7 +54,7 @@
      &  NPNTS
 !       Points (=horizontal dimensions) being processed by qSAT scheme.
 !
-      REAL                                                              &
+      REAL (RealK) ::                                                   &
                         !, INTENT(IN)
      &  T(NPNTS)                                                        &
 !       Temperature (K).
@@ -62,7 +63,7 @@
 !
 ! arguments with intent out. ie: output variables.
 !
-      REAL                                                              &
+      REAL (RealK) ::                                                   &
                         !, INTENT(OUT)
      &  QS(NPNTS)
 !       SATURATION MIXING RATIO AT TEMPERATURE T AND PRESSURE P (KG/KG)
@@ -72,18 +73,21 @@
 !     zerodegc is a conversion between degrees centigrade and kelvin
       REAL, PARAMETER :: zerodegc = 273.15
 
-      REAL ONE_MINUS_EPSILON  ! ONE MINUS THE RATIO OF THE MOLECULAR
-!                               WEIGHTS OF WATER AND DRY AIR
-!
-      REAL T_LOW        ! LOWEST TEMPERATURE FOR WHICH LOOK-UP TABLE OF
-!                         SATURATION WATER VAPOUR PRESSURE IS VALID (K)
-!
-      REAL T_HIGH       ! HIGHEST TEMPERATURE FOR WHICH LOOK-UP TABLE OF
-!                         SATURATION WATER VAPOUR PRESSURE IS VALID (K)
-!
-      REAL DELTA_T      ! TEMPERATURE INCREMENT OF THE LOOK-UP
-                        ! TABLE OF SATURATION VAPOUR PRESSURES
-!
+      REAL (RealK) :: ONE_MINUS_EPSILON
+!       ONE MINUS THE RATIO OF THE MOLECULAR WEIGHTS OF WATER AND DRY AIR
+
+      REAL (RealK) :: T_LOW
+!       LOWEST TEMPERATURE FOR WHICH LOOK-UP TABLE OF
+!       SATURATION WATER VAPOUR PRESSURE IS VALID (K)
+
+      REAL (RealK) :: T_HIGH
+!       HIGHEST TEMPERATURE FOR WHICH LOOK-UP TABLE OF
+!       SATURATION WATER VAPOUR PRESSURE IS VALID (K)
+
+      REAL (RealK) :: DELTA_T
+!       TEMPERATURE INCREMENT OF THE LOOK-UP
+!       TABLE OF SATURATION VAPOUR PRESSURES
+
       INTEGER N         ! SIZE OF LOOK-UP TABLE OF SATURATION
                         ! WATER VAPOUR PRESSURES
 !
@@ -101,22 +105,24 @@
 !
       INTEGER ITABLE    ! WORK VARIABLES
 !
-      REAL ATABLE       ! WORK VARIABLES
+      REAL (RealK) :: ATABLE       ! WORK VARIABLES
 !
 !     VARIABLES INTRODUCED BY DLR.
 !
-      REAL FSUBW        ! FACTOR THAT CONVERTS FROM SAT VAPOUR PRESSURE
-!                         IN A PURE WATER SYSTEM TO SAT VAPOUR PRESSURE
-!                         IN AIR.
-      REAL TT
-!
+      REAL (RealK) :: FSUBW
+!       FACTOR THAT CONVERTS FROM SAT VAPOUR PRESSURE
+!       IN A PURE WATER SYSTEM TO SAT VAPOUR PRESSURE IN AIR.
+
+      REAL (RealK) :: TT
+
 !  (b) Others.
       INTEGER I         ! LOOP COUNTERS
 !
       INTEGER IES       ! LOOP COUNTER FOR DATA STATEMENT LOOK-UP TABLE
 !
 !  Local dynamic arrays-------------------------------------------------
-      REAL ES(0:N+1)    ! TABLE OF SATURATION WATER VAPOUR PRESSURE (PA)
+      REAL (RealK) :: ES(0:N+1)
+!       TABLE OF SATURATION WATER VAPOUR PRESSURE (PA)
 !                       - SET BY DATA STATEMENT CALCULATED FROM THE
 !                         GOFF-GRATCH FORMULAE AS TAKEN FROM LANDOLT-
 !                         BORNSTEIN, 1987 NUMERICAL DATA AND FUNCTIONAL
