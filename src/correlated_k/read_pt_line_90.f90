@@ -46,7 +46,7 @@ SUBROUTINE read_pt_line_90 &
 !   Values of temperatures.
 !
 !
-! Local varaibles
+! Local variables
   INTEGER :: length
 !   Length of input line
   INTEGER :: n_word
@@ -63,9 +63,9 @@ SUBROUTINE read_pt_line_90 &
 !   Unit number assigned for input of p and T
   INTEGER :: ios
 !   I/O error flag
-  INTEGER,PARAMETER :: n_char_line=512
+  INTEGER,PARAMETER :: n_char_line=1024
 !   Maximum number of characters in a line
-  INTEGER,PARAMETER :: n_char_list=1024
+  INTEGER,PARAMETER :: n_char_list=2048
 !   Maximum number of characters in a list
   INTEGER,PARAMETER :: n_char_word=20
 !   Maximum number of characters in a word

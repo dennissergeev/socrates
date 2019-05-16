@@ -693,12 +693,91 @@ CONTAINS
 !
 !
   END SUBROUTINE select_bands_int
-!
-!
-!
+
+
+
+  SUBROUTINE sorting_PT_points(P,T,map)
+
+    IMPLICIT NONE
+
+    ! Input P,T points
+    REAL(RealK), DIMENSION(:), Intent(IN)   :: P,T
+    ! Map indexing properly sorted P,T 
+    INTEGER,DIMENSION(:), Intent(OUT):: map
+
+    INTEGER,DIMENSION(SIZE(P)) :: Pmap,Pmap2
+    INTEGER :: PuniqueNum ! Counts the number of unique pressure points
+    INTEGER :: PTLen,i,j, PCount,idx,mapIdx
+    REAL(RealK),DIMENSION(SIZE(P)) :: Pcopy, Tcopy,Punique
+    INTEGER,DIMENSION(:), ALLOCATABLE :: PIdxSelection,Tmap
+    REAL(RealK),DIMENSION(:), ALLOCATABLE :: TSelection
+    LOGICAL :: PisPresent
+
+    PTLen = SIZE(P)
+    ! Sort the P points
+    Pcopy=P
+    Tcopy=T
+    CALL map_heap_func(Pcopy,Pmap)
+    Pcopy=Pcopy(Pmap)
+    Tcopy=Tcopy(Pmap)
+
+    ! Adds first element to Punique
+    PuniqueNum = 1
+    Punique(PuniqueNum)=P(1)
+    ! Find unique P points
+    DO idx =2,PTLen
+      PisPresent=.FALSE.
+      DO i = 1, PuniqueNum
+        IF (P(idx) == Punique(i)) THEN
+          PisPresent=.TRUE.
+        END IF
+      END DO
+      IF (.NOT. PisPresent) THEN
+        PuniqueNum =PuniqueNum+1
+        Punique(PuniqueNum)=P(idx)
+      END IF
+    END DO
+    !write(*,*) PuniqueNum, " unique Pressure Points"
+
+    ! For each P, find every T, sort them, and output to map
+    mapIdx=0
+    DO idx=1,PuniqueNum
+      PCount=0
+      ! Find the Pressure indices corresponding to each P
+      DO i = 1, PTLen
+        IF (Punique(idx) == P(i)) THEN
+          PCount=PCount+1
+          Pmap2(Pcount)=i
+        END IF
+      END DO
+      
+      ! Find the Ts for each index
+      ALLOCATE(TSelection(PCount))
+      ALLOCATE(PIdxSelection(PCount))
+      ALLOCATE(Tmap(PCount))
+      ! Matching indices in the master lists and Ts
+      PIdxSelection=Pmap2(1:PCount)
+      TSelection=T(Pmap2(1:PCount))
+      ! Sort T to find the proper order of indices
+      CALL map_heap_func(TSelection,Tmap)
+      PIdxSelection=PIdxSelection(Tmap)
+      ! Write them to map for output
+      DO j = 1, PCount
+        mapIdx=mapIdx+1
+        map(mapIdx) = PIdxSelection(j)
+      END DO
+      DEALLOCATE(TSelection)
+      DEALLOCATE(PIdxSelection)
+      DEALLOCATE(Tmap)
+    END DO
+  END SUBROUTINE sorting_PT_points
+    
+    
+    
   SUBROUTINE select_generation_pT_int
 !  
     INTEGER :: map_pt(nd_pt)
+    
 !  
 !   Determine the pressures and temperatures at which data are to be
 !   generated.
@@ -772,8 +851,9 @@ CONTAINS
     IF (l_file) CLOSE(iu_file_in)
 
 !   Sort the P/T pairs into increasing P and T:
-    CALL map_heap_func( &
-      p(1:n_pt_pair)+t(1:n_pt_pair)*1.0e-9_RealK, map_pt(1:n_pt_pair) )
+    Call sorting_PT_points( &
+         p(1:n_pt_pair),t(1:n_pt_pair),map_pt(1:n_pt_pair))
+    
     p(1:n_pt_pair)=p(map_pt(1:n_pt_pair))
     t(1:n_pt_pair)=t(map_pt(1:n_pt_pair))
 !

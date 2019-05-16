@@ -10,7 +10,7 @@ MODULE dimensions_pp_ucf
 
   IMPLICIT NONE
 
-  INTEGER, Parameter ::  npd_pt = 1000
+  INTEGER, Parameter ::  npd_pt = 2000
 !   Size allocated for p and T pairs
   INTEGER, Parameter ::  npd_amount = 330
 !   Size allocated for amounts
