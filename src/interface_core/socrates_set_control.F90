@@ -19,8 +19,9 @@ subroutine set_control(control, spectrum, l_set_defaults, &
   l_tile, l_clear, &
   l_flux_up_band, l_flux_down_band, &
   l_flux_up_clear_band, l_flux_down_clear_band, &
+  l_blue_flux_surf, &
   n_tile, n_cloud_layer, n_aer_mode, &
-  isolir, i_cloud_representation, i_overlap, i_inhom, &
+  isolir, i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
   i_st_water, i_cnv_water, i_st_ice, i_cnv_ice )
 
 use def_control,  only: StrCtrl, allocate_control
@@ -42,6 +43,7 @@ use rad_pcf, only: &
   ip_solver_triple_hogan, ip_cloud_triple, ip_cloud_part_corr_cnv, &
   ip_cloud_clear, ip_scale_ses2, ip_overlap_mix_ses2, &
   i_normal, i_err_fatal
+use def_mcica, only: ip_mcica_optimal_sampling
 
 implicit none
 
@@ -57,12 +59,13 @@ logical, intent(in), optional :: l_set_defaults, &
   l_aerosol, l_aerosol_mode, l_aerosol_ccn, &
   l_tile, l_clear, &
   l_flux_up_band, l_flux_down_band, &
-  l_flux_up_clear_band, l_flux_down_clear_band
+  l_flux_up_clear_band, l_flux_down_clear_band, &
+  l_blue_flux_surf
 
 integer, intent(in), optional :: n_tile, n_cloud_layer, n_aer_mode
 
 integer, intent(in), optional :: isolir, &
-  i_cloud_representation, i_overlap, i_inhom, &
+  i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
   i_st_water, i_cnv_water, i_st_ice, i_cnv_ice
 
 ! Local variables
@@ -94,6 +97,7 @@ if (present(i_cloud_representation)) &
   control%i_cloud_representation = i_cloud_representation
 if (present(i_overlap)) control%i_overlap = i_overlap
 if (present(i_inhom)) control%i_inhom = i_inhom
+if (present(i_mcica_sampling)) control%i_mcica_sampling = i_mcica_sampling
 if (present(i_st_water)) control%i_st_water = i_st_water
 if (present(i_cnv_water)) control%i_cnv_water = i_cnv_water
 if (present(i_st_ice)) control%i_st_ice = i_st_ice
@@ -107,6 +111,7 @@ if (present(l_flux_up_clear_band)) &
   control%l_flux_up_clear_band = l_flux_up_clear_band
 if (present(l_flux_down_clear_band)) &
   control%l_flux_down_clear_band = l_flux_down_clear_band
+if (present(l_blue_flux_surf)) control%l_blue_flux_surf = l_blue_flux_surf
 
 if (present(l_clear)) control%l_clear = l_clear
 control%l_clear = control%l_clear &
@@ -161,6 +166,7 @@ if (present(l_set_defaults)) then
       call set_int_default(control%i_cloud_representation, ip_cloud_off)
       call set_int_default(control%i_overlap, ip_max_rand)
       call set_int_default(control%i_inhom, ip_homogeneous)
+      call set_int_default(control%i_mcica_sampling, ip_mcica_optimal_sampling)
       if (present(n_cloud_layer)) then
         if (n_cloud_layer < 1) control%i_cloud_representation = ip_cloud_off
       end if

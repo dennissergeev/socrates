@@ -158,6 +158,8 @@ TYPE StrCtrl
 !   Type of ice crystal in convective clouds
   INTEGER :: i_inhom                                              = imdi
 !   Method of treating cloud water content variability
+  INTEGER :: i_mcica_sampling                                     = imdi
+!   Method of sampling sub-grid cloud using MCICA
   INTEGER :: i_overlap                                            = imdi
 !   Method of treating cloud vertical overlap
   LOGICAL :: l_local_cnv_partition                                = .FALSE.

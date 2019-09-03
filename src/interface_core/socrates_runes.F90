@@ -25,9 +25,8 @@ implicit none
 character(len=*), parameter, private :: ModuleName = 'SOCRATES_RUNES'
 contains
 
-subroutine runes(n_profile, n_layer, spectrum, spectrum_name, &
+subroutine runes(n_profile, n_layer, spectrum, spectrum_name, mcica_data, &
   n_cloud_layer, n_aer_mode, n_tile, &
-  n_subcol_gen, n_subcol_req, &
   p_layer, t_layer, t_level, mass, density, &
   h2o, o3, &
   p_layer_1d, t_layer_1d, t_level_1d, mass_1d, density_1d, &
@@ -46,33 +45,41 @@ subroutine runes(n_profile, n_layer, spectrum, spectrum_name, &
   liq_frac_1d, ice_frac_1d, liq_conv_frac_1d, ice_conv_frac_1d, &
   liq_mmr_1d, ice_mmr_1d, liq_conv_mmr_1d, ice_conv_mmr_1d, &
   liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d, &
-  dp_corr_strat, dp_corr_conv, &
+  cloud_vertical_decorr, conv_vertical_decorr, &
+  cloud_horizontal_rsd, &
   layer_heat_capacity, layer_heat_capacity_1d, &
-  i_source, i_cloud_representation, i_overlap, i_inhom, i_st_water, i_st_ice, &
+  i_source, i_cloud_representation, i_overlap, i_inhom, &
+  i_mcica_sampling, i_st_water, i_st_ice, &
+  rand_seed, &
   l_rayleigh, l_mixing_ratio, l_aerosol_mode, &
   l_invert, l_debug, i_profile_debug, &
   flux_direct, flux_down, flux_up, heating_rate, &
   flux_up_tile, flux_up_blue_tile, flux_direct_blue_surf, flux_down_blue_surf, &
   flux_direct_1d, flux_down_1d, flux_up_1d, heating_rate_1d, &
-  flux_up_tile_1d, flux_up_blue_tile_1d)
+  flux_up_tile_1d, flux_up_blue_tile_1d, &
+  total_cloud_cover)
 
 use def_spectrum, only: StrSpecData
+use def_mcica,    only: StrMcica
 use def_control,  only: StrCtrl,  deallocate_control
 use def_dimen,    only: StrDim
 use def_atm,      only: StrAtm,   deallocate_atm
 use def_bound,    only: StrBound, deallocate_bound
-use def_cld,      only: StrCld,   deallocate_cld, deallocate_cld_prsc
+use def_cld,      only: StrCld,   deallocate_cld, deallocate_cld_prsc, &
+                                  deallocate_cld_mcica
 use def_aer,      only: StrAer,   deallocate_aer, deallocate_aer_prsc
 use def_out,      only: StrOut,   deallocate_out
 
-use socrates_set_spectrum, only: spectrum_array_name, spectrum_array
+use socrates_set_spectrum, only: spectrum_array_name, spectrum_array, &
+                                 mcica_spectrum_name, mcica_data_array
 
-use socrates_set_control, only: set_control
-use socrates_set_dimen,   only: set_dimen
-use socrates_set_atm,     only: set_atm
-use socrates_set_bound,   only: set_bound
-use socrates_set_cld,     only: set_cld
-use socrates_set_aer,     only: set_aer
+use socrates_set_control,   only: set_control
+use socrates_set_dimen,     only: set_dimen
+use socrates_set_atm,       only: set_atm
+use socrates_set_bound,     only: set_bound
+use socrates_set_cld,       only: set_cld
+use socrates_set_cld_mcica, only: set_cld_mcica
+use socrates_set_aer,       only: set_aer
 
 use realtype_rd, only: RealK
 use ereport_mod,  only: ereport
@@ -85,6 +92,9 @@ implicit none
 type (StrSpecData), intent(in), target, optional :: spectrum
 character(len=*), intent(in), optional :: spectrum_name
 
+! Mcica data
+type (StrMcica), intent(in), target, optional :: mcica_data
+
 integer, intent(in) :: n_profile
 !   Number of columns to operate on
 integer, intent(in) :: n_layer
@@ -95,10 +105,6 @@ integer, intent(in), optional :: n_cloud_layer
 !   Number of potentially cloudy layers
 integer, intent(in), optional :: n_aer_mode
 !   Number of aerosol modes
-integer, intent(in), optional :: n_subcol_gen
-!   Number of sub-grid cloud columns generated
-integer, intent(in), optional :: n_subcol_req
-!   Number of sub-grid cloud columns required
 
 real(RealK), intent(in), optional :: p_layer(n_profile, n_layer)
 real(RealK), intent(in), optional :: p_layer_1d(n_layer)
@@ -171,8 +177,12 @@ real(RealK), intent(in), dimension (n_layer), optional :: &
 !   Liquid and ice cloud fractions, gridbox mean mixing ratios, and
 !   effective dimensions
 
-real(RealK), intent(in), optional :: dp_corr_strat, dp_corr_conv
-!   Decorrelation pressure scales for cloud vertical overlap
+real(RealK), intent(in), optional :: cloud_vertical_decorr
+!   Decorrelation pressure scale for cloud vertical overlap
+real(RealK), intent(in), optional :: conv_vertical_decorr
+!   Decorrelation pressure scale for convective cloud vertical overlap
+real(RealK), intent(in), optional :: cloud_horizontal_rsd
+!   Relative standard deviation of sub-grid cloud condensate
 
 real(RealK), intent(in), optional :: layer_heat_capacity(n_profile, n_layer)
 real(RealK), intent(in), optional :: layer_heat_capacity_1d(n_layer)
@@ -181,8 +191,11 @@ real(RealK), intent(in), optional :: layer_heat_capacity_1d(n_layer)
 integer, intent(in), optional :: i_source
 !   Select source of radiation
 integer, intent(in), optional :: &
-  i_cloud_representation, i_overlap, i_inhom, i_st_water, i_st_ice
+  i_cloud_representation, i_overlap, i_inhom, &
+  i_mcica_sampling, i_st_water, i_st_ice
 !   Select treatment of cloud
+integer, intent(in), optional :: rand_seed(n_profile)
+!   Random seed for cloud generator
 
 logical, intent(in), optional :: l_rayleigh
 !   Include Rayleigh scattering
@@ -222,10 +235,15 @@ real(RealK), intent(out), optional :: flux_direct_blue_surf(n_profile)
 !   Direct blue flux at the surface
 real(RealK), intent(out), optional :: flux_down_blue_surf(n_profile)
 !   Total downward blue flux at the surface
-
+real(RealK), intent(out), optional :: total_cloud_cover(n_profile)
+!   Total cloud cover
 
 ! Spectral data:
 type(StrSpecData), pointer :: spec => null()
+
+! Mcica data:
+type(StrMcica), pointer :: mcica => null()
+type(StrMcica), target :: mcica_dummy
 
 ! Controlling options:
 type(StrCtrl) :: control
@@ -248,10 +266,12 @@ type(StrAer) :: aer
 ! Output fields from core radiation code:
 type(StrOut) :: radout
 
-integer :: l, i, id_spec
+integer :: l, i, id_spec, id_mcica
 !   Loop variables
 logical :: l_inv
 !   Local logical for field inversion
+logical :: l_blue_flux_surf
+!   Output blue fluxes if requested
 real(RealK) :: flux_divergence(n_profile, n_layer)
 !   Flux divergence across layer (Wm-2)
 
@@ -270,12 +290,53 @@ if (present(spectrum_name)) then
     end if
   end do
   spec => spectrum_array(id_spec)
+  if ( (i_cloud_representation /= ip_cloud_representation_off) .and. &
+       (i_inhom == ip_inhom_mcica) ) then
+    if (allocated(mcica_data_array).and.allocated(mcica_spectrum_name)) then
+      do id_mcica=1, size(mcica_data_array)
+        if (mcica_spectrum_name(i_source, id_mcica) == spectrum_name) exit
+        if (id_mcica == size(mcica_data_array)) then
+          cmessage = 'Spectrum name not associated with MCICA data.'
+          ierr=i_err_fatal
+          call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+        end if
+      end do
+      mcica => mcica_data_array(id_mcica)
+    else
+      cmessage = 'MCICA data has not been read in correctly.'
+      ierr=i_err_fatal
+      call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+    end if
+  else
+    mcica => mcica_dummy
+  end if
 else if (present(spectrum)) then
   spec => spectrum
+  if ( (i_cloud_representation /= ip_cloud_representation_off) .and. &
+       (i_inhom == ip_inhom_mcica) ) then
+    if (present(mcica_data)) then
+      mcica => mcica_data
+    else
+      cmessage = 'No mcica_data object has been passed to socrates_runes.'
+      ierr=i_err_fatal
+      call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+    end if
+  else
+    mcica => mcica_dummy
+  end if
 else
   cmessage = 'No spectrum name or object supplied.'
   ierr=i_err_fatal
   call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+end if
+
+if (present(flux_up_blue_tile)     .or. &
+    present(flux_up_blue_tile_1d)  .or. &
+    present(flux_direct_blue_surf) .or. &
+    present(flux_down_blue_surf) ) then
+  l_blue_flux_surf = .true.
+else
+  l_blue_flux_surf = .false.
 end if
 
 call set_control(control, spec, &
@@ -284,22 +345,23 @@ call set_control(control, spec, &
   l_mixing_ratio         = l_mixing_ratio, &
   l_aerosol_mode         = l_aerosol_mode, &
   l_tile                 = l_tile, &
+  l_blue_flux_surf       = l_blue_flux_surf, &
   n_tile                 = n_tile, &
   n_cloud_layer          = n_cloud_layer, &
   n_aer_mode             = n_aer_mode, &
   i_cloud_representation = i_cloud_representation, &
   i_overlap              = i_overlap, &
   i_inhom                = i_inhom, &
+  i_mcica_sampling       = i_mcica_sampling, &
   i_st_water             = i_st_water, &
   i_st_ice               = i_st_ice, &
   l_set_defaults         = .true.)
 
 call set_dimen(dimen, control, n_profile, n_layer, &
+  mcica_data    = mcica, &
   n_tile        = n_tile, &
   n_cloud_layer = n_cloud_layer, &
-  n_aer_mode    = n_aer_mode, &
-  n_subcol_gen  = n_subcol_gen, &
-  n_subcol_req  = n_subcol_req )
+  n_aer_mode    = n_aer_mode )
 
 call set_atm(atm, dimen, spec, n_profile, n_layer, &
   p_layer           = p_layer,           &
@@ -348,24 +410,28 @@ call set_bound(bound, control, dimen, spec, n_profile, &
   i_profile_debug  = i_profile_debug )
 
 call set_cld(cld, control, dimen, spec, atm, &
-  cloud_frac      = cloud_frac,     &
-  liq_frac        = liq_frac,       &
-  ice_frac        = ice_frac,       &
-  liq_mmr         = liq_mmr,        &
-  ice_mmr         = ice_mmr,        &
-  liq_dim         = liq_dim,        &
-  ice_dim         = ice_dim,        &
-  cloud_frac_1d   = cloud_frac_1d,  &
-  liq_frac_1d     = liq_frac_1d,    &
-  ice_frac_1d     = ice_frac_1d,    &
-  liq_mmr_1d      = liq_mmr_1d,     &
-  ice_mmr_1d      = ice_mmr_1d,     &
-  liq_dim_1d      = liq_dim_1d,     &
-  ice_dim_1d      = ice_dim_1d,     &
-  dp_corr_strat   = dp_corr_strat,  &
-  l_invert        = l_invert,       &
-  l_debug         = l_debug,        &
-  i_profile_debug = i_profile_debug )
+  cloud_frac            = cloud_frac, &
+  liq_frac              = liq_frac, &
+  ice_frac              = ice_frac, &
+  liq_mmr               = liq_mmr, &
+  ice_mmr               = ice_mmr, &
+  liq_dim               = liq_dim, &
+  ice_dim               = ice_dim, &
+  cloud_frac_1d         = cloud_frac_1d, &
+  liq_frac_1d           = liq_frac_1d, &
+  ice_frac_1d           = ice_frac_1d, &
+  liq_mmr_1d            = liq_mmr_1d, &
+  ice_mmr_1d            = ice_mmr_1d, &
+  liq_dim_1d            = liq_dim_1d, &
+  ice_dim_1d            = ice_dim_1d, &
+  cloud_vertical_decorr = cloud_vertical_decorr, &
+  l_invert              = l_invert, &
+  l_debug               = l_debug, &
+  i_profile_debug       = i_profile_debug )
+
+call set_cld_mcica(cld, mcica, control, dimen, spec, atm, &
+  rand_seed            = rand_seed, &
+  cloud_horizontal_rsd = cloud_horizontal_rsd)
 
 call set_aer(aer, control, dimen, spec, n_profile, n_layer)
 
@@ -448,13 +514,26 @@ call sum_tile_channels(flux_up_tile, flux_up_tile_1d, radout%flux_up_tile)
 call sum_tile_channels(flux_up_blue_tile, flux_up_blue_tile_1d, &
                        radout%flux_up_blue_tile)
 if (present(flux_direct_blue_surf)) &
-  flux_direct_blue_surf = radout%flux_direct_blue_surf
+  flux_direct_blue_surf = radout%flux_direct_blue_surf(1:n_profile)
 if (present(flux_down_blue_surf)) &
-  flux_down_blue_surf = radout%flux_down_blue_surf
+  flux_down_blue_surf = radout%flux_down_blue_surf(1:n_profile)
+if (present(total_cloud_cover)) then
+  if (control%i_cloud_representation == ip_cloud_representation_off) then
+    total_cloud_cover = 0.0_RealK
+  else
+    if (control%i_inhom == ip_inhom_mcica) then
+      total_cloud_cover = real(cld%n_subcol_cld(1:n_profile), RealK) &
+                        / real(mcica%n_subcol_gen, RealK)
+    else
+      total_cloud_cover = radout%tot_cloud_cover(1:n_profile)
+    end if
+  end if
+end if
 
 call deallocate_out(radout)
 call deallocate_aer_prsc(aer)
 call deallocate_aer(aer)
+call deallocate_cld_mcica(cld)
 call deallocate_cld_prsc(cld)
 call deallocate_cld(cld)
 call deallocate_bound(bound)

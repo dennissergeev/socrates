@@ -16,6 +16,8 @@ PROGRAM l_run_cdl
 ! Modules to set types of variables:
   USE realtype_rd
   USE def_spectrum
+  USE def_mcica,   ONLY: StrMcica, read_mcica_data, ip_mcica_full_sampling, &
+                         ip_mcica_single_sampling, ip_mcica_optimal_sampling
   USE def_dimen,   ONLY: StrDim
   USE def_control, ONLY: StrCtrl,  allocate_control,   deallocate_control
   USE def_atm,     ONLY: StrAtm,   allocate_atm,       deallocate_atm
@@ -34,8 +36,10 @@ PROGRAM l_run_cdl
   USE rad_pcf
   USE gas_list_pcf
   USE input_head_pcf
-  USE rad_ccf, ONLY: seconds_per_day, grav_acc, cp_air_dry, r, c_virtual
-  USE mcica_mod
+  USE rad_ccf, ONLY: seconds_per_day, grav_acc, cp_air_dry, r, c_virtual, &
+    earth_radius, pi
+  USE socrates_set_spectrum, only: set_spectrum
+  USE socrates_set_cld_mcica, only: set_cld_mcica
 
   IMPLICIT NONE
 
@@ -58,6 +62,9 @@ PROGRAM l_run_cdl
 
 ! Spectral information:
   TYPE(StrSpecData) :: spectrum
+
+! MCICA data
+  TYPE(StrMcica) :: mcica
 
 ! Atmospheric properties:
   TYPE(StrAtm) :: atm
@@ -115,8 +122,6 @@ PROGRAM l_run_cdl
 !       Flag recording the presence of solar azimuthal angles
 
 ! Cloudy fields
-  INTEGER :: rad_mcica_sampling
-!       Level of optimization of the random sampling in McICA
   REAL  (RealK) :: rad_mcica_sigma
 !       Normalized cloud condensate std. dev
 
@@ -195,7 +200,10 @@ PROGRAM l_run_cdl
   mcica_data(PATH_END+1:)='mcica_data'
 
 ! Read spectral file
-  CALL read_spectrum(control%spectral_file, Spectrum)
+  CALL set_spectrum( &
+    spectrum      = spectrum, &
+    spectral_file = control%spectral_file, &
+    l_all_gases   = .true. )
 
   WRITE(iu_stdout, "(a,i0,a)") &
     "Enter the number of channels for output (1 - ", &
@@ -791,14 +799,18 @@ PROGRAM l_run_cdl
   ENDIF
 
   IF (control%i_cloud == IP_cloud_mcica) THEN
-    WRITE(iu_stdout, '(/a)') 'Enter fractional standard deviation ' //  &
+    WRITE(iu_stdout, '(/a)') 'Enter relative standard deviation ' //  &
       '(std. dev / mean) of cloud water content.'
     READ(iu_stdin, *) rad_mcica_sigma
     WRITE(iu_stdout, '(/a)') 'Enter number for the sampling method ' // &
       'used in McICA,'
-    READ(iu_stdin, *) rad_mcica_sampling
+    READ(iu_stdin, *) control%i_mcica_sampling
     WRITE (iu_stdout,'(/a)') 'Reading McICA data file: ',mcica_data
-    CALL read_mcica_data(mcica_data)
+    IF (control%isolir == ip_solar) THEN
+      CALL read_mcica_data(mcica, mcica_data, sp_sw=spectrum)
+    ELSE
+      CALL read_mcica_data(mcica, mcica_data, sp_lw=spectrum)
+    END IF
   ENDIF
 
 ! ------------------------------------------------------------------
@@ -1030,55 +1042,19 @@ PROGRAM l_run_cdl
 ! Subgrid cloud generator
 ! ------------------------------------------------------------------
   IF (control%i_cloud == IP_cloud_mcica) THEN
-    CALL open_cloud_gen(                                                &
-!               Model Dimensions
-      atm%n_layer, dimen%nd_layer,                                      &
-      atm%n_profile, dimen%nd_profile, atm%p,                           &
-!               Properties of clouds
-      cld%w_cloud, cld%dp_corr_strat,                                   &
-!               McICA inpit parameters
-      rad_mcica_sampling, rad_mcica_sigma,                              &
-!               Error information
-      ierr)
-
-    dimen%nd_subcol_gen = tot_subcol_gen
-    dimen%nd_subcol_req = subcol_need
-    CALL allocate_cld_mcica(cld, dimen, spectrum)
-
-!   Fill MCICA variables in the cld input structure
-    IF (control%isolir == IP_solar) THEN
-      DO l=1,subcol_need
-        cld%subcol_reorder(l)=sw_subcol_reorder(l)
-      END DO
-      DO ll=1, Spectrum%Dim%nd_k_term
-        DO l=1, Spectrum%Dim%nd_band
-          cld%subcol_k(l,ll)=sw_subcol_k(l,ll)
-        END DO
-      END DO
-    ELSE
-      DO l=1,subcol_need
-        cld%subcol_reorder(l)=lw_subcol_reorder(l)
-      END DO
-      DO ll=1, Spectrum%Dim%nd_k_term
-        DO l=1, Spectrum%Dim%nd_band
-          cld%subcol_k(l,ll)=lw_subcol_k(l,ll)
-        END DO
-      END DO
-    ENDIF
-    CALL mcica_order(control, spectrum, cld) 
-    cld%frac_cloudy=frac_cloudy_full
-    IF (cld%n_cloud_type == 2) THEN
-      IF (ALLOCATED(cic_sub_full)) THEN
-        cld%c_sub(1:atm%n_profile,1:atm%n_layer,:,1)=clw_sub_full
-        cld%c_sub(1:atm%n_profile,1:atm%n_layer,:,2)=cic_sub_full
-      ELSE
-        cld%c_sub(1:atm%n_profile,1:atm%n_layer,:,1)=clw_sub_full
-        cld%c_sub(1:atm%n_profile,1:atm%n_layer,:,2)=clw_sub_full
-      ENDIF
-    ELSE IF (cld%n_cloud_type == 1) THEN
-        cld%c_sub(1:atm%n_profile,1:atm%n_layer,:,1)=clw_sub_full    
-    ENDIF
-  ENDIF
+    dimen%nd_subcol_gen = mcica%n_subcol_gen
+    select case (control%i_mcica_sampling)
+    case (ip_mcica_full_sampling)
+      dimen%nd_subcol_req = mcica%n_subcol_gen
+    case (ip_mcica_single_sampling)
+      dimen%nd_subcol_req = mcica%n_subcol_req_single
+    case (ip_mcica_optimal_sampling)
+      dimen%nd_subcol_req = mcica%n_subcol_req_optimal
+    end select
+    control%i_overlap=2
+    CALL set_cld_mcica(cld, mcica, control, dimen, spectrum, atm, &
+      cloud_horizontal_rsd = rad_mcica_sigma)
+  END IF
 
 
 ! ------------------------------------------------------------------
@@ -1213,7 +1189,6 @@ END IF
 ! ------------------------------------------------------------------
 ! Deallocate arrays:
 ! ------------------------------------------------------------------
-  CALL close_cloud_gen
   CALL deallocate_cld_mcica(cld)
   CALL deallocate_atm(atm)
   CALL deallocate_cld(cld)

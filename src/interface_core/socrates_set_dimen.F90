@@ -12,15 +12,16 @@ implicit none
 character(len=*), parameter, private :: ModuleName = 'SOCRATES_SET_DIMEN'
 contains
 
-subroutine set_dimen(dimen, control, n_profile, n_layer, &
-  n_channel, n_tile, &
-  n_cloud_layer, n_aer_mode, n_subcol_gen, n_subcol_req, &
+subroutine set_dimen(dimen, control, n_profile, n_layer, mcica_data, &
+  n_channel, n_tile, n_cloud_layer, n_aer_mode, &
   n_direction, n_viewing_level, n_brdf_basis_fnc, n_brdf_trunc, &
   n_profile_aerosol_prsc, n_profile_cloud_prsc, &
   n_opt_level_aerosol_prsc, n_opt_level_cloud_prsc)
 
 use def_dimen,   only: StrDim
 use def_control, only: StrCtrl
+use def_mcica,   only: StrMcica, ip_mcica_full_sampling, &
+  ip_mcica_single_sampling, ip_mcica_optimal_sampling
 use rad_pcf,     only: &
   ip_cloud_homogen, ip_cloud_ice_water, ip_cloud_conv_strat, ip_cloud_csiw, &
   ip_cloud_column_max, ip_solver_mix_app_scat, ip_solver_mix_direct, &
@@ -39,11 +40,13 @@ type(StrDim), intent(inout) :: dimen
 ! Control options:
 type(StrCtrl), intent(in) :: control
 
+! Mcica data:
+type(StrMcica), intent(in), optional :: mcica_data
+
 integer, intent(in) :: n_profile
 integer, intent(in) :: n_layer
 integer, intent(in), optional :: n_channel, n_tile
 integer, intent(in), optional :: n_cloud_layer, n_aer_mode
-integer, intent(in), optional :: n_subcol_gen, n_subcol_req
 integer, intent(in), optional :: n_direction, n_viewing_level
 integer, intent(in), optional :: n_brdf_basis_fnc, n_brdf_trunc
 integer, intent(in), optional :: n_profile_aerosol_prsc
@@ -88,14 +91,20 @@ case (ip_cloud_column_max)
 case default
   dimen%nd_column = 1
 end select
-if (present(n_subcol_gen)) then
-  dimen%nd_subcol_gen = n_subcol_gen
+if (present(mcica_data)) then
+  dimen%nd_subcol_gen = mcica_data%n_subcol_gen
+  select case (control%i_mcica_sampling)
+  case (ip_mcica_full_sampling)
+    dimen%nd_subcol_req = mcica_data%n_subcol_gen
+  case (ip_mcica_single_sampling)
+    dimen%nd_subcol_req = mcica_data%n_subcol_req_single
+  case (ip_mcica_optimal_sampling)
+    dimen%nd_subcol_req = mcica_data%n_subcol_req_optimal
+  case default
+    dimen%nd_subcol_req = 1
+  end select
 else
   dimen%nd_subcol_gen = 1
-end if
-if (present(n_subcol_req)) then
-  dimen%nd_subcol_req = n_subcol_req
-else
   dimen%nd_subcol_req = 1
 end if
 

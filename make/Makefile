@@ -25,7 +25,6 @@ include Mk_src_gen
 include Mk_src_aux
 include Mk_src_ck
 include Mk_src_radcore
-include Mk_src_radctrl
 include Mk_src_scat
 
 #-----------------------------------------------------------------------
@@ -45,13 +44,13 @@ radlib.$(LIBSUFFIX): \
 	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
-	   $(SOURCE_RADCTRL:.f90=.o) $(SOURCE_RADCORE:.f90=.o) 
+	   $(SOURCE_RADCORE:.f90=.o) 
 	$(LIBLINK) radlib.$(LIBSUFFIX) \
 	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \
 	   $(SOURCE90_GENCORE:.f90=.o) \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_AUX:.f90=.o) $(SOURCE77_AUX:.f=.o) \
-	   $(SOURCE_RADCTRL:.f90=.o) $(SOURCE_RADCORE:.f90=.o)
+	   $(SOURCE_RADCORE:.f90=.o)
 
 cklib.$(LIBSUFFIX): \
 	   $(MODULES_GEN:.f90=.o) $(MODULES_GENCORE:.f90=.o) \

@@ -74,18 +74,20 @@ MODULE rad_ccf
 ! physical_constants_pp_ccf
 ! ------------------------------------------------------------------
 ! Module setting physical constants.
-  REAL (RealK), PARAMETER :: h_planck    = 6.626176e-34_RealK
+  REAL (RealK), PARAMETER :: h_planck         = 6.626176e-34_RealK
 !   Planck's constant (J s)
-  REAL (RealK), PARAMETER :: c_light     = 2.9979245e+08_RealK
+  REAL (RealK), PARAMETER :: c_light          = 2.9979245e+08_RealK
 !   Speed of light in a vacuum (m s-1)
-  REAL (RealK), PARAMETER :: k_boltzmann = 1.380662e-23_RealK
+  REAL (RealK), PARAMETER :: k_boltzmann      = 1.380662e-23_RealK
 !   Boltzmann's constant (J K-1)
-  REAL (RealK), PARAMETER :: rho_n       = 2.79e-02_RealK
+  REAL (RealK), PARAMETER :: rho_n            = 2.79e-02_RealK
 !   Depolarizing factor
-  REAL (RealK), PARAMETER :: n_avogadro  = 6.022045e+23_RealK
+  REAL (RealK), PARAMETER :: n_avogadro       = 6.022045e+23_RealK
 !   Avogadro's number
-  REAL (RealK), PARAMETER :: rho_air_stp = 1.293125e+00_RealK
+  REAL (RealK), PARAMETER :: rho_air_stp      = 1.293125e+00_RealK
 !   Density of dry air at standard temperature and pressure
+  REAL (RealK), PARAMETER :: stefan_boltzmann = 5.670374419e-08_RealK
+!   Stefan-Boltzmann constant (W m-2 K-4)
 
 ! ------------------------------------------------------------------
 ! Exoplanet constants

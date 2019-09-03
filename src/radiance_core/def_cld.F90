@@ -84,6 +84,8 @@ TYPE StrCld
 !   Scaling factor for condensate in each sub-column
   REAL (RealK), ALLOCATABLE :: frac_cloudy(:)
 !   Fraction of the profile which is cloudy
+  INTEGER, ALLOCATABLE :: n_subcol_cld(:)
+!   Number of sub-columns containing cloud
   INTEGER, ALLOCATABLE :: subcol_k(:, :)
 !   Number of sub-columns sampled for each k_term in each band.
   INTEGER, ALLOCATABLE :: first_subcol_k(:, :)
@@ -222,6 +224,9 @@ IF (.NOT. ALLOCATED(cld%c_sub))                                                &
 IF (.NOT. ALLOCATED(cld%frac_cloudy))                                          &
   ALLOCATE(cld%frac_cloudy          ( dimen%nd_profile                       ))
 
+IF (.NOT. ALLOCATED(cld%n_subcol_cld))                                         &
+  ALLOCATE(cld%n_subcol_cld         ( dimen%nd_profile                       ))
+
 IF (.NOT. ALLOCATED(cld%subcol_k))                                             &
   ALLOCATE(cld%subcol_k             ( sp%dim%nd_band,                          &
                                       sp%dim%nd_k_term                       ))
@@ -280,6 +285,7 @@ TYPE (StrCld), INTENT(INOUT) :: cld
 IF (ALLOCATED(cld%subcol_reorder))       DEALLOCATE(cld%subcol_reorder)
 IF (ALLOCATED(cld%first_subcol_k))       DEALLOCATE(cld%first_subcol_k)
 IF (ALLOCATED(cld%subcol_k))             DEALLOCATE(cld%subcol_k)
+IF (ALLOCATED(cld%n_subcol_cld))         DEALLOCATE(cld%n_subcol_cld)
 IF (ALLOCATED(cld%frac_cloudy))          DEALLOCATE(cld%frac_cloudy)
 IF (ALLOCATED(cld%c_sub))                DEALLOCATE(cld%c_sub)
 

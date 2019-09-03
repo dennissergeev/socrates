@@ -15,10 +15,9 @@ PROGRAM assign_subcols
 
 ! Modules to set types of variables:
   USE def_spectrum
+  USE def_mcica, ONLY: StrMcica, read_mcica_data
   USE realtype_rd
   USE rad_pcf
-  USE mcica_mod, ONLY: tot_subcol_gen, ipph, ioverlap, &
-                       n1, n2, xcw, read_mcica_data
 
   IMPLICIT NONE
 
@@ -37,9 +36,11 @@ LOGICAL :: l_interactive
   CHARACTER  (LEN=256) :: file_mcica_xcw
 !       Name of input MCICA data file for xcw array
   TYPE  (StrSpecData) :: Spectrum_sw
-!       SW Spectral data for
+!       SW Spectral data
   TYPE  (StrSpecData) :: Spectrum_lw
-!       LW Spectral data for
+!       LW Spectral data
+  TYPE  (StrMcica) :: mcica_data
+!       MCICA data
   INTEGER :: i_gas
 !       Index of main gas
   REAL (RealK) :: ext_gas
@@ -48,6 +49,10 @@ LOGICAL :: l_interactive
 !       mean Planck flux in each band
 
 ! Algorithm specfics
+  INTEGER :: tot_subcol_gen
+!       Number of sub-columns to generate
+  INTEGER :: ioverlap = 3
+!       Overlap method hardwired for legacy, no longer used from file
   INTEGER :: n_subcol_sw
 !       No additional sub-columns in SW
   INTEGER :: n_subcol_lw
@@ -286,7 +291,7 @@ LOGICAL :: l_interactive
 ! Read XCW array from an existing mcica_data file
   WRITE(*, "(a)") "Enter the name of a file containing the XCW array:"
   READ(*, "(a)") file_mcica_xcw
-  CALL read_mcica_data(file_mcica_xcw)
+  CALL read_mcica_data(mcica_data, file_mcica_xcw)
 
 ! Read in the total number of generated sub-columns
   WRITE(*, "(a)") &
@@ -321,7 +326,7 @@ LOGICAL :: l_interactive
       WRITE(iu_mcd,'(a/,i5)') 'tot_subcol_gen', tot_subcol_gen
       WRITE(iu_mcd,'(a/,i5)') 'subcol_need_single', total_k_lw
       WRITE(iu_mcd,'(a/,i5)') 'subcol_need_optimal', total_k_lw+n_add_lw
-      WRITE(iu_mcd,'(a/,i5)') 'ipph', ipph
+      WRITE(iu_mcd,'(a/,i5)') 'ipph', mcica_data%ipph
       WRITE(iu_mcd,'(a/,i5,/)') 'ioverlap', ioverlap
       WRITE(iu_mcd,'(A24)') "lw_subcol_reorder_single"
       WRITE(iu_mcd,'(10i5)') order_lw_single(1:total_k_lw)
@@ -347,8 +352,8 @@ LOGICAL :: l_interactive
       WRITE(iu_mcd,'(A12/)') ' -99   0   0'
       WRITE(iu_mcd,'(A25)') "lw_subcol_reorder_optimal"
       WRITE(iu_mcd,'(10i5)') order_lw(1:total_k_lw+n_add_lw)
-      WRITE(iu_mcd,'(2(/a/,i6))') 'n1', n1, 'n2', n2
-      WRITE(iu_mcd,'(a/,(5e15.8))') 'xcw', xcw
+      WRITE(iu_mcd,'(2(/a/,i6))') 'n1', mcica_data%n1, 'n2', mcica_data%n2
+      WRITE(iu_mcd,'(a/,(5e15.8))') 'xcw', mcica_data%xcw
       WRITE(iu_mcd,'(a)') '*END'
       WRITE(*,'(3a)') "Written output to '",TRIM(file_mcica_data),"'" 
     ENDIF

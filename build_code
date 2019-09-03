@@ -9,7 +9,7 @@ if [ ${host:0:4} == "dali" ]; then
 fi
 
 SRC_LIST="general modules_gen aux scatter correlated_k"
-SRC_LIST=${SRC_LIST}" modules_core radiance_core radiation_control"
+SRC_LIST=${SRC_LIST}" modules_core radiance_core"
 SRC_LIST=${SRC_LIST}" illumination interface_core"
 
 echo 'Building the radiation code in bin/ and utilities in sbin/'
@@ -52,7 +52,7 @@ cd bin
 if [ -r Mk_cmd_$host ]
   then
     cp Mk_cmd_$host Mk_cmd
-elif [ $1 = "gfortran" ]
+elif [ "$1" = "gfortran" ]
   then
     . /usr/share/Modules/init/bash
     module load scitools
@@ -60,7 +60,7 @@ elif [ $1 = "gfortran" ]
     diff -q Mk_cmd_gfortran Mk_cmd || \
     cp Mk_cmd_gfortran Mk_cmd; make clean
     shift
-elif [ $1 = "ifort" ]
+elif [ "$1" = "ifort" ]
   then
     . /usr/share/Modules/init/bash
     module load scitools

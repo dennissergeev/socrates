@@ -4,6 +4,7 @@ MODULES_GENCORE = def_aer.f90 \
 		def_cld.f90 \
 		def_control.f90 \
 		def_dimen.f90 \
+		def_mcica.f90 \
 		def_out.f90 \
 		def_spectrum.f90 \
 		diffusivity_factor.f90 \
