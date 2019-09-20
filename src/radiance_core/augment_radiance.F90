@@ -403,6 +403,38 @@ SUBROUTINE augment_radiance(control, radout, i_band                     &
               = weight_incr*flux_total_incr_clear(l, 2*i+2)
           END DO
         END DO
+      ELSE
+        IF (control%isolir == ip_solar) THEN
+          IF (control%l_spherical_solar) THEN
+            DO i=0, n_layer+1
+              DO l=1, n_profile
+                radout%flux_direct_clear_sph(l,i, control%map_channel(i_band)) &
+                  = 0.0_RealK
+              END DO
+            END DO
+            DO i=1, n_layer
+              DO l=1, n_profile
+                radout%flux_direct_clear_div(l,i, control%map_channel(i_band)) &
+                  = 0.0_RealK
+              END DO
+            END DO
+          ELSE
+            DO i=0, n_layer
+              DO l=1, n_profile
+                radout%flux_direct_clear(l, i, control%map_channel(i_band)) &
+                  = 0.0_RealK
+              END DO
+            END DO
+          END IF
+        END IF
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_up_clear(l, i, control%map_channel(i_band)) &
+              = 0.0_RealK
+            radout%flux_down_clear(l, i, control%map_channel(i_band)) &
+              = 0.0_RealK
+          END DO
+        END DO
       END IF
 
       IF (control%l_contrib_func) THEN
@@ -499,6 +531,7 @@ SUBROUTINE augment_radiance(control, radout, i_band                     &
     END IF
 
     IF (l_clear) THEN
+
       IF (control%l_flux_direct_clear_band) THEN
         DO i=0, n_layer
           DO l=1, n_profile
@@ -525,14 +558,14 @@ SUBROUTINE augment_radiance(control, radout, i_band                     &
           END DO
         END DO
       END IF
-!      IF (control%l_flux_down_clear_band) THEN
-!        DO i=0, n_layer
-!          DO l=1, n_profile
-!            radout%flux_down_clear_band(l, i, i_band) &
-!              = weight_incr*flux_total_incr_clear(l, 2*i+2)
-!          END DO
-!        END DO
-!      END IF
+      IF (control%l_flux_down_clear_band) THEN
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_down_clear_band(l, i, i_band) &
+              = weight_incr*flux_total_incr_clear(l, 2*i+2)
+          END DO
+        END DO
+      END IF
       IF (control%l_flux_up_clear_band) THEN
         DO i=0, n_layer
           DO l=1, n_profile
@@ -541,6 +574,47 @@ SUBROUTINE augment_radiance(control, radout, i_band                     &
           END DO
         END DO
       END IF
+
+    ELSE ! .NOT. l_clear_band
+
+      IF (control%l_flux_direct_clear_band) THEN
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_direct_clear_band(l, i, i_band) = 0.0_RealK
+          END DO
+        END DO
+      END IF
+      IF (control%l_flux_direct_clear_div_band .AND. &
+          control%l_spherical_solar) THEN
+        DO i=1, n_layer
+          DO l=1, n_profile
+            radout%flux_direct_clear_div_band(l, i, i_band) = 0.0_RealK
+          END DO
+        END DO
+      END IF
+      IF (control%l_flux_direct_clear_sph_band .AND. &
+          control%l_spherical_solar) THEN
+        DO i=0, n_layer+1
+          DO l=1, n_profile
+            radout%flux_direct_clear_sph_band(l, i, i_band) = 0.0_RealK
+          END DO
+        END DO
+      END IF
+      IF (control%l_flux_down_clear_band) THEN
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_down_clear_band(l, i, i_band) = 0.0_RealK
+          END DO
+        END DO
+      END IF
+      IF (control%l_flux_up_clear_band) THEN
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_up_clear_band(l, i, i_band) = 0.0_RealK
+          END DO
+        END DO
+      END IF
+
     END IF
 
     IF (control%l_contrib_func_band) THEN
@@ -635,15 +709,15 @@ SUBROUTINE augment_radiance(control, radout, i_band                     &
           END DO
         END DO
       END IF
-!      IF (control%l_flux_down_clear_band) THEN
-!        DO i=0, n_layer
-!          DO l=1, n_profile
-!            radout%flux_down_clear_band(l, i, i_band) &
-!              = radout%flux_down_clear_band(l, i, i_band) &
-!              + weight_incr*flux_total_incr_clear(l, 2*i+2)
-!          END DO
-!        END DO
-!      END IF
+      IF (control%l_flux_down_clear_band) THEN
+        DO i=0, n_layer
+          DO l=1, n_profile
+            radout%flux_down_clear_band(l, i, i_band) &
+              = radout%flux_down_clear_band(l, i, i_band) &
+              + weight_incr*flux_total_incr_clear(l, 2*i+2)
+          END DO
+        END DO
+      END IF
       IF (control%l_flux_up_clear_band) THEN
         DO i=0, n_layer
           DO l=1, n_profile

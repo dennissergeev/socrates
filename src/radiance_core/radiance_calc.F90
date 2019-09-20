@@ -782,14 +782,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
           = radout%flux_direct_clear(:,:,control%map_channel(i_band))
       END IF
     END IF
-    IF (control%l_flux_down_clear_band) THEN
-      IF (l_initial) THEN
-        radout%flux_down_clear_band(:,:,i_band) = 0.0
-      ELSE
-        radout%flux_down_clear_band(:,:,i_band)                                &
-          = radout%flux_down_clear(:,:,control%map_channel(i_band))
-      END IF
-    END IF
     IF (control%l_cloud_absorptivity     .OR.                                  &
         control%l_ls_cloud_absorptivity  .OR.                                  &
         control%l_cnv_cloud_absorptivity) THEN
@@ -2303,13 +2295,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
 !   Deallocate Planckian emission fields
     CALL deallocate_planck(planck)
-
-!   Set band-by-band flux diagnostics
-    IF (control%l_flux_down_clear_band) THEN
-      radout%flux_down_clear_band(:,:,i_band)                                  &
-        = radout%flux_down_clear(:,:,control%map_channel(i_band))              &
-        - radout%flux_down_clear_band(:,:,i_band)
-    END IF
 
   END DO ! i_band
 
