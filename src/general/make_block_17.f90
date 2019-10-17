@@ -62,7 +62,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
   INTEGER :: band, sub_band, number_term
   INTEGER :: sub_bands(Sp%Dim%nd_band)
   INTEGER :: n_times, yearstart=imdi, monthstart, daystart
-  INTEGER, ALLOCATABLE :: calyear(:), calmonth(:), calday(:)
+  INTEGER, ALLOCATABLE :: calyear(:), calmonth(:), calday(:), seconds(:)
   LOGICAL :: l_monthly
   REAL (RealK), ALLOCATABLE :: tsi(:), ssi(:,:), wbinsize(:), wbinbnds(:,:)
   REAL (RealK) :: wavelength(2, Sp%Dim%nd_k_term, Sp%Dim%nd_band)
@@ -379,7 +379,14 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
       ELSE
         calday(:) = 1
       END IF
-
+      ALLOCATE(seconds(time_len))
+      ios = nf90_inq_varid(ncid, 'seconds', varid)
+      if (ios == NF90_NOERR) THEN
+        CALL nf(nf90_get_var(ncid, varid, seconds))
+      ELSE
+        seconds(:) = 0 ! Defaults to 0 if it fails
+      END IF
+      
       ! Read the tsi
       ALLOCATE(tsi(time_len))
       CALL nf(nf90_inq_varid(ncid, 'tsi', varid))
@@ -434,6 +441,11 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
           Sp%Var%time(2, i) = 1
           Sp%Var%time(3, i) = 1
           Sp%Var%time(4, i) = 0
+        CASE ("sec")
+          Sp%Var%time(1, i) = calyear(j)
+          Sp%Var%time(2, i) = calmonth(j)
+          Sp%Var%time(3, i) = calday(j)
+          Sp%Var%time(4, i) = seconds(j)
         END SELECT
 
         Sp%Var%total_solar_flux(i) = tsi(j)
@@ -459,6 +471,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
       DEALLOCATE(wbinbnds)
       DEALLOCATE(wbinsize)
       DEALLOCATE(tsi)
+      DEALLOCATE(seconds)
       DEALLOCATE(calday)
       DEALLOCATE(calmonth)
       DEALLOCATE(calyear)
