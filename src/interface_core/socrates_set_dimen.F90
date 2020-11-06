@@ -24,6 +24,8 @@ use def_mcica,   only: StrMcica, ip_mcica_full_sampling, &
   ip_mcica_single_sampling, ip_mcica_optimal_sampling
 use rad_pcf,     only: &
   ip_cloud_homogen, ip_cloud_ice_water, ip_cloud_conv_strat, ip_cloud_csiw, &
+  ip_cloud_combine_homogen, ip_cloud_combine_ice_water, &
+  ip_cloud_split_homogen, ip_cloud_split_ice_water, &
   ip_cloud_column_max, ip_solver_mix_app_scat, ip_solver_mix_direct, &
   ip_solver_mix_direct_hogan, ip_solver_triple_app_scat, ip_solver_triple, &
   ip_solver_triple_hogan, ip_two_stream, ip_spherical_harmonic, &
@@ -71,10 +73,12 @@ end if
 
 ! Cloud
 select case (control%i_cloud_representation)
-case (ip_cloud_homogen, ip_cloud_ice_water)
+case (ip_cloud_homogen, ip_cloud_ice_water, &
+      ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
   dimen%nd_cloud_type      = 2
   dimen%nd_cloud_component = 2
-case (ip_cloud_conv_strat, ip_cloud_csiw)
+case (ip_cloud_conv_strat, ip_cloud_csiw, &
+      ip_cloud_split_homogen, ip_cloud_split_ice_water)
   dimen%nd_cloud_type      = 4
   dimen%nd_cloud_component = 4
 case default

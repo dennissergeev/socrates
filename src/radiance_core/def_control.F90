@@ -162,6 +162,8 @@ TYPE StrCtrl
 !   Method of sampling sub-grid cloud using MCICA
   INTEGER :: i_overlap                                            = imdi
 !   Method of treating cloud vertical overlap
+  INTEGER :: i_drop_re                                            = imdi
+!   Method of setting the effective radii of cloud droplets
   LOGICAL :: l_local_cnv_partition                                = .FALSE.
 !   Flag to partition convective clouds between water and
 !   ice using the local temperature

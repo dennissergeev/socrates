@@ -4,15 +4,12 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to set pointers to types of clouds
+! Subroutine to set pointers to types of clouds
 !
 ! Method:
 !   The types of condensate included are examined. Their phases
 !   are set and depending on the representation of clouds adopted
 !   it is determined to which type of cloud they contribute.
-!
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
 SUBROUTINE set_cloud_pointer(ierr                                       &
@@ -23,7 +20,18 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
      )
 
 
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, &
+   ip_cloud_homogen, ip_cloud_combine_homogen, &
+   ip_cloud_ice_water, ip_cloud_combine_ice_water, &
+   ip_cloud_conv_strat, ip_cloud_split_homogen, &
+   ip_cloud_csiw, ip_cloud_split_ice_water, &
+   ip_clcmp_st_water, ip_clcmp_st_ice, &
+   ip_clcmp_cnv_water, ip_clcmp_cnv_ice, &
+   ip_cloud_type_homogen, ip_cloud_type_water, ip_cloud_type_ice, &
+   ip_cloud_type_strat, ip_cloud_type_conv, &
+   ip_cloud_type_sw, ip_cloud_type_si, &
+   ip_cloud_type_cw, ip_cloud_type_ci, &
+   ip_phase_water, ip_phase_ice
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport
@@ -72,7 +80,7 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
   REAL(KIND=jprb)               :: zhook_handle
-  CHARACTER (LEN=errormessagelength)           :: cmessage
+  CHARACTER (LEN=errormessagelength) :: cmessage
   CHARACTER (LEN=*), PARAMETER  :: RoutineName = 'SET_CLOUD_POINTER'
 
 
@@ -82,7 +90,8 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
 
     i_cloud_type(k)=0
 !   Set pointers for valid condensed components.
-    IF (i_cloud_representation == ip_cloud_homogen) THEN
+    SELECT CASE (i_cloud_representation)
+    CASE (ip_cloud_homogen, ip_cloud_combine_homogen)
 
       IF (type_condensed(k) == ip_clcmp_st_water) THEN
         i_cloud_type(k)=ip_cloud_type_homogen
@@ -90,7 +99,7 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
         i_cloud_type(k)=ip_cloud_type_homogen
       END IF
 
-    ELSE IF (i_cloud_representation == ip_cloud_ice_water) THEN
+    CASE (ip_cloud_ice_water, ip_cloud_combine_ice_water)
 
       IF (type_condensed(k) == ip_clcmp_st_water) THEN
         i_cloud_type(k)=ip_cloud_type_water
@@ -98,7 +107,7 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
         i_cloud_type(k)=ip_cloud_type_ice
       END IF
 
-    ELSE IF (i_cloud_representation == ip_cloud_conv_strat) THEN
+    CASE (ip_cloud_conv_strat, ip_cloud_split_homogen)
 
       IF (type_condensed(k) == ip_clcmp_st_water) THEN
         i_cloud_type(k)=ip_cloud_type_strat
@@ -110,7 +119,7 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
         i_cloud_type(k)=ip_cloud_type_conv
       END IF
 
-    ELSE IF (i_cloud_representation == ip_cloud_csiw) THEN
+    CASE (ip_cloud_csiw, ip_cloud_split_ice_water)
 
       IF (type_condensed(k) == ip_clcmp_st_water) THEN
         i_cloud_type(k)=ip_cloud_type_sw
@@ -122,11 +131,17 @@ SUBROUTINE set_cloud_pointer(ierr                                       &
         i_cloud_type(k)=ip_cloud_type_ci
       END IF
 
-    END IF
+    CASE DEFAULT
+
+      cmessage = 'Invalid cloud representation'
+      ierr = i_err_fatal
+      CALL ereport(RoutineName, ierr, cmessage)
+
+    END SELECT
 
 !   Check for 0 flagging illegal types.
     IF (i_cloud_type(k) == 0) THEN
-      cmessage = '*** Error: A component is not compatible with the '   &
+      cmessage = 'A component is not compatible with the ' &
         //'representation of clouds selected.'
       ierr=i_err_fatal
       CALL ereport(RoutineName, ierr, cmessage)

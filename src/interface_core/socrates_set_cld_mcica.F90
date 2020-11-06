@@ -13,7 +13,7 @@ character(len=*), parameter, private :: ModuleName = 'SOCRATES_SET_CLD_MCICA'
 contains
 
 subroutine set_cld_mcica(cld, mcica_data, control, dimen, spectrum, atm, &
-  rand_seed, cloud_horizontal_rsd)
+  rand_seed)
 
 use def_cld,      only: StrCld, allocate_cld_mcica
 use def_mcica,    only: StrMcica, ip_mcica_full_sampling, &
@@ -52,24 +52,18 @@ type(StrSpecData), intent(in) :: spectrum
 ! Atmospheric properties:
 type(StrAtm),      intent(in) :: atm
 
-integer,     intent(in), optional :: rand_seed(:)
+integer, intent(in), optional :: rand_seed(:)
 !   Random seed for cloud generator
-real(RealK), intent(in), optional :: cloud_horizontal_rsd
-!   Relative standard deviation of sub-grid cloud condensate
 
 real(RealK), dimension(dimen%nd_profile, dimen%id_cloud_top:dimen%nd_layer) :: &
-  c_cloud, &
-!   Amount of convective cloud
-  c_ratio, &
-!   Ratio of convective cloud condensate to mean condensate
-  ls_ratio, &
-!   Ratio of large-scale cloud condensate to mean condensate
   dp_corr_cloud, &
 !   Cloud fraction decorrelation length
   dp_corr_cond, &
 !   Cloud condensate decorrelation length
-  cond_rsd
+  cond_rsd, &
 !   Relative standard deviation of sub-grid cloud condensate
+  sum_weight, weight
+!   Working arrays for calculating the weighted cond_rsd
 integer :: rnd_seed(dimen%nd_profile)
 !   Random seed
 
@@ -158,20 +152,22 @@ if (control%i_cloud_representation /= ip_cloud_off .and. &
       rnd_seed(i) = 10 + i
     end do
   end if
-  if (present(cloud_horizontal_rsd)) then
-    cond_rsd(:, :) = cloud_horizontal_rsd
-  else
-    cond_rsd(:, :) = 0.75_RealK
-  end if
+
+  ! Combine the liquid and ice relative standard deviations using the
+  ! gridbox mean condensate mixing ratios as weights
+  cond_rsd = 0.0_RealK
+  sum_weight = 0.0_RealK
+  do i=1, cld%n_condensed
+    weight = max(epsilon(weight), cld%condensed_mix_ratio(:, :, i) &
+      * cld%frac_cloud(:, :, cld%i_cloud_type(i)))
+    cond_rsd = cond_rsd + cld%condensed_rel_var_dens(:, :, i) * weight
+    sum_weight = sum_weight + weight
+  end do
+  cond_rsd = cond_rsd / sum_weight
 
   ! Currently a single value of the decorrelation scale is used
   dp_corr_cloud(:, :) = cld%dp_corr_strat
   dp_corr_cond(:, :) = dp_corr_cloud(:, :) * 0.5_RealK
-
-  ! Convective cloud amounts not yet implemented
-  c_cloud(:, :) = 0.0_RealK
-  c_ratio(:, :) = 0.0_RealK
-  ls_ratio(:, :) = 1.0_RealK
 
   ! Call the cloud generator
   call cloud_gen(dimen%nd_layer, dimen%id_cloud_top, atm%n_layer, &
@@ -179,7 +175,7 @@ if (control%i_cloud_representation /= ip_cloud_off .and. &
     mcica_data%n_subcol_gen, mcica_data%n1, mcica_data%n2, &
     mcica_data%ipph, control%i_overlap, rnd_seed, &
     dp_corr_cloud, dp_corr_cond, &
-    cond_rsd, cld%w_cloud, c_cloud, c_ratio, ls_ratio, atm%p, &
+    cond_rsd, cld%w_cloud, cld%c_cloud, cld%c_ratio, atm%p, &
     mcica_data%xcw, &
     cld%n_subcol_cld, cld%c_sub(:,:,:,1))
   

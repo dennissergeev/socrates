@@ -19,8 +19,10 @@ SOURCE90_AUX =	aerosol_profile_pcf.f90 \
 		socrates_set_atm.f90 \
 		socrates_set_bound.f90 \
 		socrates_set_cld.f90 \
+		socrates_set_cld_dim.f90 \
 		socrates_set_cld_mcica.f90 \
 		socrates_set_aer.f90 \
+		socrates_set_diag.f90 \
 		solang_mod.f90 \
 		solpos_mod.f90 \
 		write_samson.f90

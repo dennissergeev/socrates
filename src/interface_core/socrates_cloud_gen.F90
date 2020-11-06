@@ -55,7 +55,7 @@ subroutine cloud_gen(nd_layer, cloud_top, n_layer, nd_profile, il1, il2, &
                      n_subcol, n1, n2, &
                      ipph, ioverlap, rand_seed, &
                      rlc_cf, rlc_cw, sigma_qcw, avg_cf, &
-                     c_cloud, c_ratio, ls_ratio, zf, xcw, &
+                     c_cloud, c_ratio, zf, xcw, &
                      n_subcol_cld, c_sub)
 
 use realtype_rd, only: RealK
@@ -88,8 +88,6 @@ implicit none
 !     Convective cloud amount for each layer
     c_ratio(nd_profile, cloud_top:nd_layer), &
 !     Convective condensate ratio
-    ls_ratio(nd_profile, cloud_top:nd_layer), &
-!     Large-scale condensate ratio
     sigma_qcw(nd_profile, cloud_top:nd_layer), &
 !     Normalized cloud condensate std. dev. (Std. dev. over mean)
     rlc_cf(nd_profile, cloud_top:nd_layer), &
@@ -108,6 +106,8 @@ implicit none
 !     Sub-grid cloud water content
 
 ! Local variables
+  real(RealK) :: ls_ratio(nd_profile, cloud_top:nd_layer)
+!     Large-scale condensate ratio
   real(RealK) :: sigma_ccw(nd_profile, nd_layer)
 !     Normalized cloud condensate std. dev. for convective cloud
 
@@ -118,9 +118,7 @@ implicit none
     x(nd_profile),     &
     y(nd_profile),     &
     x1(nd_profile),    &
-    y1(nd_profile),    &
-    x2(nd_profile),    &
-    y2(nd_profile)
+    y1(nd_profile)
 !     Random number vectors
 
   real(RealK) :: alpha(nd_profile, 0:nd_layer)
@@ -203,6 +201,13 @@ implicit none
       rand_seed_y(il, i) = random_dummy(il)
     end do
   end do
+
+  ! Set the large-scale condensate ratio to be consistent with c_ratio
+  where (c_cloud > 0.0_RealK .and. c_cloud < avg_cf)
+    ls_ratio = (avg_cf - c_ratio*c_cloud) / (avg_cf - c_cloud)
+  elsewhere
+    ls_ratio = 1.0_RealK
+  end where
 
   ! Set convective cloud RSD equal to large-scale value for now.
   sigma_ccw=sigma_qcw

@@ -1166,8 +1166,10 @@ PROGRAM l_run_cdf
       dimen%nd_subcol_req = mcica%n_subcol_req_optimal
     end select
     control%i_overlap=2
-    CALL set_cld_mcica(cld, mcica, control, dimen, spectrum, atm, &
-      cloud_horizontal_rsd = rad_mcica_sigma)
+    cld%c_cloud = 0.0_RealK
+    cld%c_ratio = 0.0_RealK
+    cld%condensed_rel_var_dens = rad_mcica_sigma
+    CALL set_cld_mcica(cld, mcica, control, dimen, spectrum, atm)
   END IF
 
 

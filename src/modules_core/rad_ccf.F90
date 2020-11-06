@@ -86,6 +86,8 @@ MODULE rad_ccf
 !   Avogadro's number
   REAL (RealK), PARAMETER :: rho_air_stp      = 1.293125e+00_RealK
 !   Density of dry air at standard temperature and pressure
+  REAL (RealK), PARAMETER :: rho_water        = 1.0e+03_RealK
+!   Density of pure water (kg/m3)
   REAL (RealK), PARAMETER :: stefan_boltzmann = 5.670374419e-08_RealK
 !   Stefan-Boltzmann constant (W m-2 K-4)
 

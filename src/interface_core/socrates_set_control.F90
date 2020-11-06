@@ -22,7 +22,7 @@ subroutine set_control(control, spectrum, l_set_defaults, &
   l_blue_flux_surf, &
   n_tile, n_cloud_layer, n_aer_mode, &
   isolir, i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
-  i_st_water, i_cnv_water, i_st_ice, i_cnv_ice )
+  i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re )
 
 use def_control,  only: StrCtrl, allocate_control
 use def_spectrum, only: StrSpecData
@@ -34,14 +34,16 @@ use rad_pcf, only: &
   ip_solar, ip_pifm80, ip_scatter_full, ip_infra_red, ip_elsasser, &
   ip_two_stream, ip_ir_gauss, ip_spherical_harmonic, ip_overlap_k_eqv_scl, &
   ip_cloud_off, ip_cloud_homogen, ip_cloud_ice_water, ip_cloud_conv_strat, &
-  ip_cloud_csiw, ip_max_rand, ip_rand, ip_exponential_rand, ip_homogeneous, &
+  ip_cloud_csiw, ip_cloud_combine_homogen, ip_cloud_combine_ice_water, &
+  ip_cloud_split_homogen, ip_cloud_split_ice_water, &
+  ip_max_rand, ip_rand, ip_exponential_rand, ip_homogeneous, &
   ip_scaling, ip_mcica, ip_cairns, ip_cloud_ice_water, ip_cloud_mcica, &
   ip_no_scatter_abs, ip_no_scatter_ext, ip_solver_no_scat, &
   ip_solver_homogen_direct, ip_scatter_approx, ip_solver_mix_app_scat, &
   ip_solver_homogen_direct, ip_solver_mix_direct_hogan, ip_cloud_mix_max, &
   ip_cloud_part_corr, ip_cloud_mix_random, ip_solver_triple_app_scat, &
   ip_solver_triple_hogan, ip_cloud_triple, ip_cloud_part_corr_cnv, &
-  ip_cloud_clear, ip_scale_ses2, ip_overlap_mix_ses2, &
+  ip_cloud_clear, ip_scale_ses2, ip_overlap_mix_ses2, ip_re_external, &
   i_normal, i_err_fatal
 use def_mcica, only: ip_mcica_optimal_sampling
 
@@ -66,7 +68,7 @@ integer, intent(in), optional :: n_tile, n_cloud_layer, n_aer_mode
 
 integer, intent(in), optional :: isolir, &
   i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
-  i_st_water, i_cnv_water, i_st_ice, i_cnv_ice
+  i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re
 
 ! Local variables
 integer :: i
@@ -102,6 +104,7 @@ if (present(i_st_water)) control%i_st_water = i_st_water
 if (present(i_cnv_water)) control%i_cnv_water = i_cnv_water
 if (present(i_st_ice)) control%i_st_ice = i_st_ice
 if (present(i_cnv_ice)) control%i_cnv_ice = i_cnv_ice
+if (present(i_drop_re)) control%i_drop_re = i_drop_re
 
 
 ! Diagnostic options
@@ -167,11 +170,13 @@ if (present(l_set_defaults)) then
       call set_int_default(control%i_overlap, ip_max_rand)
       call set_int_default(control%i_inhom, ip_homogeneous)
       call set_int_default(control%i_mcica_sampling, ip_mcica_optimal_sampling)
+      call set_int_default(control%i_drop_re, ip_re_external)
       if (present(n_cloud_layer)) then
         if (n_cloud_layer < 1) control%i_cloud_representation = ip_cloud_off
       end if
       select case(control%i_cloud_representation)
-      case(ip_cloud_homogen, ip_cloud_ice_water)
+      case(ip_cloud_homogen, ip_cloud_ice_water, &
+           ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
         control%l_cloud = .true.
         if (.not.control%l_drop .and. .not.control%l_ice) then
           control%l_drop = .true.
@@ -203,7 +208,8 @@ if (present(l_set_defaults)) then
             control%i_cloud = ip_cloud_mix_random
           end if
         end if
-      case(ip_cloud_conv_strat, ip_cloud_csiw)
+      case(ip_cloud_conv_strat, ip_cloud_csiw, &
+           ip_cloud_split_homogen, ip_cloud_split_ice_water)
         ! Not compatible with control%i_inhom == ip_mcica
         if (control%i_inhom == ip_mcica) control%i_inhom = ip_homogeneous
         control%l_cloud = .true.

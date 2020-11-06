@@ -235,36 +235,50 @@ INTEGER, PARAMETER :: ip_region_conv  = 3
 ! cloud_representation_pcf, clrepp3a (part)
 ! ------------------------------------------------------------------
 ! Module to set representations of clouds.
-INTEGER, PARAMETER :: ip_cloud_homogen    = 1
-!   All components are mixed homogeneously
-INTEGER, PARAMETER :: ip_cloud_ice_water  = 2
+INTEGER, PARAMETER :: ip_cloud_homogen           = 1
+!   Stratiform components are mixed homogeneously
+INTEGER, PARAMETER :: ip_cloud_ice_water         = 2
 !   Ice and water clouds are treated separately
-INTEGER, PARAMETER :: ip_cloud_conv_strat = 3
+!   for stratiform cloud
+INTEGER, PARAMETER :: ip_cloud_conv_strat        = 3
 !   Clouds are divided into homogeneously mixed
 !   stratiform and convective parts
-INTEGER, PARAMETER :: ip_cloud_csiw       = 4
+INTEGER, PARAMETER :: ip_cloud_csiw              = 4
 !   Clouds divided into ice and water phases and
 !   into stratiform and convective components.
-INTEGER, PARAMETER :: ip_cloud_off        = 5
+INTEGER, PARAMETER :: ip_cloud_off               = 5
 !   Clear column
+INTEGER, PARAMETER :: ip_cloud_combine_homogen   = 6
+!   All phases of stratiform and convective
+!   components are mixed homogeneously
+INTEGER, PARAMETER :: ip_cloud_combine_ice_water = 7
+!   Stratiform and convective clouds are combined
+!   but divided into ice and water components
+INTEGER, PARAMETER :: ip_cloud_split_homogen     = 8
+!   Cloud is split into optically thick and thin
+!   regions of mixed phase cloud.
+INTEGER, PARAMETER :: ip_cloud_split_ice_water   = 9
+!   Cloud is split into optically thick and thin
+!   regions divided into ice and water components
 
 ! ------------------------------------------------------------------
 ! treatment of in-cloud horizontal water content inhomogeneity
 ! ------------------------------------------------------------------
-INTEGER, PARAMETER :: ip_homogeneous      = 0
-!   flag to treat clouds as horizontally
-!   homogeneous
-INTEGER, PARAMETER :: ip_scaling          = 1
-!   flag to represent inhomogeneity with a
-!   scaling factor
-INTEGER, PARAMETER :: ip_mcica            = 2
-!   flag to represent inhomogeneity with
-!   the McICA scheme.
-INTEGER, PARAMETER :: ip_cairns           = 3
-!   flag to represent inhomogeneity by calculating corrections to
+INTEGER, PARAMETER :: ip_homogeneous       = 0
+!   Treat clouds as horizontally homogeneous
+INTEGER, PARAMETER :: ip_scaling           = 1
+!   Represent inhomogeneity with a scaling factor
+INTEGER, PARAMETER :: ip_mcica             = 2
+!   Represent inhomogeneity with the McICA scheme.
+INTEGER, PARAMETER :: ip_cairns            = 3
+!   Represent inhomogeneity by calculating corrections to
 !   single scattering parameters as described in Cairns et al.,
-!   Journal of Atmospheric Sciences, Volume 57, 2000. Only supported
-!   with two-stream approximation.
+!   Journal of Atmospheric Sciences, Volume 57, 2000.
+!   Only supported with two-stream approximation.
+INTEGER, PARAMETER :: ip_tripleclouds_2019 = 4
+!   Split cloud into optically thick and thin regions using
+!   the parametrisation from Hogan et al., 2019
+!   DOI:10.1175/JAS-D-18-0366.1
 
 ! ------------------------------------------------------------------
 ! treatment of cloud vertical overlap
@@ -325,6 +339,16 @@ INTEGER, PARAMETER :: ip_cloud_type_cw      = 3
 !   Convective water cloud
 INTEGER, PARAMETER :: ip_cloud_type_ci      = 4
 !   Convective ice cloud
+
+! ------------------------------------------------------------------
+! setting of droplet effective radii
+! ------------------------------------------------------------------
+INTEGER, PARAMETER :: ip_re_default  = 1
+!   Use default effective radius of 7um
+INTEGER, PARAMETER :: ip_re_external = 2
+!   Use input values of effective radius
+INTEGER, PARAMETER :: ip_re_liu      = 3
+!   Liu spectral dispersion
 
 ! ------------------------------------------------------------------
 ! continuum_pcf, cntuum3a

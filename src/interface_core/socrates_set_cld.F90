@@ -16,12 +16,12 @@ subroutine set_cld(cld, control, dimen, spectrum, atm, &
   cloud_frac, conv_frac, &
   liq_frac, ice_frac, liq_conv_frac, ice_conv_frac, &
   liq_mmr, ice_mmr, liq_conv_mmr, ice_conv_mmr, &
-  liq_dim, ice_dim, liq_conv_dim, ice_conv_dim, &
+  liq_rsd, ice_rsd, liq_conv_rsd, ice_conv_rsd, &
   cloud_frac_1d, conv_frac_1d, &
   liq_frac_1d, ice_frac_1d, liq_conv_frac_1d, ice_conv_frac_1d, &
   liq_mmr_1d, ice_mmr_1d, liq_conv_mmr_1d, ice_conv_mmr_1d, &
-  liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d, &
-  cloud_vertical_decorr, conv_vertical_decorr, &
+  liq_rsd_1d, ice_rsd_1d, liq_conv_rsd_1d, ice_conv_rsd_1d, &
+  cloud_vertical_decorr, conv_vertical_decorr, cloud_horizontal_rsd, &
   l_invert, l_debug, i_profile_debug)
 
 use def_cld,      only: StrCld, allocate_cld, allocate_cld_prsc
@@ -32,12 +32,15 @@ use def_atm,      only: StrAtm
 use realtype_rd,  only: RealK
 use rad_pcf,      only: &
   ip_cloud_homogen, ip_cloud_ice_water, ip_cloud_conv_strat, ip_cloud_csiw, &
+  ip_cloud_combine_homogen, ip_cloud_combine_ice_water, &
+  ip_cloud_split_homogen, ip_cloud_split_ice_water, &
   ip_clcmp_st_water, ip_clcmp_st_ice, ip_clcmp_cnv_water, ip_clcmp_cnv_ice, &
   ip_phase_water, ip_phase_ice, ip_cloud_type_homogen, &
   ip_cloud_type_water, ip_cloud_type_ice, &
   ip_cloud_type_strat, ip_cloud_type_conv, &
   ip_cloud_type_sw, ip_cloud_type_si, ip_cloud_type_cw, ip_cloud_type_ci, &
   ip_drop_unparametrized, ip_ice_unparametrized, &
+  ip_scaling, ip_cairns, ip_mcica, ip_tripleclouds_2019, &
   i_normal, i_err_fatal
 use ereport_mod,  only: ereport
 use errormessagelength_mod, only: errormessagelength
@@ -64,22 +67,24 @@ real(RealK), intent(in), dimension(:, :), optional :: &
   cloud_frac, conv_frac, &
   liq_frac, ice_frac, liq_conv_frac, ice_conv_frac, &
   liq_mmr, ice_mmr, liq_conv_mmr, ice_conv_mmr, &
-  liq_dim, ice_dim, liq_conv_dim, ice_conv_dim
-!   Liquid and ice cloud fractions, gridbox mean mixing ratios, and
-!   effective dimensions
+  liq_rsd, ice_rsd, liq_conv_rsd, ice_conv_rsd
+!   Liquid and ice cloud fractions, gridbox mean mixing ratios,
+!   and relative standard deviation of condensate
 
 real(RealK), intent(in), dimension(:), optional :: &
   cloud_frac_1d, conv_frac_1d, &
   liq_frac_1d, ice_frac_1d, liq_conv_frac_1d, ice_conv_frac_1d, &
   liq_mmr_1d, ice_mmr_1d, liq_conv_mmr_1d, ice_conv_mmr_1d, &
-  liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d
-!   Liquid and ice cloud fractions, gridbox mean mixing ratios, and
-!   effective dimensions input as 1d fields
+  liq_rsd_1d, ice_rsd_1d, liq_conv_rsd_1d, ice_conv_rsd_1d
+!   Liquid and ice cloud fractions, gridbox mean mixing ratios,
+!   and relative standard deviation of condensate input as 1d fields
 
 real(RealK), intent(in), optional :: cloud_vertical_decorr
 !   Decorrelation pressure scale for cloud vertical overlap
 real(RealK), intent(in), optional :: conv_vertical_decorr
 !   Decorrelation pressure scale for convective cloud vertical overlap
+real(RealK), intent(in), optional :: cloud_horizontal_rsd
+!   Relative standard deviation of sub-grid cloud condensate
 
 logical, intent(in), optional :: l_invert
 !   Flag to invert fields in the vertical
@@ -92,19 +97,22 @@ integer, intent(in), optional :: i_profile_debug
 ! Local variables
 integer :: i, j, k, l
 !   Loop variables
-integer :: i_phase, i_param_type, n_cloud_parameter
+integer :: i_phase, i_param_type, n_cloud_parameter, i_thin, i_thick
 !   Working variables
-integer :: i_cloud_type(dimen%nd_cloud_component)
-!   Types of cloud to which each component contributes
 real(RealK), dimension(dimen%nd_profile, dimen%id_cloud_top:dimen%nd_layer) :: &
-  frac, frac_liq, frac_ice
-!   Cloud fraction working arrays
+  cond_mmr, cond_rsd, frac, frac_liq, frac_ice, frac_thin, ratio_thin
+!   Working arrays
 
 logical :: l_inv
 !   Local flag to invert fields in the vertical
+logical :: l_combine
+!   Combine stratiform and convective cloud
+logical :: l_split
+!   Split cloud into optically thick and thin regions
 
-real(RealK) :: eps = EPSILON(1.0)
-real(RealK) :: min_cloud_fraction = 0.001
+real(RealK) :: eps = EPSILON(1.0_RealK)
+real(RealK) :: min_cloud_fraction = 0.001_RealK
+real(RealK) :: frac_c, frac_m
 
 integer                      :: ierr = i_normal
 character (len=*), parameter :: RoutineName = 'SET_CLD'
@@ -134,11 +142,13 @@ end if
 
 if (control%l_ice .and. control%l_drop) then
   select case (control%i_cloud_representation)
-  case (ip_cloud_homogen, ip_cloud_ice_water)
+  case (ip_cloud_homogen, ip_cloud_ice_water, &
+        ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
     cld%n_condensed = 2
     cld%type_condensed(1) = ip_clcmp_st_water
     cld%type_condensed(2) = ip_clcmp_st_ice
-  case (ip_cloud_conv_strat, ip_cloud_csiw)
+  case (ip_cloud_conv_strat, ip_cloud_csiw, &
+        ip_cloud_split_homogen, ip_cloud_split_ice_water)
     cld%n_condensed = 4
     cld%type_condensed(1) = ip_clcmp_st_water
     cld%type_condensed(2) = ip_clcmp_st_ice
@@ -147,20 +157,24 @@ if (control%l_ice .and. control%l_drop) then
   end select
 else if (control%l_ice .and. .not.control%l_drop) then
   select case (control%i_cloud_representation)
-  case (ip_cloud_homogen, ip_cloud_ice_water)
+  case (ip_cloud_homogen, ip_cloud_ice_water, &
+        ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
     cld%n_condensed = 1
     cld%type_condensed(1) = ip_clcmp_st_ice
-  case (ip_cloud_conv_strat, ip_cloud_csiw)
+  case (ip_cloud_conv_strat, ip_cloud_csiw, &
+        ip_cloud_split_homogen, ip_cloud_split_ice_water)
     cld%n_condensed = 2
     cld%type_condensed(1) = ip_clcmp_st_ice
     cld%type_condensed(2) = ip_clcmp_cnv_ice
   end select
 else if (.not.control%l_ice .and. control%l_drop) then
   select case (control%i_cloud_representation)
-  case (ip_cloud_homogen, ip_cloud_ice_water)
+  case (ip_cloud_homogen, ip_cloud_ice_water, &
+        ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
     cld%n_condensed = 1
     cld%type_condensed(1) = ip_clcmp_st_water
-  case (ip_cloud_conv_strat, ip_cloud_csiw)
+  case (ip_cloud_conv_strat, ip_cloud_csiw, &
+        ip_cloud_split_homogen, ip_cloud_split_ice_water)
     cld%n_condensed = 2
     cld%type_condensed(1) = ip_clcmp_st_water
     cld%type_condensed(2) = ip_clcmp_cnv_water
@@ -170,6 +184,25 @@ else
   ierr=i_err_fatal
   call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
 end if
+
+select case (control%i_cloud_representation)
+case (ip_cloud_combine_homogen, ip_cloud_combine_ice_water)
+  ! Combine stratiform and convective cloud into a single region
+  l_combine = .true.
+  l_split = .false.
+case (ip_cloud_split_homogen, ip_cloud_split_ice_water)
+  ! Stratiform and convective cloud is combined
+  l_combine = .true.
+  ! Total cloud is then split into optically thick and thin regions
+  l_split = .true.
+case default
+  l_combine = .false.
+  l_split = .false.
+end select
+
+! Initialise convective cloud
+cld%c_cloud = 0.0_RealK
+cld%c_ratio = 0.0_RealK
 
 do i=1, cld%n_condensed
   select case (cld%type_condensed(i))
@@ -211,47 +244,74 @@ do i=1, cld%n_condensed
             = spectrum%drop%parm_list(k, j, i_param_type)
         end do
       end do
-      ! Assign droplet mass mixing ratio and effective radius
+
+      ! Assign liquid mass mixing ratio, effective dimension,
+      ! and relative standard deviation
       select case (cld%type_condensed(i))
+
       case (ip_clcmp_st_water)
-        if ((present(liq_mmr).or.present(liq_mmr_1d)) .and. &
-            (present(liq_dim).or.present(liq_dim_1d))) then
+        if (present(liq_mmr).or.present(liq_mmr_1d)) then
+          ! Set the liquid condensate mass mixing ratio
           call set_cld_field(cld%condensed_mix_ratio(:, :, i), &
                              liq_mmr, liq_mmr_1d)
-          call set_cld_field(cld%condensed_dim_char(:, :, i), &
-                             liq_dim, liq_dim_1d)
+          if (l_combine .and. &
+              (present(liq_conv_mmr).or.present(liq_conv_mmr_1d))) then
+            ! Add in the convective condensate if using combined cloud
+            call set_cld_field(cond_mmr, liq_conv_mmr, liq_conv_mmr_1d)
+            cld%condensed_mix_ratio(:, :, i) = &
+              cld%condensed_mix_ratio(:, :, i) + cond_mmr
+            ! Increment the convective condensate for the ratio calculation
+            cld%c_ratio = cld%c_ratio + cond_mmr
+          end if
         else
-          cmessage = 'Liquid MMR and effective radius not provided.'
+          cmessage = 'Liquid MMR not provided.'
           ierr=i_err_fatal
           call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
         end if
+        if (present(liq_rsd).or.present(liq_rsd_1d)) then
+          ! Set the relative standard deviation (RSD)
+          call set_cld_field(cond_rsd, liq_rsd, liq_rsd_1d)
+        else if (present(cloud_horizontal_rsd)) then
+          cond_rsd = cloud_horizontal_rsd
+        else
+          cond_rsd = 0.0_RealK
+        end if
+
       case (ip_clcmp_cnv_water)
-        if ((present(liq_conv_mmr).or.present(liq_conv_mmr_1d)) .and. &
-            (present(liq_conv_dim).or.present(liq_conv_dim_1d))) then
+        if (present(liq_conv_mmr).or.present(liq_conv_mmr_1d)) then
           call set_cld_field(cld%condensed_mix_ratio(:, :, i), &
                              liq_conv_mmr, liq_conv_mmr_1d)
-          call set_cld_field(cld%condensed_dim_char(:, :, i), &
-                             liq_conv_dim, liq_conv_dim_1d)
+        else if (l_split) then
+          ! If splitting cloud then convective mmr may not have been provided
+          cld%condensed_mix_ratio(:, :, i) = 0.0_RealK
         else
-          cmessage = 'Convective liquid MMR and effective radius not provided.'
+          cmessage = 'Convective liquid MMR not provided.'
           ierr=i_err_fatal
           call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
-        end if        
+        end if
+        if (l_combine .and. (present(liq_mmr).or.present(liq_mmr_1d))) then
+          ! Add in the stratiform condensate if using combined cloud
+          call set_cld_field(cond_mmr, liq_mmr, liq_mmr_1d)
+          cld%condensed_mix_ratio(:, :, i) = &
+            cld%condensed_mix_ratio(:, :, i) + cond_mmr
+        end if
+        if (present(liq_conv_rsd).or.present(liq_conv_rsd_1d)) then
+          ! Set the relative standard deviation (RSD)
+          call set_cld_field(cond_rsd, liq_conv_rsd, liq_conv_rsd_1d)
+        else if (present(cloud_horizontal_rsd)) then
+          cond_rsd = cloud_horizontal_rsd
+        else
+          cond_rsd = 0.0_RealK
+        end if
+
       end select
-      ! Constrain effective radius to be within parametrisation bounds
-      do k = dimen%id_cloud_top, atm%n_layer
-        do l = 1, atm%n_profile
-          cld%condensed_dim_char(l, k, i) = min( max( &
-            cld%condensed_dim_char(l, k, i), &
-            spectrum%drop%parm_min_dim(i_param_type) ), &
-            spectrum%drop%parm_max_dim(i_param_type) )
-        end do
-      end do
+
     else
       cmessage = 'Liquid cloud type not in spectral file.'
       ierr=i_err_fatal
       call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
     end if
+
   case (ip_phase_ice)
     if (i_param_type <= 0) then
       cld%i_condensed_param(i) = ip_ice_unparametrized
@@ -274,55 +334,93 @@ do i=1, cld%n_condensed
             = spectrum%ice%parm_list(k, j, i_param_type)
         end do
       end do
-      ! Assign ice mass mixing ratio and effective dimension
+
+      ! Assign ice mass mixing ratio, effective dimension,
+      ! and relative standard deviation
       select case (cld%type_condensed(i))
+
       case (ip_clcmp_st_ice)
         if (present(ice_mmr).or.present(ice_mmr_1d)) then
           call set_cld_field(cld%condensed_mix_ratio(:, :, i), &
                              ice_mmr, ice_mmr_1d)
+          if (l_combine .and. &
+              (present(ice_conv_mmr).or.present(ice_conv_mmr_1d))) then
+            ! Add in the convective condensate if using combined cloud
+            call set_cld_field(cond_mmr, ice_conv_mmr, ice_conv_mmr_1d)
+            cld%condensed_mix_ratio(:, :, i) = &
+              cld%condensed_mix_ratio(:, :, i) + cond_mmr
+            ! Increment the convective condensate for the ratio calculation
+            cld%c_ratio = cld%c_ratio + cond_mmr
+          end if
         else
           cmessage = 'Ice MMR not provided.'
           ierr=i_err_fatal
           call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
         end if
-        if (present(ice_dim).or.present(ice_dim_1d)) then
-          call set_cld_field(cld%condensed_dim_char(:, :, i), &
-                             ice_dim, ice_dim_1d)
+        if (present(ice_rsd).or.present(ice_rsd_1d)) then
+          ! Set the relative standard deviation (RSD)
+          call set_cld_field(cond_rsd, ice_rsd, ice_rsd_1d)
+        else if (present(cloud_horizontal_rsd)) then
+          cond_rsd = cloud_horizontal_rsd
         else
-          call set_ice_dim()
+          cond_rsd = 0.0_RealK
         end if
+
       case (ip_clcmp_cnv_ice)
         if (present(ice_conv_mmr).or.present(ice_conv_mmr_1d)) then
           call set_cld_field(cld%condensed_mix_ratio(:, :, i), &
                              ice_conv_mmr, ice_conv_mmr_1d)
+        else if (l_split) then
+          ! If splitting cloud then convective mmr may not have been provided
+          cld%condensed_mix_ratio(:, :, i) = 0.0_RealK
         else
           cmessage = 'Convective ice MMR not provided.'
           ierr=i_err_fatal
           call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
         end if
-        if (present(ice_conv_dim).or.present(ice_conv_dim_1d)) then
-          call set_cld_field(cld%condensed_dim_char(:, :, i), &
-                             ice_conv_dim, ice_conv_dim_1d)
-        else
-          call set_ice_dim()
+        if (l_combine .and. (present(ice_mmr).or.present(ice_mmr_1d))) then
+          ! Add in the stratiform condensate if using combined cloud
+          call set_cld_field(cond_mmr, ice_mmr, ice_mmr_1d)
+          cld%condensed_mix_ratio(:, :, i) = &
+            cld%condensed_mix_ratio(:, :, i) + cond_mmr
         end if
+        if (present(ice_conv_rsd).or.present(ice_conv_rsd_1d)) then
+          ! Set the relative standard deviation (RSD)
+          call set_cld_field(cond_rsd, ice_conv_rsd, ice_conv_rsd_1d)
+        else if (present(cloud_horizontal_rsd)) then
+          cond_rsd = cloud_horizontal_rsd
+        else
+          cond_rsd = 0.0_RealK
+        end if
+
       end select
-      ! Constrain effective dimension to be within parametrisation bounds
-      do k = dimen%id_cloud_top, atm%n_layer
-        do l = 1, atm%n_profile
-          cld%condensed_dim_char(l, k, i) = min( max( &
-            cld%condensed_dim_char(l, k, i), &
-            spectrum%ice%parm_min_dim(i_param_type) ), &
-            spectrum%ice%parm_max_dim(i_param_type) )
-        end do
-      end do
+
     else
       cmessage = 'Ice cloud type not in spectral file.'
       ierr=i_err_fatal
       call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
     end if
   end select
-end do
+
+  ! Treatment of condensate inhomogeneity
+  select case (control%i_inhom)
+  case (ip_scaling)
+    ! Scale the mixing ratio directly
+    ! (equivalent to eqn 11a from Cairns et al. 2000).
+    cld%condensed_mix_ratio(:, :, i) = &
+      cld%condensed_mix_ratio(:, :, i) / (1.0_RealK + cond_rsd**2)
+  case (ip_cairns)
+    ! Set the relative variance as the square of the
+    ! relative standard deviation. This will be used
+    ! to renormalise the single scattering properties.
+    cld%condensed_rel_var_dens(:, :, i) = cond_rsd**2
+  case (ip_mcica, ip_tripleclouds_2019)
+    ! Use the relative variation field to store the RSD
+    cld%condensed_rel_var_dens(:, :, i) = cond_rsd
+  end select
+
+end do ! over condensed components
+
 
 ! Set the decorrelation scalings for cloud vertical overlap
 if (present(cloud_vertical_decorr)) then
@@ -343,10 +441,11 @@ end if
 
 ! Set cloud fractions
 select case (control%i_cloud_representation)
-case (ip_cloud_homogen)
+
+case (ip_cloud_homogen, ip_cloud_combine_homogen)
   cld%n_cloud_type = 1
   do i = 1, cld%n_condensed
-    i_cloud_type(i) = ip_cloud_type_homogen
+    cld%i_cloud_type(i) = ip_cloud_type_homogen
   end do
   if (present(cloud_frac).or.present(cloud_frac_1d)) then
     call set_cld_field(cld%frac_cloud(:, :, ip_cloud_type_homogen), &
@@ -356,14 +455,21 @@ case (ip_cloud_homogen)
     ierr=i_err_fatal
     call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
   end if
-case (ip_cloud_ice_water)
+  if (l_combine .and. ( present(conv_frac).or.present(conv_frac_1d) )) then
+    ! Add in the convective fraction if using combined cloud
+    call set_cld_field(cld%c_cloud, conv_frac, conv_frac_1d)
+    cld%frac_cloud(:, :, ip_cloud_type_homogen) = &
+      cld%frac_cloud(:, :, ip_cloud_type_homogen) + cld%c_cloud
+  end if
+
+case (ip_cloud_ice_water, ip_cloud_combine_ice_water)
   cld%n_cloud_type = 2
   do i = 1, cld%n_condensed
     select case (cld%type_condensed(i))
     case (ip_clcmp_st_water)
-      i_cloud_type(i) = ip_cloud_type_water
+      cld%i_cloud_type(i) = ip_cloud_type_water
     case (ip_clcmp_st_ice)
-      i_cloud_type(i) = ip_cloud_type_ice
+      cld%i_cloud_type(i) = ip_cloud_type_ice
     end select
   end do
   if ((present(liq_frac).or.present(liq_frac_1d)) .and. &
@@ -397,18 +503,45 @@ case (ip_cloud_ice_water)
     ierr=i_err_fatal
     call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
   end if
-case (ip_cloud_conv_strat)
+  if (l_combine .and. &
+      (present(liq_conv_frac).or.present(liq_conv_frac_1d)) .and. &
+      (present(ice_conv_frac).or.present(ice_conv_frac_1d))) then
+    ! Add in the convective fraction if using combined cloud
+    call set_cld_field(frac_liq, liq_conv_frac, liq_conv_frac_1d)
+    call set_cld_field(frac_ice, ice_conv_frac, ice_conv_frac_1d)
+    if (present(conv_frac).or.present(conv_frac_1d)) then
+      call set_cld_field(frac, conv_frac, conv_frac_1d)
+      do k = dimen%id_cloud_top, atm%n_layer
+        do l = 1, atm%n_profile
+          if (frac_liq(l, k) + frac_ice(l, k) > eps) then
+            ! Split mixed phase fraction between ice and liquid
+            frac_liq(l, k) = &
+              frac(l, k)*frac_liq(l, k) / (frac_liq(l, k)+frac_ice(l, k))
+            frac_ice(l, k) = &
+              frac(l, k)*frac_ice(l, k) / (frac_liq(l, k)+frac_ice(l, k))
+          end if
+        end do
+      end do
+    end if
+    cld%frac_cloud(:, :, ip_cloud_type_water) = &
+      cld%frac_cloud(:, :, ip_cloud_type_water) + frac_liq
+    cld%frac_cloud(:, :, ip_cloud_type_ice) = &
+      cld%frac_cloud(:, :, ip_cloud_type_ice) + frac_ice
+    cld%c_cloud = frac_liq + frac_ice
+  end if
+
+case (ip_cloud_conv_strat, ip_cloud_split_homogen)
   cld%n_cloud_type = 2
   do i = 1, cld%n_condensed
     select case (cld%type_condensed(i))
     case (ip_clcmp_st_water)
-      i_cloud_type(i) = ip_cloud_type_strat
+      cld%i_cloud_type(i) = ip_cloud_type_strat
     case (ip_clcmp_st_ice)
-      i_cloud_type(i) = ip_cloud_type_strat
+      cld%i_cloud_type(i) = ip_cloud_type_strat
     case (ip_clcmp_cnv_water)
-      i_cloud_type(i) = ip_cloud_type_conv
+      cld%i_cloud_type(i) = ip_cloud_type_conv
     case (ip_clcmp_cnv_ice)
-      i_cloud_type(i) = ip_cloud_type_conv
+      cld%i_cloud_type(i) = ip_cloud_type_conv
     end select
   end do
   if ((present(cloud_frac).or.present(cloud_frac_1d)) .and. &
@@ -417,23 +550,76 @@ case (ip_cloud_conv_strat)
                        cloud_frac, cloud_frac_1d)
     call set_cld_field(cld%frac_cloud(:, :, ip_cloud_type_conv), &
                        conv_frac, conv_frac_1d)
+  else if (l_split .and. &
+           (present(cloud_frac).or.present(cloud_frac_1d))) then
+    call set_cld_field(cld%frac_cloud(:, :, ip_cloud_type_strat), &
+                       cloud_frac, cloud_frac_1d)
+    cld%frac_cloud(:, :, ip_cloud_type_conv) = 0.0_RealK
   else
-    cmessage = 'Cloud fraction and convective cloud fraction not provided.'
+    cmessage = 'Cloud fractions not provided.'
     ierr=i_err_fatal
     call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
   end if
-case (ip_cloud_csiw)
+
+  if (l_split) then
+    ! Combine the stratiform and convective fractions and then split
+    ! into optically thick and thin regions
+    frac = cld%frac_cloud(:, :, ip_cloud_type_strat) &
+         + cld%frac_cloud(:, :, ip_cloud_type_conv)
+    select case (control%i_inhom)
+    case (ip_tripleclouds_2019)
+      ! Use equations A1 and A2 from Hogan et al. (2019) to set the
+      ! fractions and mixing ratios in each region of the split cloud.
+      ! A single RSD field is needed so use the weighted mean of liq and ice.
+      cond_rsd = 0.0_RealK
+      cond_mmr = 0.0_RealK
+      do i = 1, cld%n_condensed
+        if (cld%i_cloud_type(i) == ip_cloud_type_strat) then
+          cond_rsd = cond_rsd + cld%condensed_rel_var_dens(:, :, i) &
+                              * cld%condensed_mix_ratio(:, :, i)
+          cond_mmr = cond_mmr + cld%condensed_mix_ratio(:, :, i)
+        end if
+      end do
+      cond_rsd = cond_rsd / max(cond_mmr, epsilon(cond_mmr))
+      frac_m = 0.4_RealK/2.25_RealK
+      frac_c = 0.525_RealK/2.25_RealK
+      frac_thin = max(0.5_RealK, min(0.9_RealK, cond_rsd*frac_m + frac_c))
+      cld%frac_cloud(:, :, ip_cloud_type_strat) = frac*frac_thin
+      cld%frac_cloud(:, :, ip_cloud_type_conv) = frac*(1.0_RealK-frac_thin)
+      ratio_thin = 0.025_RealK + 0.975_RealK &
+        * exp(-cond_rsd-cond_rsd**2/2.0_RealK-cond_rsd**3/4.0_RealK)
+      do i = 1, cld%n_condensed
+        select case (cld%i_cloud_type(i))
+        case (ip_cloud_type_strat)
+          ! Optically thin region
+          cld%condensed_mix_ratio(:, :, i) = &
+            cld%condensed_mix_ratio(:, :, i) * ratio_thin * frac_thin
+        case (ip_cloud_type_conv)
+          ! Optically thick region
+          cld%condensed_mix_ratio(:, :, i) = &
+            cld%condensed_mix_ratio(:, :, i) * (1.0_RealK-ratio_thin*frac_thin)
+        end select
+      end do
+    case default
+      cld%frac_cloud(:, :, ip_cloud_type_strat) = 0.5_RealK*frac
+      cld%frac_cloud(:, :, ip_cloud_type_conv) = 0.5_RealK*frac
+      cld%condensed_mix_ratio(:, :, 1:cld%n_condensed) = &
+        0.5_RealK*cld%condensed_mix_ratio(:, :, 1:cld%n_condensed)
+    end select
+  end if
+
+case (ip_cloud_csiw, ip_cloud_split_ice_water)
   cld%n_cloud_type = 4
   do i = 1, cld%n_condensed
     select case (cld%type_condensed(i))
     case (ip_clcmp_st_water)
-      i_cloud_type(i) = ip_cloud_type_sw
+      cld%i_cloud_type(i) = ip_cloud_type_sw
     case (ip_clcmp_st_ice)
-      i_cloud_type(i) = ip_cloud_type_si
+      cld%i_cloud_type(i) = ip_cloud_type_si
     case (ip_clcmp_cnv_water)
-      i_cloud_type(i) = ip_cloud_type_cw
+      cld%i_cloud_type(i) = ip_cloud_type_cw
     case (ip_clcmp_cnv_ice)
-      i_cloud_type(i) = ip_cloud_type_ci
+      cld%i_cloud_type(i) = ip_cloud_type_ci
     end select
   end do
   if ((present(liq_frac).or.present(liq_frac_1d)) .and. &
@@ -493,19 +679,106 @@ case (ip_cloud_csiw)
                        liq_conv_frac, liq_conv_frac_1d)
     call set_cld_field(cld%frac_cloud(:, :, ip_cloud_type_ci), &
                        ice_conv_frac, ice_conv_frac_1d)
+  else if (l_split) then
+    cld%frac_cloud(:, :, ip_cloud_type_cw) = 0.0_RealK
+    cld%frac_cloud(:, :, ip_cloud_type_ci) = 0.0_RealK
   else
     cmessage = 'Liquid and ice convective cloud fractions not provided.'
     ierr=i_err_fatal
     call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
   end if
+
+  if (l_split) then
+    ! Combine the stratiform and convective fractions and then split
+    ! into optically thick and thin regions
+    select case (control%i_inhom)
+    case (ip_tripleclouds_2019)
+      ! Use equations A1 and A2 from Hogan et al. (2019) to set the
+      ! fractions and mixing ratios in each region of the split cloud.
+      do i_phase = 1, 2
+        ! Liquid and ice fractions are split according to their RSD.
+        select case (i_phase)
+        case (ip_phase_water)
+          i_thin = ip_cloud_type_sw
+          i_thick = ip_cloud_type_cw
+        case (ip_phase_ice)
+          i_thin = ip_cloud_type_si
+          i_thick = ip_cloud_type_ci
+        end select
+        ! Select the RSD for this phase (or zero if this phase is turned off)
+        cond_rsd = 0.0_RealK
+        do i = 1, cld%n_condensed
+          if (cld%i_cloud_type(i) == i_thin) then
+            cond_rsd = cld%condensed_rel_var_dens(:, :, i)
+          end if
+        end do
+        ! First combine the strat and conv cloud fractions for this phase
+        frac = cld%frac_cloud(:, :, i_thin) + cld%frac_cloud(:, :, i_thick)
+        frac_m = 0.4_RealK/2.25_RealK
+        frac_c = 0.525_RealK/2.25_RealK
+        ! Optically thin fraction set between 0.5 and 0.9 of total
+        frac_thin = max(0.5_RealK, min(0.9_RealK, cond_rsd*frac_m + frac_c))
+        cld%frac_cloud(:, :, i_thin) = frac*frac_thin
+        ! Optically thick fraction set between 0.1 and 0.5 of total
+        cld%frac_cloud(:, :, i_thick) = frac*(1.0_RealK-frac_thin)
+        ! Condensate in optically thin region reduced according to equations
+        ! A1 and A2 in Hogan et al 2019. The condensate in the optically 
+        ! thick region is adjusted to preserve the correct gridbox mean.
+        ratio_thin = 0.025_RealK + 0.975_RealK &
+          * exp(-cond_rsd-cond_rsd**2/2.0_RealK-cond_rsd**3/4.0_RealK)
+        do i = 1, cld%n_condensed
+          if (cld%i_cloud_type(i) == i_thin) then
+            ! Optically thin region
+            cld%condensed_mix_ratio(:, :, i) = &
+              cld%condensed_mix_ratio(:, :, i) * ratio_thin * frac_thin
+          else if (cld%i_cloud_type(i) == i_thick) then
+            ! Optically thick region
+            cld%condensed_mix_ratio(:, :, i) = &
+              cld%condensed_mix_ratio(:, :, i)*(1.0_RealK-ratio_thin*frac_thin)
+          end if
+        end do
+      end do
+    case default
+      ! The default case splits the cloud into two equal regions.
+      frac_liq = cld%frac_cloud(:, :, ip_cloud_type_sw) &
+               + cld%frac_cloud(:, :, ip_cloud_type_cw)
+      frac_ice = cld%frac_cloud(:, :, ip_cloud_type_si) &
+               + cld%frac_cloud(:, :, ip_cloud_type_ci)
+      cld%frac_cloud(:, :, ip_cloud_type_sw) = 0.5_RealK*frac_liq
+      cld%frac_cloud(:, :, ip_cloud_type_cw) = 0.5_RealK*frac_liq
+      cld%frac_cloud(:, :, ip_cloud_type_si) = 0.5_RealK*frac_ice
+      cld%frac_cloud(:, :, ip_cloud_type_ci) = 0.5_RealK*frac_ice
+      cld%condensed_mix_ratio(:, :, 1:cld%n_condensed) = &
+        0.5_RealK*cld%condensed_mix_ratio(:, :, 1:cld%n_condensed)
+    end select
+  end if
+
 end select
+
+if (l_combine) then
+  ! Set the convective cloud contribution to combined cloud
+  do k = dimen%id_cloud_top, atm%n_layer
+    do l = 1, atm%n_profile
+      ! Temporarily set c_ratio to the in-cloud convective condensate mmr
+      cld%c_ratio(l, k) = cld%c_ratio(l, k) / max(cld%c_cloud(l, k), eps)
+    end do
+  end do
+  cond_mmr = 0.0_RealK
+  do i = 1, cld%n_condensed
+    do k = dimen%id_cloud_top, atm%n_layer
+      do l = 1, atm%n_profile
+        cond_mmr(l, k) = cond_mmr(l, k) + cld%condensed_mix_ratio(l, k, i)
+      end do
+    end do
+  end do
+end if
 
 ! Convert mass mixing ratios to in-cloud values
 do i = 1, cld%n_condensed
   do k = dimen%id_cloud_top, atm%n_layer
     do l = 1, atm%n_profile
       cld%condensed_mix_ratio(l, k, i) = cld%condensed_mix_ratio(l, k, i) &
-        / max(cld%frac_cloud(l, k, i_cloud_type(i)), eps)
+        / max(cld%frac_cloud(l, k, cld%i_cloud_type(i)), eps)
     end do
   end do
 end do
@@ -518,9 +791,19 @@ do k = dimen%id_cloud_top, atm%n_layer
       do j=1, cld%n_cloud_type
         cld%frac_cloud(l, k, j) = cld%frac_cloud(l, k, j) / cld%w_cloud(l, k)
       end do
+      if (l_combine) then
+        ! Set c_ratio to the in-cloud convective condensate MMR
+        ! divided by the total in-cloud condensate MMR
+        cld%c_ratio(l, k) = &
+          cld%c_ratio(l, k) * cld%w_cloud(l, k) / cond_mmr(l, k)
+      end if
     else
       cld%w_cloud(l, k) = 0.0_RealK
       cld%frac_cloud(l, k, 1:cld%n_cloud_type) = 0.0_RealK
+      if (l_combine) then
+        cld%c_cloud(l, k) = 0.0_RealK
+        cld%c_ratio(l, k) = 0.0_RealK
+      end if
     end if
     if (cld%w_cloud(l, k) > 1.0_RealK + min_cloud_fraction) then
       cmessage = 'Cloud fraction greater than 1.'
@@ -579,76 +862,6 @@ contains
       call ereport(ModuleName//':'//RoutineName, ierr, cmessage)      
     end if
   end subroutine set_cld_field
-
-
-  subroutine set_ice_dim()
-
-    use rad_pcf, only: &
-      ip_ice_adt, ip_ice_agg_de, ip_ice_agg_de_sun
-    implicit none
-
-    ! Parameters for the aggregate parametrization.
-    real (RealK), parameter :: a0_agg_cold = 7.5094588e-04_RealK
-    real (RealK), parameter :: b0_agg_cold = 5.0830326e-07_RealK
-    real (RealK), parameter :: a0_agg_warm = 1.3505403e-04_RealK
-    real (RealK), parameter :: b0_agg_warm = 2.6517429e-05_RealK
-    real (RealK), parameter :: t_switch    = 216.208_RealK
-    real (RealK), parameter :: t0_agg      = 279.5_RealK
-    real (RealK), parameter :: s0_agg      = 0.05_RealK
-    real (RealK), parameter :: dge2de      = &
-      (3.0_RealK/2.0_RealK)*(3.0_RealK/(2.0_RealK*sqrt(3.0_RealK)))
-
-    select case (cld%i_condensed_param(i))
-
-    case (ip_ice_adt)
-      ! This parametrization is based on the mean maximum
-      ! dimension of the crystal, determined as a function of
-      ! the local temperature. The size is limited to its value
-      ! at the freezing level.
-      do k = dimen%id_cloud_top, atm%n_layer
-        do l = 1, atm%n_profile
-          cld%condensed_dim_char(l, k, i) = min( 7.198755e-04_RealK, &
-            exp(5.522e-02_RealK * (atm%t(l, k) - 2.7965e+02_RealK)) &
-            / 9.702e+02_RealK )
-        end do
-      end do
-
-    case (ip_ice_agg_de, ip_ice_agg_de_sun)
-      ! Aggregate parametrization based on effective dimension.
-      ! The fit provided here is based on Stephan Havemann's fit of
-      ! Dge with temperature, consistent with David Mitchell's treatment
-      ! of the variation of the size distribution with temperature. The
-      ! parametrization of the optical properties is based on De
-      ! (=(3/2)volume/projected area), whereas Stephan's fit gives Dge
-      ! (=(2*SQRT(3)/3)*volume/projected area), which explains the
-      ! conversion factor. The fit to Dge is in two sections, because
-      ! Mitchell's relationship predicts a cusp at 216.208 K. Limits
-      ! of 8 and 124 microns are imposed on Dge: these are based on this
-      ! relationship and should be reviewed if it is changed. Note also
-      ! that the relationship given here is for polycrystals only.
-      do k = dimen%id_cloud_top, atm%n_layer
-        do l = 1, atm%n_profile
-          ! Preliminary calculation of Dge.
-          if (atm%t(l, k) < t_switch) then
-            cld%condensed_dim_char(l, k, i) = &
-              a0_agg_cold*exp(s0_agg*(atm%t(l, k)-t0_agg))+b0_agg_cold
-          else
-            cld%condensed_dim_char(l, k, i) = &
-              a0_agg_warm*exp(s0_agg*(atm%t(l, k)-t0_agg))+b0_agg_warm
-          end if
-          ! Limit and convert to De.
-          cld%condensed_dim_char(l, k, i) = dge2de * min( 1.24e-04_RealK, &
-            max(8.0e-06_RealK, cld%condensed_dim_char(l, k, i)) )
-        end do
-      end do
-
-      case default
-        ! A default value of 30-microns is assumed.
-        cld%condensed_dim_char(:, :, i) = 30.0e-6_RealK
-
-    end select
-
-  end subroutine set_ice_dim
 
 end subroutine set_cld
 end module socrates_set_cld

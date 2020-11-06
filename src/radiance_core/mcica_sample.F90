@@ -95,10 +95,14 @@ SUBROUTINE mcica_sample(ierr                                            &
   USE def_planck,  ONLY: StrPlanck
   USE def_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf, ONLY: ip_solar, ip_cloud_homogen, ip_cloud_ice_water,    &
-    ip_no_scatter_abs,  ip_no_scatter_ext, ip_direct_csr_scaling
+  USE rad_pcf, ONLY: ip_solar, ip_cloud_homogen, ip_cloud_ice_water, &
+    ip_cloud_combine_homogen, ip_cloud_combine_ice_water, &
+    ip_no_scatter_abs, ip_no_scatter_ext, ip_direct_csr_scaling, &
+    i_err_fatal
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE ereport_mod, ONLY: ereport
+  USE errormessagelength_mod, ONLY: errormessagelength
 
   IMPLICIT NONE
 
@@ -441,7 +445,7 @@ SUBROUTINE mcica_sample(ierr                                            &
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
   REAL(KIND=jprb)               :: zhook_handle
-
+  CHARACTER (LEN=errormessagelength) :: cmessage
   CHARACTER(LEN=*), PARAMETER :: RoutineName='MCICA_SAMPLE'
 
 
@@ -465,7 +469,8 @@ SUBROUTINE mcica_sample(ierr                                            &
 !   Loop over the condensed components, calculating their optical
 !   properties by simply scaling the values previously calculated
 !   for the average cloud condensate amounts.
-    IF (i_cloud_representation == IP_cloud_ice_water) THEN
+    SELECT CASE (i_cloud_representation)
+    CASE (ip_cloud_ice_water, ip_cloud_combine_ice_water)
       IF (control%l_avg_phase_fnc .OR.                                  &
             (i_scatter_method == ip_no_scatter_abs) .OR.                &
             (i_scatter_method == ip_no_scatter_ext) ) THEN
@@ -555,7 +560,7 @@ SUBROUTINE mcica_sample(ierr                                            &
         END IF
       END IF
 
-    ELSE IF (i_cloud_representation == IP_cloud_homogen) THEN
+    CASE (ip_cloud_homogen, ip_cloud_combine_homogen)
 ! Since both ice and liquid are added to same i_cloud_type, the clear-sky
 ! extinction, cloudy extinction and scaling of phase function must each be
 ! done in separate loops.
@@ -723,7 +728,14 @@ SUBROUTINE mcica_sample(ierr                                            &
           END DO
         END IF
       END IF
-    END IF
+
+    CASE DEFAULT
+
+      cmessage = 'Cloud representation not compatible with MCICA'
+      ierr = i_err_fatal
+      CALL ereport(RoutineName, ierr, cmessage)
+
+    END SELECT
 
 
 ! DEPENDS ON: monochromatic_radiance

@@ -8,18 +8,24 @@
 module socrates_runes
 
 use rad_pcf, only: &
-  ip_source_illuminate              => ip_solar, &
-  ip_source_thermal                 => ip_infra_red, &
-  ip_cloud_representation_off       => ip_cloud_off, &
-  ip_cloud_representation_ice_water => ip_cloud_ice_water, &
-  ip_cloud_representation_csiw      => ip_cloud_csiw, &
-  ip_overlap_max_random             => ip_max_rand, &
-  ip_overlap_random                 => ip_rand, &
-  ip_overlap_exponential_random     => ip_exponential_rand, &
-  ip_inhom_homogeneous              => ip_homogeneous, &
-  ip_inhom_scaling                  => ip_scaling, &
-  ip_inhom_mcica                    => ip_mcica, &
-  ip_inhom_cairns                   => ip_cairns
+  ip_source_illuminate                      => ip_solar, &
+  ip_source_thermal                         => ip_infra_red, &
+  ip_cloud_representation_off               => ip_cloud_off, &
+  ip_cloud_representation_ice_water         => ip_cloud_ice_water, &
+  ip_cloud_representation_combine_ice_water => ip_cloud_combine_ice_water, &
+  ip_cloud_representation_csiw              => ip_cloud_csiw, &
+  ip_cloud_representation_split_ice_water   => ip_cloud_split_ice_water, &
+  ip_overlap_max_random                     => ip_max_rand, &
+  ip_overlap_random                         => ip_rand, &
+  ip_overlap_exponential_random             => ip_exponential_rand, &
+  ip_inhom_homogeneous                      => ip_homogeneous, &
+  ip_inhom_scaling                          => ip_scaling, &
+  ip_inhom_mcica                            => ip_mcica, &
+  ip_inhom_cairns                           => ip_cairns, &
+  ip_inhom_tripleclouds_2019                => ip_tripleclouds_2019, &
+  ip_droplet_re_external                    => ip_re_external, &
+  ip_droplet_re_liu                         => ip_re_liu, &
+  ip_droplet_re_default                     => ip_re_default
 
 implicit none
 character(len=*), parameter, private :: ModuleName = 'SOCRATES_RUNES'
@@ -41,15 +47,19 @@ subroutine runes(n_profile, n_layer, spectrum, spectrum_name, mcica_data, &
   liq_frac, ice_frac, liq_conv_frac, ice_conv_frac, &
   liq_mmr, ice_mmr, liq_conv_mmr, ice_conv_mmr, &
   liq_dim, ice_dim, liq_conv_dim, ice_conv_dim, &
+  liq_rsd, ice_rsd, liq_conv_rsd, ice_conv_rsd, &
+  liq_nc, liq_conv_nc, &
   cloud_frac_1d, conv_frac_1d, &
   liq_frac_1d, ice_frac_1d, liq_conv_frac_1d, ice_conv_frac_1d, &
   liq_mmr_1d, ice_mmr_1d, liq_conv_mmr_1d, ice_conv_mmr_1d, &
   liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d, &
+  liq_rsd_1d, ice_rsd_1d, liq_conv_rsd_1d, ice_conv_rsd_1d, &
+  liq_nc_1d, liq_conv_nc_1d, &
   cloud_vertical_decorr, conv_vertical_decorr, &
   cloud_horizontal_rsd, &
   layer_heat_capacity, layer_heat_capacity_1d, &
   i_source, i_cloud_representation, i_overlap, i_inhom, &
-  i_mcica_sampling, i_st_water, i_st_ice, &
+  i_mcica_sampling, i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re, &
   rand_seed, &
   l_rayleigh, l_mixing_ratio, l_aerosol_mode, &
   l_invert, l_debug, i_profile_debug, &
@@ -57,7 +67,20 @@ subroutine runes(n_profile, n_layer, spectrum, spectrum_name, mcica_data, &
   flux_up_tile, flux_up_blue_tile, flux_direct_blue_surf, flux_down_blue_surf, &
   flux_direct_1d, flux_down_1d, flux_up_1d, heating_rate_1d, &
   flux_up_tile_1d, flux_up_blue_tile_1d, &
-  total_cloud_cover)
+  total_cloud_cover, total_cloud_fraction, total_cloud_fraction_1d, &
+  liq_frac_diag, ice_frac_diag, &
+  liq_conv_frac_diag, ice_conv_frac_diag, &
+  liq_incloud_mmr_diag, ice_incloud_mmr_diag, &
+  liq_inconv_mmr_diag, ice_inconv_mmr_diag, &
+  liq_dim_diag, ice_dim_diag, &
+  liq_conv_dim_diag, ice_conv_dim_diag, &
+  liq_frac_diag_1d, ice_frac_diag_1d, &
+  liq_conv_frac_diag_1d, ice_conv_frac_diag_1d, &
+  liq_incloud_mmr_diag_1d, ice_incloud_mmr_diag_1d, &
+  liq_inconv_mmr_diag_1d, ice_inconv_mmr_diag_1d, &
+  liq_dim_diag_1d, ice_dim_diag_1d, &
+  liq_conv_dim_diag_1d, ice_conv_dim_diag_1d)
+
 
 use def_spectrum, only: StrSpecData
 use def_mcica,    only: StrMcica
@@ -78,8 +101,10 @@ use socrates_set_dimen,     only: set_dimen
 use socrates_set_atm,       only: set_atm
 use socrates_set_bound,     only: set_bound
 use socrates_set_cld,       only: set_cld
+use socrates_set_cld_dim,   only: set_cld_dim
 use socrates_set_cld_mcica, only: set_cld_mcica
 use socrates_set_aer,       only: set_aer
+use socrates_set_diag,      only: set_diag
 
 use realtype_rd, only: RealK
 use ereport_mod,  only: ereport
@@ -168,14 +193,19 @@ real(RealK), intent(in), dimension (n_profile, n_layer), optional :: &
   cloud_frac, conv_frac, &
   liq_frac, ice_frac, liq_conv_frac, ice_conv_frac, &
   liq_mmr, ice_mmr, liq_conv_mmr, ice_conv_mmr, &
-  liq_dim, ice_dim, liq_conv_dim, ice_conv_dim
+  liq_dim, ice_dim, liq_conv_dim, ice_conv_dim, &
+  liq_rsd, ice_rsd, liq_conv_rsd, ice_conv_rsd, &
+  liq_nc, liq_conv_nc
 real(RealK), intent(in), dimension (n_layer), optional :: &
   cloud_frac_1d, conv_frac_1d, &
   liq_frac_1d, ice_frac_1d, liq_conv_frac_1d, ice_conv_frac_1d, &
   liq_mmr_1d, ice_mmr_1d, liq_conv_mmr_1d, ice_conv_mmr_1d, &
-  liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d
-!   Liquid and ice cloud fractions, gridbox mean mixing ratios, and
-!   effective dimensions
+  liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d, &
+  liq_rsd_1d, ice_rsd_1d, liq_conv_rsd_1d, ice_conv_rsd_1d, &
+  liq_nc_1d, liq_conv_nc_1d
+!   Liquid and ice cloud fractions, gridbox mean mixing ratios,
+!   effective dimensions, relative standard deviation of condensate,
+!   and number concentration
 
 real(RealK), intent(in), optional :: cloud_vertical_decorr
 !   Decorrelation pressure scale for cloud vertical overlap
@@ -192,7 +222,7 @@ integer, intent(in), optional :: i_source
 !   Select source of radiation
 integer, intent(in), optional :: &
   i_cloud_representation, i_overlap, i_inhom, &
-  i_mcica_sampling, i_st_water, i_st_ice
+  i_mcica_sampling, i_st_water, i_st_ice, i_cnv_water, i_cnv_ice, i_drop_re
 !   Select treatment of cloud
 integer, intent(in), optional :: rand_seed(n_profile)
 !   Random seed for cloud generator
@@ -237,6 +267,25 @@ real(RealK), intent(out), optional :: flux_down_blue_surf(n_profile)
 !   Total downward blue flux at the surface
 real(RealK), intent(out), optional :: total_cloud_cover(n_profile)
 !   Total cloud cover
+real(RealK), intent(out), optional :: total_cloud_fraction(n_profile, n_layer)
+real(RealK), intent(out), optional :: total_cloud_fraction_1d(n_layer)
+!   Total cloud fraction in layers
+real(RealK), intent(out), dimension(n_profile, n_layer), optional :: &
+  liq_frac_diag, ice_frac_diag, &
+  liq_conv_frac_diag, ice_conv_frac_diag, &
+  liq_incloud_mmr_diag, ice_incloud_mmr_diag, &
+  liq_inconv_mmr_diag, ice_inconv_mmr_diag, &
+  liq_dim_diag, ice_dim_diag, &
+  liq_conv_dim_diag, ice_conv_dim_diag
+real(RealK), intent(out), dimension(n_layer), optional :: &
+  liq_frac_diag_1d, ice_frac_diag_1d, &
+  liq_conv_frac_diag_1d, ice_conv_frac_diag_1d, &
+  liq_incloud_mmr_diag_1d, ice_incloud_mmr_diag_1d, &
+  liq_inconv_mmr_diag_1d, ice_inconv_mmr_diag_1d, &
+  liq_dim_diag_1d, ice_dim_diag_1d, &
+  liq_conv_dim_diag_1d, ice_conv_dim_diag_1d
+!   Liquid and ice cloud fractions, in-cloud mean mixing ratios,
+!   and effective dimension diagnostics
 
 ! Spectral data:
 type(StrSpecData), pointer :: spec => null()
@@ -266,14 +315,10 @@ type(StrAer) :: aer
 ! Output fields from core radiation code:
 type(StrOut) :: radout
 
-integer :: l, i, id_spec, id_mcica
+integer :: id_spec, id_mcica
 !   Loop variables
-logical :: l_inv
-!   Local logical for field inversion
 logical :: l_blue_flux_surf
 !   Output blue fluxes if requested
-real(RealK) :: flux_divergence(n_profile, n_layer)
-!   Flux divergence across layer (Wm-2)
 
 integer :: ierr = i_normal
 character (len=errormessagelength) :: cmessage
@@ -354,7 +399,10 @@ call set_control(control, spec, &
   i_inhom                = i_inhom, &
   i_mcica_sampling       = i_mcica_sampling, &
   i_st_water             = i_st_water, &
+  i_cnv_water            = i_cnv_water, &
   i_st_ice               = i_st_ice, &
+  i_cnv_ice              = i_cnv_ice, &
+  i_drop_re              = i_drop_re, &
   l_set_defaults         = .true.)
 
 call set_dimen(dimen, control, n_profile, n_layer, &
@@ -411,124 +459,112 @@ call set_bound(bound, control, dimen, spec, n_profile, &
 
 call set_cld(cld, control, dimen, spec, atm, &
   cloud_frac            = cloud_frac, &
+  conv_frac             = conv_frac, &
   liq_frac              = liq_frac, &
   ice_frac              = ice_frac, &
+  liq_conv_frac         = liq_conv_frac, &
+  ice_conv_frac         = ice_conv_frac, &
   liq_mmr               = liq_mmr, &
   ice_mmr               = ice_mmr, &
-  liq_dim               = liq_dim, &
-  ice_dim               = ice_dim, &
+  liq_conv_mmr          = liq_conv_mmr, &
+  ice_conv_mmr          = ice_conv_mmr, &
+  liq_rsd               = liq_rsd, &
+  ice_rsd               = ice_rsd, &
+  liq_conv_rsd          = liq_conv_rsd, &
+  ice_conv_rsd          = ice_conv_rsd, &
   cloud_frac_1d         = cloud_frac_1d, &
+  conv_frac_1d          = conv_frac_1d, &
   liq_frac_1d           = liq_frac_1d, &
   ice_frac_1d           = ice_frac_1d, &
+  liq_conv_frac_1d      = liq_conv_frac_1d, &
+  ice_conv_frac_1d      = ice_conv_frac_1d, &
   liq_mmr_1d            = liq_mmr_1d, &
   ice_mmr_1d            = ice_mmr_1d, &
-  liq_dim_1d            = liq_dim_1d, &
-  ice_dim_1d            = ice_dim_1d, &
+  liq_conv_mmr_1d       = liq_conv_mmr_1d, &
+  ice_conv_mmr_1d       = ice_conv_mmr_1d, &
+  liq_rsd_1d            = liq_rsd_1d, &
+  ice_rsd_1d            = ice_rsd_1d, &
+  liq_conv_rsd_1d       = liq_conv_rsd_1d, &
+  ice_conv_rsd_1d       = ice_conv_rsd_1d, &
   cloud_vertical_decorr = cloud_vertical_decorr, &
+  conv_vertical_decorr  = conv_vertical_decorr, &
+  cloud_horizontal_rsd  = cloud_horizontal_rsd, &
   l_invert              = l_invert, &
   l_debug               = l_debug, &
   i_profile_debug       = i_profile_debug )
 
+call set_cld_dim(cld, control, dimen, spec, atm, &
+  liq_nc          = liq_nc, &
+  liq_conv_nc     = liq_conv_nc, &
+  liq_dim         = liq_dim, &
+  ice_dim         = ice_dim, &
+  liq_conv_dim    = liq_conv_dim, &
+  ice_conv_dim    = ice_conv_dim, &
+  liq_nc_1d       = liq_nc_1d, &
+  liq_conv_nc_1d  = liq_conv_nc_1d, &
+  liq_dim_1d      = liq_dim_1d, &
+  ice_dim_1d      = ice_dim_1d, &
+  liq_conv_dim_1d = liq_conv_dim_1d, &
+  ice_conv_dim_1d = ice_conv_dim_1d, &
+  l_invert        = l_invert, &
+  l_debug         = l_debug, &
+  i_profile_debug = i_profile_debug )
+
 call set_cld_mcica(cld, mcica, control, dimen, spec, atm, &
-  rand_seed            = rand_seed, &
-  cloud_horizontal_rsd = cloud_horizontal_rsd)
+  rand_seed = rand_seed)
 
 call set_aer(aer, control, dimen, spec, n_profile, n_layer)
 
 ! DEPENDS ON: radiance_calc
 call radiance_calc(control, dimen, spec, atm, cld, aer, bound, radout)
 
-if (present(l_invert)) then
-  l_inv = l_invert
-else
-  l_inv = .false.
-end if
-
-! set heating rates and diagnostics
-if (present(heating_rate).or.present(heating_rate_1d)) then
-  if (l_inv) then
-    do i=1, n_layer
-      do l=1, n_profile
-        flux_divergence(l, n_layer-i+1) = &
-          sum(radout%flux_down(l, i-1, 1:control%n_channel)) - &
-          sum(radout%flux_down(l, i,   1:control%n_channel)) + &
-          sum(radout%flux_up(  l, i,   1:control%n_channel)) - &
-          sum(radout%flux_up(  l, i-1, 1:control%n_channel))
-      end do
-    end do
-  else
-    do i=1, n_layer
-      do l=1, n_profile
-        flux_divergence(l, i) = &
-          sum(radout%flux_down(l, i-1, 1:control%n_channel)) - &
-          sum(radout%flux_down(l, i,   1:control%n_channel)) + &
-          sum(radout%flux_up(  l, i,   1:control%n_channel)) - &
-          sum(radout%flux_up(  l, i-1, 1:control%n_channel))
-      end do
-    end do
-  end if
-  if (present(heating_rate)) then
-    if (present(layer_heat_capacity)) then
-      heating_rate = flux_divergence / layer_heat_capacity
-    else if (present(layer_heat_capacity_1d)) then
-      do i=1, n_layer
-        heating_rate(1:n_profile, i) = &
-          flux_divergence(1:n_profile, i) / layer_heat_capacity_1d(i)
-      end do
-    else
-      ! Just return the flux_divergence if no heat capacity supplied
-      heating_rate = flux_divergence
-    end if
-  end if
-  if (present(heating_rate_1d)) then
-    if (n_profile == 1) then
-      if (present(layer_heat_capacity)) then
-        heating_rate_1d(1:n_layer) = &
-          flux_divergence(1, 1:n_layer) / layer_heat_capacity(1, 1:n_layer)
-      else if (present(layer_heat_capacity_1d)) then
-        heating_rate_1d(1:n_layer) = &
-          flux_divergence(1, 1:n_layer) / layer_heat_capacity_1d(1:n_layer)
-      else
-        heating_rate_1d(1:n_layer) = flux_divergence(1, 1:n_layer)
-      end if
-    else
-      if (present(layer_heat_capacity)) then
-        heating_rate_1d = &
-          sum(flux_divergence / layer_heat_capacity, 1) &
-          / real(n_profile, RealK)
-      else if (present(layer_heat_capacity_1d)) then
-        heating_rate_1d = &
-          (sum(flux_divergence, 1) / layer_heat_capacity_1d) &
-          / real(n_profile, RealK)
-      else
-        heating_rate_1d = sum(flux_divergence, 1) / real(n_profile, RealK)
-      end if
-    end if
-  end if
-end if
-
-call sum_flux_channels(flux_direct, flux_direct_1d, radout%flux_direct)
-call sum_flux_channels(flux_down, flux_down_1d, radout%flux_down)
-call sum_flux_channels(flux_up, flux_up_1d, radout%flux_up)
-call sum_tile_channels(flux_up_tile, flux_up_tile_1d, radout%flux_up_tile)
-call sum_tile_channels(flux_up_blue_tile, flux_up_blue_tile_1d, &
-                       radout%flux_up_blue_tile)
-if (present(flux_direct_blue_surf)) &
-  flux_direct_blue_surf = radout%flux_direct_blue_surf(1:n_profile)
-if (present(flux_down_blue_surf)) &
-  flux_down_blue_surf = radout%flux_down_blue_surf(1:n_profile)
-if (present(total_cloud_cover)) then
-  if (control%i_cloud_representation == ip_cloud_representation_off) then
-    total_cloud_cover = 0.0_RealK
-  else
-    if (control%i_inhom == ip_inhom_mcica) then
-      total_cloud_cover = real(cld%n_subcol_cld(1:n_profile), RealK) &
-                        / real(mcica%n_subcol_gen, RealK)
-    else
-      total_cloud_cover = radout%tot_cloud_cover(1:n_profile)
-    end if
-  end if
-end if
+call set_diag(control, dimen, spectrum, atm, cld, mcica, aer, bound, radout, &
+  n_profile, n_layer, &
+  n_tile                  = n_tile, &
+  layer_heat_capacity     = layer_heat_capacity, &
+  layer_heat_capacity_1d  = layer_heat_capacity_1d, &
+  l_invert                = l_invert, &
+  flux_direct             = flux_direct, &
+  flux_down               = flux_down, &
+  flux_up                 = flux_up, &
+  heating_rate            = heating_rate, &
+  flux_up_tile            = flux_up_tile, &
+  flux_up_blue_tile       = flux_up_blue_tile, &
+  flux_direct_blue_surf   = flux_direct_blue_surf, &
+  flux_down_blue_surf     = flux_down_blue_surf, &
+  flux_direct_1d          = flux_direct_1d, &
+  flux_down_1d            = flux_down_1d, &
+  flux_up_1d              = flux_up_1d, &
+  heating_rate_1d         = heating_rate_1d, &
+  flux_up_tile_1d         = flux_up_tile_1d, &
+  flux_up_blue_tile_1d    = flux_up_blue_tile_1d, &
+  total_cloud_cover       = total_cloud_cover, &
+  total_cloud_fraction    = total_cloud_fraction, &
+  total_cloud_fraction_1d = total_cloud_fraction_1d, &
+  liq_frac_diag           = liq_frac_diag, &
+  ice_frac_diag           = ice_frac_diag, &
+  liq_conv_frac_diag      = liq_conv_frac_diag, &
+  ice_conv_frac_diag      = ice_conv_frac_diag, &
+  liq_incloud_mmr_diag    = liq_incloud_mmr_diag, &
+  ice_incloud_mmr_diag    = ice_incloud_mmr_diag, &
+  liq_inconv_mmr_diag     = liq_inconv_mmr_diag, &
+  ice_inconv_mmr_diag     = ice_inconv_mmr_diag, &
+  liq_dim_diag            = liq_dim_diag, &
+  ice_dim_diag            = ice_dim_diag, &
+  liq_conv_dim_diag       = liq_conv_dim_diag, &
+  ice_conv_dim_diag       = ice_conv_dim_diag, &
+  liq_frac_diag_1d        = liq_frac_diag_1d, &
+  ice_frac_diag_1d        = ice_frac_diag_1d, &
+  liq_conv_frac_diag_1d   = liq_conv_frac_diag_1d, &
+  ice_conv_frac_diag_1d   = ice_conv_frac_diag_1d, &
+  liq_incloud_mmr_diag_1d = liq_incloud_mmr_diag_1d, &
+  ice_incloud_mmr_diag_1d = ice_incloud_mmr_diag_1d, &
+  liq_inconv_mmr_diag_1d  = liq_inconv_mmr_diag_1d, &
+  ice_inconv_mmr_diag_1d  = ice_inconv_mmr_diag_1d, &
+  liq_dim_diag_1d         = liq_dim_diag_1d, &
+  ice_dim_diag_1d         = ice_dim_diag_1d, &
+  liq_conv_dim_diag_1d    = liq_conv_dim_diag_1d, &
+  ice_conv_dim_diag_1d    = ice_conv_dim_diag_1d )
 
 call deallocate_out(radout)
 call deallocate_aer_prsc(aer)
@@ -539,106 +575,6 @@ call deallocate_cld(cld)
 call deallocate_bound(bound)
 call deallocate_atm(atm)
 call deallocate_control(control)
-
-contains
-
-  subroutine sum_flux_channels(field, field_1d, field_channels)
-  
-  implicit none
-  
-  real(RealK), intent(out), optional :: field(n_profile, 0:n_layer)
-  real(RealK), intent(out), optional :: field_1d(0:n_layer)
-  real(RealK), intent(in) :: field_channels(:, 0:, :)
-  
-  if (present(field)) then
-    if (l_inv) then
-      do i=0, n_layer
-        do l=1, n_profile
-          field(l, n_layer-i) = &
-            sum(field_channels(l, i, 1:control%n_channel))
-        end do
-      end do
-    else
-      do i=0, n_layer
-        do l=1, n_profile
-          field(l, i) = &
-            sum(field_channels(l, i, 1:control%n_channel))
-        end do
-      end do
-    end if
-  end if
-  if (present(field_1d)) then
-    if (n_profile == 1) then
-      if (l_inv) then
-        do i=0, n_layer
-          field_1d(n_layer-i) = &
-            sum(field_channels(1, i, 1:control%n_channel))
-        end do
-      else
-        do i=0, n_layer
-          field_1d(i) = &
-            sum(field_channels(1, i, 1:control%n_channel))
-        end do
-      end if
-    else
-      if (l_inv) then
-        do i=0, n_layer
-          field_1d(n_layer-i) = &
-            sum(field_channels(1:n_profile, i, 1:control%n_channel)) &
-            / real(n_profile, RealK)
-        end do
-      else
-        do i=0, n_layer
-          field_1d(i) = &
-            sum(field_channels(1:n_profile, i, 1:control%n_channel)) &
-            / real(n_profile, RealK)
-        end do
-      end if
-    end if
-  end if
-  
-  end subroutine sum_flux_channels
-  
-  
-  subroutine sum_tile_channels(field, field_1d, field_channels)
-  
-  implicit none
-  
-  real(RealK), intent(out), optional :: field(:, :)
-  real(RealK), intent(out), optional :: field_1d(:)
-  real(RealK), intent(in) :: field_channels(:, :, :)
-  
-  integer :: ll
-  
-  if (present(field)) then
-    field(:, :) = 0.0_RealK
-    if (present(n_tile).and.control%l_tile) then
-      do i=1, n_tile
-        do ll=1, bound%n_point_tile
-          l = bound%list_tile(ll)
-          field(l, i) = sum(field_channels(ll, i, 1:control%n_channel))
-        end do
-      end do
-    end if
-  end if
-  if (present(field_1d)) then
-    field_1d(:) = 0.0_RealK
-    if (present(n_tile).and.control%l_tile) then
-      if (bound%n_point_tile == 1) then
-        do i=1, n_tile
-          field_1d(i) = sum(field_channels(1, i, 1:control%n_channel))
-        end do
-      else if (bound%n_point_tile > 1) then
-        do i=1, n_tile
-          field_1d(i) = &
-            sum(field_channels(1:bound%n_point_tile, i, 1:control%n_channel)) &
-            / real(bound%n_point_tile, RealK)
-        end do
-      end if
-    end if
-  end if
-  
-  end subroutine sum_tile_channels
 
 end subroutine runes
 end module socrates_runes

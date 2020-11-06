@@ -101,7 +101,8 @@ SUBROUTINE aggregate_cloud(ierr                                         &
   IF ( (i_cloud == ip_cloud_triple).OR.                                 &
        (i_cloud == ip_cloud_part_corr_cnv) ) THEN
 
-    IF (i_cloud_representation == ip_cloud_csiw) THEN
+    SELECT CASE (i_cloud_representation)
+    CASE (ip_cloud_csiw, ip_cloud_split_ice_water)
 
       DO k=1, n_cloud_type
         IF (k == ip_cloud_type_sw) THEN
@@ -126,7 +127,7 @@ SUBROUTINE aggregate_cloud(ierr                                         &
         END DO
       END DO
 
-    ELSE IF (i_cloud_representation == ip_cloud_conv_strat) THEN
+    CASE (ip_cloud_conv_strat, ip_cloud_split_homogen)
 
       DO k=1, n_cloud_type
         IF (k == ip_cloud_type_strat) THEN
@@ -145,12 +146,12 @@ SUBROUTINE aggregate_cloud(ierr                                         &
          END DO
       END DO
 
-    ELSE
+    CASE DEFAULT
       cmessage = '*** Error: This representation of clouds is not '//   &
         'compatible with separate convective and stratiform overlap.'
       ierr=i_err_fatal
       CALL ereport(RoutineName, ierr, cmessage)
-    END IF
+    END SELECT
 
   END IF
 

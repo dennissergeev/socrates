@@ -27,6 +27,8 @@ TYPE StrCld
 
   INTEGER, ALLOCATABLE :: type_condensed(:)
 !   Types of condensed components
+  INTEGER, ALLOCATABLE :: i_cloud_type(:)
+!   Types of cloud to which each component contributes
   INTEGER, ALLOCATABLE :: i_condensed_param(:)
 !   Parametrization schemes for components
   INTEGER, ALLOCATABLE :: condensed_n_phf(:)
@@ -47,6 +49,11 @@ TYPE StrCld
 !   Characteristic dimensions of condensed species
   REAL (RealK), ALLOCATABLE :: condensed_param_list(:, :, :)
 !   Coefficients in parametrizations of condensed phases
+
+  REAL (RealK), ALLOCATABLE :: c_cloud(:, :)
+!   Convective cloud area fraction in layers
+  REAL (RealK), ALLOCATABLE :: c_ratio(:, :)
+!   Ratio of convective cloud condensate to mean condensate
 
   REAL (RealK), ALLOCATABLE :: condensed_rel_var_dens(:, :, :)
 !   Relative variance of cloud density used to correct single scattering
@@ -114,6 +121,9 @@ TYPE (StrSpecData), INTENT(IN)    :: sp
 IF (.NOT. ALLOCATED(cld%type_condensed))                                       &
   ALLOCATE(cld%type_condensed       ( dimen%nd_cloud_component               ))
 
+IF (.NOT. ALLOCATED(cld%i_cloud_type))                                         &
+  ALLOCATE(cld%i_cloud_type         ( dimen%nd_cloud_component               ))
+
 IF (.NOT. ALLOCATED(cld%i_condensed_param))                                    &
   ALLOCATE(cld%i_condensed_param    ( dimen%nd_cloud_component               ))
 
@@ -143,6 +153,14 @@ IF (.NOT. ALLOCATED(cld%condensed_param_list))                                 &
   ALLOCATE(cld%condensed_param_list ( sp%dim%nd_cloud_parameter,               &
                                       dimen%nd_cloud_component,                &
                                       sp%dim%nd_band                         ))
+
+IF (.NOT. ALLOCATED(cld%c_cloud))                                              &
+  ALLOCATE(cld%c_cloud              ( dimen%nd_profile,                        &
+                                      dimen%id_cloud_top : dimen%nd_layer    ))
+
+IF (.NOT. ALLOCATED(cld%c_ratio))                                              &
+  ALLOCATE(cld%c_ratio              ( dimen%nd_profile,                        &
+                                      dimen%id_cloud_top : dimen%nd_layer    ))
 
 IF (.NOT. ALLOCATED(cld%condensed_rel_var_dens))                               &
   ALLOCATE(cld%condensed_rel_var_dens ( dimen%nd_profile,                      &
@@ -248,6 +266,8 @@ TYPE (StrCld), INTENT(INOUT) :: cld
 
 IF (ALLOCATED(cld%condensed_rel_var_dens)) &
   DEALLOCATE(cld%condensed_rel_var_dens)
+IF (ALLOCATED(cld%c_ratio))              DEALLOCATE(cld%c_ratio)
+IF (ALLOCATED(cld%c_cloud))              DEALLOCATE(cld%c_cloud)
 IF (ALLOCATED(cld%condensed_param_list)) DEALLOCATE(cld%condensed_param_list)
 IF (ALLOCATED(cld%condensed_dim_char))   DEALLOCATE(cld%condensed_dim_char)
 IF (ALLOCATED(cld%condensed_mix_ratio))  DEALLOCATE(cld%condensed_mix_ratio)
@@ -255,6 +275,7 @@ IF (ALLOCATED(cld%frac_cloud))           DEALLOCATE(cld%frac_cloud)
 IF (ALLOCATED(cld%w_cloud))              DEALLOCATE(cld%w_cloud)
 IF (ALLOCATED(cld%condensed_n_phf))      DEALLOCATE(cld%condensed_n_phf)
 IF (ALLOCATED(cld%i_condensed_param))    DEALLOCATE(cld%i_condensed_param)
+IF (ALLOCATED(cld%i_cloud_type))         DEALLOCATE(cld%i_cloud_type)
 IF (ALLOCATED(cld%type_condensed))       DEALLOCATE(cld%type_condensed)
 
 END SUBROUTINE deallocate_cld
