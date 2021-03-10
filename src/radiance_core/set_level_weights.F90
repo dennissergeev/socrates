@@ -154,12 +154,14 @@ SUBROUTINE set_level_weights(i                                          &
   INTEGER                                                               &
       lsr                                                               &
 !       Reduced polar order
-    , m1ls                                                              &
-!       -1^(l+m)
     , k                                                                 &
 !       Loop variable
     , l
 !       Loop variable
+
+  REAL (RealK) :: m1ls
+!       -1^(l+m)
+
   REAL (RealK) ::                                                       &
       exp_minus(nd_profile, nd_red_eigensystem)                         &
 !       Exponentials on viewing levels for negative terms

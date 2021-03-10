@@ -153,7 +153,7 @@ SUBROUTINE inter_k(n_profile, n_layer, n_band_absorb                    &
      , specparm, specmult
 
   INTEGER ::                                                            &
-       i, ig, j, k, l                                                   &
+       i, ig, k, l                                                   &
 !        Loop index
      , ju(nd_profile, nd_layer)                                         &
 !        Index of amount at level JP and JP1 such that

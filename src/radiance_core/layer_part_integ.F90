@@ -138,9 +138,7 @@ SUBROUTINE layer_part_integ(                                            &
     , l
 !       Loop variable
   REAL (RealK) ::                                                       &
-      v_sol(nd_profile, ls_trunc+2-ms)                                  &
-!       Solar particular integral
-    , v_dif(nd_profile, ls_trunc+2-ms)                                  &
+      v_dif(nd_profile, ls_trunc+2-ms)                                  &
 !       Difference between particular integral and eigenvector
     , gamma(nd_profile)                                                 &
 !       Constant used in the solar particular integral

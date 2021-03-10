@@ -148,8 +148,6 @@ logical :: l_inv
 real(RealK) :: flux_divergence(n_profile, n_layer)
 !   Flux divergence across layer (Wm-2)
 
-integer :: ierr = i_normal
-character (len=errormessagelength) :: cmessage
 character (len=*), parameter :: RoutineName = 'SET_DIAG'
 
 

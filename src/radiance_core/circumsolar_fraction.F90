@@ -66,7 +66,7 @@ SUBROUTINE circumsolar_fraction(n_profile                               &
 !
 ! Calculate index of Legedre polynomial based corresponding to
 ! the input half viewing angle of pyrheliometer 
-  ind_ang=half_angle/0.25
+  ind_ang=INT(half_angle/0.25)
   one_minus_cos = 1.0 - cos_half_angle(ind_ang)
   p_legendre_2d = reshape(p_legendre, (/32,20/))
   forward_scatter_csr=0.0

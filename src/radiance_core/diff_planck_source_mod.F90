@@ -70,8 +70,6 @@ SUBROUTINE diff_planck_source(control, dimen, spectrum, atm, bound, &
 ! Local variables.
   INTEGER :: i, k, l
 !     Loop variables
-  REAL (RealK) :: recip_r_base_sq
-!     Reciprocal of the radius at the grid base squared
   REAL (RealK), PARAMETER :: frac_tile_tol = TINY(1.0_RealK)
 !     Tolerance for tile fraction when setting Planckian to zero
 

@@ -54,9 +54,7 @@ SUBROUTINE ses_rescale_contm(nd_profile, nd_layer                       &
      , i
 !         Loop variable
    REAL (RealK) ::                                                      &
-       partial_p                                                        &
-!         Partial pressure
-     , o2mix, n2mix                                                     &
+       o2mix, n2mix                                                     &
 !         O2 & N2 mixing ratio
      , o2n2, o2o2                                                       &
 !         produce of mixing ratio and avog number

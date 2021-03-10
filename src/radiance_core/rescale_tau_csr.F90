@@ -58,8 +58,6 @@ SUBROUTINE rescale_tau_csr(n_profile                                    &
   INTEGER                                                               &
       i                                                                 &
 !       Loop variable
-    , k                                                                 &
-!       Loop variable
     , l                                                                 
 !       Loop variable
 !

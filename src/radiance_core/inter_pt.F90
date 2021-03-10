@@ -91,7 +91,7 @@ SUBROUTINE inter_pt(nd_profile, nd_layer                                &
 !          Reference water vapour pressure
      , fp, fph2oc, ft, ft1, compfp, compft                              &
 !          Fraction factor for P & T interpolation
-     , plog, ts                                                         &
+     , plog                                                             &
 !          Inter-medium variable
      , dt, dtc, dtswo3                                                  &
 !          Fraction of reference temperature difference
@@ -170,7 +170,7 @@ REAL, PARAMETER ::       &
     ], [59, 5], order=[2,1] )
 
   INTEGER ::                                                            &
-       i, j, l
+       i, l
 !       Vertical and horizontal loop index
 
 ! These three temperature are reference for o2 continuum

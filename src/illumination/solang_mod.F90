@@ -88,7 +88,7 @@ REAL(RealK) ::                                                                 &
 !   These are the start-time and length of the timestep (T & DT)
 !   converted to radians after midday GMT, or equivalently, hour
 !   angle of the mean sun on the Greenwich meridian.
-  sinlat(k), x(k), dec
+  sinlat(k), dec
 !   Working variables for bearing calculation.
 
 REAL(RealK), PARAMETER :: twopi = 2.0_RealK*pi

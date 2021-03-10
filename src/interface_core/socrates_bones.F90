@@ -139,7 +139,7 @@ real(RealK), intent(out), optional :: flux_down_blue_surf_mts(n_profile)
 !   Total downward blue flux at the surface
 
 ! Local variables
-integer :: l, i
+integer :: i
 real(RealK) :: trans_zen_correction(n_profile)
 real(RealK) :: orog_corr(n_profile)
 real(RealK) :: scaling(n_profile)

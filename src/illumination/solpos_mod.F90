@@ -104,7 +104,6 @@ LOGICAL :: l_obs
 INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
 INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
 REAL(KIND=jprb)               :: zhook_handle
-CHARACTER(LEN=50000)          :: lineBuffer
 CHARACTER(LEN=*), PARAMETER   :: RoutineName='SOLPOS'
 
 
