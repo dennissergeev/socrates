@@ -27,7 +27,7 @@ SUBROUTINE layer_part_integ(                                            &
 !                 Numerical arrays of spherical terms
     , cg_coeff, mu, eig_vec, theta                                      &
 !                 Solar variables
-    , isolir, i_direct_top, i_direct_bottom, mu_0, uplm_sol             &
+    , isolir, i_direct_top, mu_0, uplm_sol                              &
 !                 Infra-red variables
     , diff_planck, l_ir_source_quad, diff_planck_2                      &
 !                 Optical properies
@@ -94,9 +94,6 @@ SUBROUTINE layer_part_integ(                                            &
 !       Cosine of solar zenith angle
     , i_direct_top(nd_profile)                                          &
 !       The direct solar radiance at the top of the current layer
-    , i_direct_bottom(nd_profile)                                       &
-!       The direct solar radiance at the bottom of
-!       the current layer
     , uplm_sol(nd_profile, ls_trunc+2-ms)
 !       Spherical harmonics of the solar direction
   LOGICAL, INTENT(IN) ::                                                &

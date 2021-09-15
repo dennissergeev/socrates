@@ -15,7 +15,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE two_coeff(ierr, control                                      &
      , n_profile, i_layer_first, i_layer_last                           &
-     , i_2stream, l_ir_source_quad                                      &
+     , i_2stream                                                        &
      , asymmetry, omega, tau_dir, tau                                   &
      , isolir, sec_0, path_div                                          &
      , trans, reflect, trans_0_dir, trans_0                             &
@@ -69,9 +69,6 @@ SUBROUTINE two_coeff(ierr, control                                      &
 !       Spectral region
     , i_2stream
 !       Two stream scheme
-  LOGICAL, INTENT(IN) ::                                                &
-      l_ir_source_quad
-!       Use a quadratic source function
 
 ! Optical properties of layer:
   REAL (RealK), INTENT(IN) ::                                           &

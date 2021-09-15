@@ -1075,7 +1075,6 @@ SUBROUTINE solve_band_k_eqv(ierr                                        &
         , planck                                                        &
 !                   Conditions at TOA
         , zen_0, flux_inc_direct, flux_inc_down                         &
-        , i_direct_part                                                 &
 !                   Surface properties
         , d_planck_flux_surface                                         &
         , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb                      &
@@ -1103,12 +1102,8 @@ SUBROUTINE solve_band_k_eqv(ierr                                        &
 !                   Calculated fluxes
         , flux_direct_part, flux_total_part                             &
         , l_actinic, actinic_flux_part                                  &
-!                   Calculated radiances
-        , radiance_part                                                 &
-!                   Calculated rate of photolysis
-        , photolysis_part                                               &
 !                   Flags for clear-sky calculations
-        , l_clear, i_solver_clear                                       &
+        , i_solver_clear                                                &
 !                   Clear-sky fluxes calculated
         , flux_direct_clear_part, flux_total_clear_part                 &
         , actinic_flux_clear_part                                       &

@@ -18,7 +18,7 @@
 !
 !- ---------------------------------------------------------------------
 SUBROUTINE triple_column(ierr                                           &
-     , control, cld, bound                                              &
+     , control, bound                                                   &
 !                 Atmospheric properties
      , n_profile, n_layer                                               &
 !                 Two-stream scheme
@@ -61,7 +61,6 @@ SUBROUTINE triple_column(ierr                                           &
 
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
-  USE def_cld,     ONLY: StrCld
   USE def_bound,   ONLY: StrBound
   USE def_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
@@ -78,9 +77,6 @@ SUBROUTINE triple_column(ierr                                           &
 
 ! Control options:
   TYPE(StrCtrl),      INTENT(IN)    :: control
-
-! Cloud properties:
-  TYPE(StrCld),       INTENT(IN)    :: cld
 
 ! Boundary conditions:
   TYPE(StrBound),     INTENT(IN)    :: bound
@@ -257,7 +253,7 @@ SUBROUTINE triple_column(ierr                                           &
 ! DEPENDS ON: two_coeff_region
     CALL two_coeff_region(ierr, control                                 &
       , n_profile, n_layer, n_cloud_top                                 &
-      , i_2stream, l_ir_source_quad, n_source_coeff                     &
+      , i_2stream, n_source_coeff                                       &
       , n_cloud_type, frac_cloud                                        &
       , n_region, i_region_cloud, frac_region                           &
       , ss_prop%phase_fnc_clr, ss_prop%omega_clr                        &

@@ -770,14 +770,14 @@
           nd_sph_u_range=nd_sph_equation
         ENDIF
 !
-        CALL sph_solver(ierr
+        CALL sph_solver(     
 !                       Atmospheric sizes
-     &    , n_profile, n_layer
+     &      n_profile, n_layer
 !                       Angular integration
      &    , ms_min, ms_max, i_truncation, ls_local_trunc
      &    , cg_coeff, uplm_zero, ia_sph_mm
      &    , accuracy_adaptive, euler_factor
-     &    , i_sph_algorithm, i_sph_mode, l_rescale
+     &    , i_sph_algorithm, i_sph_mode
 !                       Spectral Region
      &    , isolir
 !                       Options for Equivalent Extinction
@@ -788,7 +788,7 @@
      &    , diff_planck, flux_inc_down
      &    , l_ir_source_quad, diff_planck_2
 !                       Optical properies
-     &    , tau, omega, phase_fnc, phase_fnc_solar, forward_scatter
+     &    , tau, omega, phase_fnc, phase_fnc_solar
 !                       Surface Conditions
      &    , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb
      &    , f_brdf, brdf_sol, brdf_hemi
@@ -819,7 +819,6 @@
      &    , diff_planck, d_planck_flux_surface
      &    , rho_alb(1, IP_surf_alb_diff)
      &    , flux_total
-     &    , l_ir_source_quad, diff_planck_2
      &    , nd_profile, nd_layer
      &    )
         IF (ierr /= i_normal) RETURN

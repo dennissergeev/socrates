@@ -25,8 +25,6 @@ SUBROUTINE set_truncation(ierr                                          &
     , nd_max_order                                                      &
     )
 
-
-  USE realtype_rd, ONLY: RealK
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

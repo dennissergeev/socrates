@@ -19,7 +19,7 @@ SUBROUTINE opt_prop_aerosol(ierr                                        &
     , n_profile, first_layer, last_layer                                &
     , n_order_phase, l_rescale, n_order_forward                         &
     , l_henyey_greenstein_pf                                            &
-    , n_aerosol, n_aerosol_mr, aerosol_mix_ratio                        &
+    , n_aerosol_mr, aerosol_mix_ratio                                   &
     , aerosol_mr_source, aerosol_mr_type_index                          &
     , i_aerosol_parametrization                                         &
     , i_humidity_pointer, humidities, delta_humidity                    &
@@ -111,9 +111,7 @@ SUBROUTINE opt_prop_aerosol(ierr                                        &
 !       Flag to use calculate a separate solar phase function
 
   INTEGER, INTENT(IN) ::                                                &
-      n_aerosol                                                         &
-!       Number of aerosol species in spectral information
-    , n_aerosol_mr                                                      &
+      n_aerosol_mr                                                      &
 !       Number of aerosol species in aerosol_mix_ratio array
     , aerosol_mr_type_index(nd_aerosol_mixratio)                        &
 !       Index relating aerosol_mix_ratio aerosols to aerosols in

@@ -16,7 +16,6 @@
 FUNCTION set_n_cloud_parameter(i_scheme, i_component, n_phase_term)
 
 
-  USE realtype_rd, ONLY: RealK
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

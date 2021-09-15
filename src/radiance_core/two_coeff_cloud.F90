@@ -13,7 +13,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE two_coeff_cloud(ierr, control                                &
      , n_profile, i_layer_first, i_layer_last                           &
-     , i_2stream, l_ir_source_quad, n_source_coeff                      &
+     , i_2stream, n_source_coeff                                        &
      , n_cloud_type, frac_cloud                                         &
      , phase_fnc_cloud, omega_cloud, tau_cloud_dir, tau_cloud           &
      , isolir, sec_0, sph                                               &
@@ -71,10 +71,6 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 !       Two stream scheme
     , n_source_coeff
 !       Number of source coefficients
-
-  LOGICAL, INTENT(IN) ::                                                &
-      l_ir_source_quad
-!       Use a quadratic source in the infra-red
 
 ! Optical properties of layer:
   REAL (RealK), INTENT(IN) ::                                           &
@@ -260,7 +256,7 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 ! DEPENDS ON: two_coeff
         CALL two_coeff(ierr, control                                    &
           , n_list, i, i                                                &
-          , i_2stream, l_ir_source_quad                                 &
+          , i_2stream                                                   &
           , asymmetry_gathered, omega_gathered                          &
           , tau_gathered_dir, tau_gathered                              &
           , isolir, sec_0_gathered, path_div_gathered                   &

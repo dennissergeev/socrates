@@ -13,7 +13,7 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE spherical_trans_coeff(                                              &
     n_profile, n_layer, n_cloud_top,                                           &
-    ss_prop, sph, nd_profile, nd_layer, id_ct)
+    ss_prop, sph)
 
   USE realtype_rd,            ONLY: RealK
   USE def_ss_prop,            ONLY: str_ss_prop
@@ -23,15 +23,6 @@ SUBROUTINE spherical_trans_coeff(                                              &
   USE yomhook,                ONLY: lhook, dr_hook
 
   IMPLICIT NONE
-
-! Sizes of dummy arrays.
-  INTEGER, INTENT(IN) ::                                                       &
-      nd_profile,                                                              &
-!       Size allocated for atmospheric profiles
-      nd_layer,                                                                &
-!       Size allocated for atmospheric layers
-      id_ct
-!       Topmost declared cloudy layer
 
 ! Dummy variables.
   INTEGER, INTENT(IN) ::                                                       &

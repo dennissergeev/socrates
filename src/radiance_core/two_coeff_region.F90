@@ -16,7 +16,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE two_coeff_region(ierr, control                               &
      , n_profile, n_layer, n_cloud_top                                  &
-     , i_2stream, l_ir_source_quad, n_source_coeff                      &
+     , i_2stream, n_source_coeff                                        &
      , n_cloud_type, frac_cloud                                         &
      , n_region, i_region_cloud, frac_region                            &
      , phase_fnc_clr, omega_clr                                         &
@@ -89,10 +89,6 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 !       Number of cloudy regions
     , i_region_cloud(nd_cloud_type)
 !       Regions in which types of clouds fall
-
-  LOGICAL, INTENT(IN) ::                                                &
-      l_ir_source_quad
-!       Use a quadratic source in the infra-red
 
 ! Optical properties of layer:
   REAL (RealK), INTENT(IN) ::                                           &
@@ -209,7 +205,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 ! DEPENDS ON: two_coeff
   CALL two_coeff(ierr, control                                          &
     , n_profile, 1, n_cloud_top-1                                       &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , phase_fnc_clr, omega_clr, tau_clr_dir, tau_clr                    &
     , isolir, sec_0, sph%common%path_div                                &
     , trans(1, 1, ip_region_clear)                                      &
@@ -222,7 +218,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 ! DEPENDS ON: two_coeff
   CALL two_coeff(ierr, control                                          &
     , n_profile, n_cloud_top, n_layer                                   &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , phase_fnc, omega, tau_dir, tau                                    &
     , isolir, sec_0, sph%common%path_div                                &
     , trans(1, 1, ip_region_clear)                                      &
@@ -331,7 +327,7 @@ SUBROUTINE two_coeff_region(ierr, control                               &
 ! DEPENDS ON: two_coeff
         CALL two_coeff(ierr, control                                    &
           , n_list, i, i                                                &
-          , i_2stream, l_ir_source_quad                                 &
+          , i_2stream                                                   &
           , asymmetry_gathered, omega_gathered                          &
           , tau_gathered_dir, tau_gathered                              &
           , isolir, sec_0_gathered, path_div_gathered                   &

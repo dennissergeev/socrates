@@ -838,7 +838,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
       , atm%gas_mix_ratio                                                      &
       , l_grey_cont, n_continuum                                               &
       , k_continuum_mono, amount_continuum                                     &
-      , spectrum%aerosol%n_aerosol                                             &
       , spectrum%aerosol%n_aerosol_mr, aer%mix_ratio                           &
       , aer%mr_source, aer%mr_type_index                                       &
       , spectrum%aerosol%i_aerosol_parm                                        &
@@ -857,7 +856,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
       , aer%phase_fnc_prsc(1, 1, 1, 1, i_band)                                 &
       , n_cloud_profile, i_cloud_profile                                       &
       , n_cloud_top, cld%n_condensed, l_cloud_cmp, i_phase_cmp                 &
-      , cld%i_condensed_param, cld%condensed_n_phf                             &
+      , cld%i_condensed_param                                                  &
       , cld%condensed_param_list(1, 1, i_band)                                 &
       , cld%condensed_mix_ratio, cld%condensed_dim_char                        &
       , cld%condensed_rel_var_dens                                             &

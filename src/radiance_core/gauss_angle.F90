@@ -26,7 +26,6 @@ SUBROUTINE gauss_angle(n_profile, n_layer                               &
      , flux_inc_down                                                    &
      , diff_planck, source_ground, albedo_surface_diff                  &
      , flux_diffuse                                                     &
-     , l_ir_source_quad, diff_planck_2                                  &
      , nd_profile, nd_layer                                             &
      )
 
@@ -57,9 +56,6 @@ SUBROUTINE gauss_angle(n_profile, n_layer                               &
 !       Number of layers
     , n_order_gauss
 !       Order of gaussian integration
-  LOGICAL, INTENT(IN) ::                                                &
-      l_ir_source_quad
-!       Use quadratic source term
   REAL (RealK), INTENT(IN) ::                                           &
       tau(nd_profile, nd_layer)                                         &
 !       Optical depth
@@ -69,10 +65,8 @@ SUBROUTINE gauss_angle(n_profile, n_layer                               &
 !       Incident total flux
     , diff_planck(nd_profile, nd_layer)                                 &
 !       Difference in pi*Planckian function
-    , source_ground(nd_profile)                                         &
+    , source_ground(nd_profile)
 !       Ground source function
-    , diff_planck_2(nd_profile, nd_layer)
-!         2x2nd differences of Planckian
   REAL (RealK), INTENT(OUT) ::                                          &
       flux_diffuse(nd_profile, 2*nd_layer+2)
 !       Diffuse fluxes

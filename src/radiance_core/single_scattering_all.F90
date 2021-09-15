@@ -21,7 +21,7 @@ SUBROUTINE single_scattering_all(i_scatter_method_band                  &
 !                 Optical Properties
     , ss_prop, k_gas_abs                                                &
 !                 Dimensions of Arrays
-    , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_cloud_type          &
+    , nd_profile, nd_layer, nd_layer_clr, id_ct                         &
     )
 
 
@@ -41,10 +41,8 @@ SUBROUTINE single_scattering_all(i_scatter_method_band                  &
 !       Size allocated for layers
     , nd_layer_clr                                                      &
 !       Size allocated for completely clear layers
-    , id_ct                                                             &
+    , id_ct
 !       Topmost declared cloudy layer
-    , nd_cloud_type
-!       Size allocated for types of clouds
 
 
 ! Dummy variables.

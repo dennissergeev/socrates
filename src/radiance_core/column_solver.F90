@@ -149,7 +149,7 @@ SUBROUTINE column_solver(ierr, control, bound, sph_common, sph_comp     &
 ! The source functions only need to be recalculated in the visible.
   IF (isolir == ip_solar) THEN
     IF (control%l_spherical_solar) THEN
-      CALL spherical_solar_source(control, bound, sph_common, sph_comp, &
+      CALL spherical_solar_source(bound, sph_common, sph_comp,          &
         n_profile, n_layer,                                             &
         trans_0, source_coeff,                                          &
         l_scale_solar, adjust_solar_ke,                                 &

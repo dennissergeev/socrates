@@ -16,7 +16,7 @@
 !
 !- ---------------------------------------------------------------------
 SUBROUTINE mix_column(ierr                                              &
-     , control, cld, bound                                              &
+     , control, bound                                                   &
 !                 Atmospheric properties
      , n_profile, n_layer, k_clr                                        &
 !                 Two-stream scheme
@@ -58,7 +58,6 @@ SUBROUTINE mix_column(ierr                                              &
 
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
-  USE def_cld,     ONLY: StrCld
   USE def_bound,   ONLY: StrBound
   USE def_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
@@ -75,9 +74,6 @@ SUBROUTINE mix_column(ierr                                              &
 
 ! Control options:
   TYPE(StrCtrl),      INTENT(IN)    :: control
-
-! Cloud properties:
-  TYPE(StrCld),       INTENT(IN)    :: cld
 
 ! Boundary conditions:
   TYPE(StrBound),     INTENT(IN)    :: bound
@@ -302,7 +298,7 @@ SUBROUTINE mix_column(ierr                                              &
 ! DEPENDS ON: two_coeff
   CALL two_coeff(ierr, control                                          &
     , n_profile, 1, n_cloud_top-1                                       &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , ss_prop%phase_fnc_clr                                             &
     , ss_prop%omega_clr, ss_prop%tau_clr_dir, ss_prop%tau_clr           &
     , isolir, sec_0, sph%common%path_div                                &
@@ -312,7 +308,7 @@ SUBROUTINE mix_column(ierr                                              &
     )
   CALL two_coeff(ierr, control                                          &
     , n_profile, n_cloud_top, n_layer                                   &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , ss_prop%phase_fnc(:, :, :, 0)                                     &
     , ss_prop%omega(:, :, 0)                                            &
     , ss_prop%tau_dir(:, :, 0), ss_prop%tau(:, :, 0)                    &
@@ -370,7 +366,7 @@ SUBROUTINE mix_column(ierr                                              &
 ! DEPENDS ON: two_coeff_cloud
   CALL two_coeff_cloud(ierr, control                                    &
     , n_profile, n_cloud_top, n_layer                                   &
-    , i_2stream, l_ir_source_quad, n_source_coeff                       &
+    , i_2stream, n_source_coeff                                         &
     , n_cloud_type, frac_cloud                                          &
     , ss_prop%phase_fnc(:, :, :, 1:)                                    &
     , ss_prop%omega(:, :, 1:)                                           &

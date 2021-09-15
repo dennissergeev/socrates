@@ -424,12 +424,12 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
 !                 Fluxes calculated
       , flux_direct, flux_total, l_actinic, actinic_flux                &
 !                 Flags for clear-sky calculations
-      , l_clear, i_solver_clear                                         &
+      , l_clear                                                         &
 !                 Clear-sky fluxes calculated
       , flux_direct_clear, flux_total_clear, actinic_flux_clear         &
 !                 Dimensions of arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct                       &
-      , nd_max_order, nd_source_coeff                                   &
+      , nd_source_coeff                                                 &
       , nd_cloud_type                                                   &
       )
 
@@ -443,7 +443,7 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
 
 ! DEPENDS ON: mix_column
     CALL mix_column(ierr                                                &
-      , control, cld, bound                                             &
+      , control, bound                                                  &
 !                 Atmospheric properties
       , n_profile, n_layer, k_clr                                       &
 !                 Two-stream scheme
@@ -492,7 +492,7 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
 
 ! DEPENDS ON: triple_column
     CALL triple_column(ierr                                             &
-      , control, cld, bound                                             &
+      , control, bound                                                  &
 !                 Atmospheric properties
       , n_profile, n_layer                                              &
 !                 Two-stream scheme
@@ -577,7 +577,6 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
       , flux_direct_clear, flux_total_clear                             &
 !                 Dimensions of arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_column            &
-      , nd_max_order, nd_cloud_type                                     &
       , nd_profile_column, nd_source_coeff                              &
       )
 

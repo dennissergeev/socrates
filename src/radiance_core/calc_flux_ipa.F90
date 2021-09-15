@@ -46,7 +46,6 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
     , flux_direct_clear, flux_total_clear                               &
 !                 Dimensions of Arrays
     , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_column              &
-    , nd_max_order, nd_cloud_type                                       &
     , nd_profile_column, nd_source_coeff                                &
     )
 
@@ -79,11 +78,6 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
 !       Size allocated for totally clear atmospheric layers
     , nd_column                                                         &
 !       Size allocated for columns at a grid-point
-    , nd_max_order                                                      &
-!       Size allocated for orders of spectral calculations
-!       (Here used only to ensure that dimensions are correct)
-    , nd_cloud_type                                                     &
-!       Size allocated for types of clouds
     , nd_profile_column                                                 &
 !       Number of profiles of subcolumns considered at once
     , id_ct                                                             &

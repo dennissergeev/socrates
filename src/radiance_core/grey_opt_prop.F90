@@ -23,7 +23,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
     , rayleigh_coeff_tot, rayleigh_coeff_gas                            &
     , gas_mix_ratio                                                     &
     , l_continuum, n_continuum, k_continuum, amount_continuum           &
-    , n_aerosol, n_aerosol_mr, aerosol_mix_ratio                        &
+    , n_aerosol_mr, aerosol_mix_ratio                                   &
     , aerosol_mr_source, aerosol_mr_type_index                          &
     , i_aerosol_parametrization                                         &
     , i_humidity_pointer, humidities, delta_humidity                    &
@@ -36,7 +36,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
     , aerosol_phase_fnc_prsc                                            &
     , n_cloud_profile, i_cloud_profile                                  &
     , n_cloud_top, n_condensed, l_cloud_cmp, i_phase_cmp                &
-    , i_condensed_param, condensed_n_phf, condensed_param_list          &
+    , i_condensed_param, condensed_param_list                           &
     , condensed_mix_ratio, condensed_dim_char                           &
     , condensed_rel_var_dens                                            &
     , n_cloud_type, i_cloud_type                                        &
@@ -216,9 +216,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
 
 ! Properties of aerosols:
   INTEGER, INTENT(IN) ::                                                &
-      n_aerosol                                                         &
-!       Number of aerosol species in spectral information
-    , n_aerosol_mr                                                      &
+      n_aerosol_mr                                                      &
 !       Number of aerosol species in aerosol_mix_ratio array
     , aerosol_mr_type_index(nd_aerosol_mixratio)                        &
 !       Index relating aerosol_mix_ratio aerosols to aerosols in
@@ -308,11 +306,8 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
 !       Number of condensed components
     , i_phase_cmp(nd_cloud_component)                                   &
 !       Phases of cloudy components
-    , i_condensed_param(nd_cloud_component)                             &
+    , i_condensed_param(nd_cloud_component)
 !       Parametrization schemes for cloudy components
-    , condensed_n_phf(nd_cloud_component)
-!       Number of terms in the phase function for each
-!       cloudy component
 
   LOGICAL, INTENT(IN) ::                                                &
       l_cloud_cmp(nd_cloud_component)
@@ -652,7 +647,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
       , n_profile, 1, n_cloud_top-1                                     &
       , n_order_phase, control%l_rescale, control%n_order_forward       &
       , control%l_henyey_greenstein_pf                                  &
-      , n_aerosol, n_aerosol_mr, aerosol_mix_ratio                      &
+      , n_aerosol_mr, aerosol_mix_ratio                                 &
       , aerosol_mr_source, aerosol_mr_type_index                        &
       , i_aerosol_parametrization                                       &
       , i_humidity_pointer, humidities, delta_humidity                  &
@@ -679,7 +674,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
       , n_profile, n_cloud_top, n_layer                                 &
       , n_order_phase, control%l_rescale, control%n_order_forward       &
       , control%l_henyey_greenstein_pf                                  &
-      , n_aerosol, n_aerosol_mr, aerosol_mix_ratio                      &
+      , n_aerosol_mr, aerosol_mix_ratio                                 &
       , aerosol_mr_source, aerosol_mr_type_index                        &
       , i_aerosol_parametrization                                       &
       , i_humidity_pointer, humidities, delta_humidity                  &
@@ -710,8 +705,8 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
 !   Include the effects of UKCA aerosols.
 !   Above clouds.
 ! DEPENDS ON: opt_prop_ukca_aerosol
-    CALL opt_prop_ukca_aerosol(ierr                                     &
-      , n_profile, 1, n_cloud_top-1                                     &
+    CALL opt_prop_ukca_aerosol(                                         &
+        n_profile, 1, n_cloud_top-1                                     &
       , n_order_phase, control%l_rescale, control%n_order_forward       &
       , n_ukca_mode, ukca_modal_mixr                                    &
       , ukca_absorption, ukca_scattering, ukca_asymmetry                &
@@ -721,8 +716,8 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
       , nd_max_order                                                    &
       )
 !   Within clouds:
-    CALL opt_prop_ukca_aerosol(ierr                                     &
-      , n_profile, n_cloud_top, n_layer                                 &
+    CALL opt_prop_ukca_aerosol(                                         &
+        n_profile, n_cloud_top, n_layer                                 &
       , n_order_phase, control%l_rescale, control%n_order_forward       &
       , n_ukca_mode, ukca_modal_mixr                                    &
       , ukca_absorption, ukca_scattering, ukca_asymmetry                &
@@ -1174,7 +1169,7 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
 ! DEPENDS ON: opt_prop_inhom_corr_cairns
       IF (control%i_inhom == ip_cairns) THEN
         CALL opt_prop_inhom_corr_cairns(                                &
-            n_profile, n_layer, n_cloud_top                             &
+            n_layer, n_cloud_top                                        &
           , n_cloud_profile, i_cloud_profile                            &
           , control%l_rescale, control%n_order_forward                  &
           , condensed_rel_var_dens(:, :, k)                             &

@@ -18,7 +18,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                 Atmospheric Propertries
-    , control, n_profile, n_layer, d_mass                               &
+    , control, n_profile, n_layer                                       &
 !                 Angular Integration
     , n_order_phase, ms_min, ms_max, i_truncation, ls_local_trunc       &
     , accuracy_adaptive, euler_factor, i_sph_algorithm                  &
@@ -32,7 +32,7 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                 Infra-red Properties
     , diff_planck, l_ir_source_quad, diff_planck_2                      &
 !                 Conditions at TOA
-    , zen_0, flux_inc_direct, flux_inc_down                             &
+    , zen_0, flux_inc_down                                              &
     , i_direct                                                          &
 !                 Surface Properties
     , d_planck_flux_surface                                             &
@@ -41,12 +41,9 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                 Optical Properties
     , ss_prop                                                           &
 !                 Cloudy Properties
-    , l_cloud, i_cloud                                                  &
+    , i_cloud                                                           &
 !                 Cloud Geometry
     , n_cloud_top                                                       &
-    , n_cloud_type, frac_cloud                                          &
-    , n_region, k_clr, i_region_cloud, frac_region                      &
-    , w_free, w_cloud, cloud_overlap                                    &
     , n_column_slv, list_column_slv                                     &
     , i_clm_lyr_chn, i_clm_cld_typ, area_column                         &
 !                   Levels for calculating radiances
@@ -62,10 +59,9 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                 Dimensions of Arrays
     , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_column              &
     , nd_flux_profile, nd_radiance_profile, nd_j_profile                &
-    , nd_cloud_type, nd_region, nd_overlap_coeff                        &
     , nd_max_order, nd_sph_coeff                                        &
     , nd_brdf_basis_fnc, nd_brdf_trunc, nd_viewing_level                &
-    , nd_direction, nd_source_coeff                                     &
+    , nd_direction                                                      &
     )
 
 
@@ -102,12 +98,6 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !       Maximum number of profiles in arrays of mean radiances
     , nd_column                                                         &
 !       Number of columns per point
-    , nd_cloud_type                                                     &
-!       Maximum number of types of cloud
-    , nd_region                                                         &
-!       Maximum number of cloudy regions
-    , nd_overlap_coeff                                                  &
-!       Maximum number of overlap coefficients
     , nd_max_order                                                      &
 !       Maximum order of spherical harmonics used
     , nd_sph_coeff                                                      &
@@ -118,10 +108,8 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !       Size allowed for orders of BRDFs
     , nd_viewing_level                                                  &
 !       Allocated size for levels where radiances are calculated
-    , nd_direction                                                      &
+    , nd_direction
 !       Allocated size for viewing directions
-    , nd_source_coeff
-!       Size allocated for source coefficients
 
 ! Dummy arguments.
   INTEGER, INTENT(INOUT) ::                                             &
@@ -134,9 +122,6 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !       Number of profiles
     , n_layer
 !       Number of layers
-  REAL (RealK), INTENT(IN) ::                                           &
-      d_mass(nd_profile, nd_layer)
-!       Mass thickness of each layer
 
 !                 Angular integration
   INTEGER, INTENT(IN) ::                                                &
@@ -200,8 +185,6 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
       zen_0(nd_profile)                                                 &
 !       Secants (two-stream) or cosines (spherical harmonics)
 !       of the solar zenith angles
-    , flux_inc_direct(nd_profile)                                       &
-!       Incident direct flux
     , flux_inc_down(nd_profile)
 !       Incident downward flux
   REAL (RealK), INTENT(INOUT) ::                                        &
@@ -236,25 +219,14 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !       Single scattering properties of the atmosphere
 
 !                 Cloudy properties
-  LOGICAL, INTENT(IN) ::                                                &
-      l_cloud
-!       Clouds required
   INTEGER, INTENT(IN) ::                                                &
       i_cloud
 !       Cloud scheme used
 
 !                 Cloud geometry
   INTEGER, INTENT(IN) ::                                                &
-      n_cloud_top                                                       &
+      n_cloud_top
 !       Topmost cloudy layer
-    , n_cloud_type                                                      &
-!       Number of types of clouds
-    , n_region                                                          &
-!       Number of cloudy regions
-    , k_clr                                                             &
-!       Index of clear-sky region
-    , i_region_cloud(nd_cloud_type)
-!       Regions in which types of clouds fall
 
 ! Cloud geometry
   INTEGER, INTENT(IN) ::                                                &
@@ -267,19 +239,8 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
     , i_clm_cld_typ(nd_profile, nd_column)
 !       Type of cloud to introduce in the changed layer
   REAL (RealK), INTENT(IN) ::                                           &
-      w_cloud(nd_profile, id_ct: nd_layer)                              &
-!       Cloudy fraction
-    , frac_cloud(nd_profile, id_ct: nd_layer, nd_cloud_type)            &
-!       Fractions of different types of cloud
-    , w_free(nd_profile, id_ct: nd_layer)                               &
-!       Clear-sky fraction
-    , cloud_overlap(nd_profile, id_ct-1: nd_layer                       &
-        , nd_overlap_coeff)                                             &
-!       Coefficients for energy transfer at interfaces
-    , area_column(nd_profile, nd_column)                                &
+      area_column(nd_profile, nd_column)
 !       Areas of columns
-    , frac_region(nd_profile, id_ct: nd_layer, nd_region)
-!       Fractions of total cloud occupied by each region
 
 
 !                 Levels where radiance are calculated
@@ -416,14 +377,14 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
     END IF
 
 ! DEPENDS ON: sph_solver
-    CALL sph_solver(ierr                                                &
+    CALL sph_solver(                                                    &
 !                   Atmospheric sizes
-      , n_profile, n_layer                                              &
+        n_profile, n_layer                                              &
 !                   Angular integration
       , ms_min, ms_max, i_truncation, ls_local_trunc                    &
       , cg_coeff, uplm_zero, ia_sph_mm                                  &
       , accuracy_adaptive, euler_factor                                 &
-      , i_sph_algorithm, i_sph_mode, l_rescale                          &
+      , i_sph_algorithm, i_sph_mode                                     &
 !                   Spectral Region
       , isolir                                                          &
 !                 Options for Equivalent Extinction
@@ -435,7 +396,7 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
       , l_ir_source_quad, diff_planck_2                                 &
 !                   Optical properies
       , tau_clr_f, omega_clr_f, phase_fnc_clr_f                         &
-      , phase_fnc_solar_clr_f, forward_scatter_clr_f                    &
+      , phase_fnc_solar_clr_f                                           &
 !                   Surface Conditions
       , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb                        &
       , f_brdf, brdf_sol, brdf_hemi                                     &
@@ -503,9 +464,9 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 
 
 ! DEPENDS ON: calc_radiance_ipa
-    CALL calc_radiance_ipa(ierr                                         &
+    CALL calc_radiance_ipa(                                             &
 !                 Atmospheric Properties
-      , n_profile, n_layer, n_cloud_top                                 &
+        n_profile, n_layer, n_cloud_top                                 &
 !                   Angular Integration
       , n_order_phase, ms_min, ms_max, ls_local_trunc                   &
       , i_truncation, accuracy_adaptive, euler_factor                   &
@@ -537,8 +498,8 @@ SUBROUTINE monochromatic_radiance_sph(ierr                              &
 !                   Calculated fluxes or radiances
       , flux_direct, flux_total, i_direct, radiance, j_radiance         &
 !                 Dimensions of Arrays
-      , nd_profile, nd_layer, nd_layer_clr, id_ct                       &
-      , nd_column, nd_cloud_type                                        &
+      , nd_profile, nd_layer                                            &
+      , nd_column                                                       &
       , nd_flux_profile, nd_radiance_profile, nd_j_profile              &
       , nd_max_order, nd_sph_coeff                                      &
       , nd_brdf_basis_fnc, nd_brdf_trunc                                &

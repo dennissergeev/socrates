@@ -42,12 +42,12 @@ SUBROUTINE mcica_column(ierr                                            &
 !                   Calculated fluxes
   , flux_direct, flux_total, l_actinic, actinic_flux                    &
 !                   Flags for clear-sky calculations
-  , l_clear, i_solver_clear                                             &
+  , l_clear                                                             &
 !                   Calculated clear-sky fluxes
   , flux_direct_clear, flux_total_clear, actinic_flux_clear             &
 !                   Dimensions of arrays
   , nd_profile, nd_layer, nd_layer_clr, id_ct                           &
-  , nd_max_order, nd_source_coeff                                       &
+  , nd_source_coeff                                                     &
   , nd_cloud_type                                                       &
   )
 
@@ -61,7 +61,6 @@ SUBROUTINE mcica_column(ierr                                            &
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
-  USE ereport_mod, ONLY: ereport
 
   USE set_n_source_coeff_mod, ONLY: set_n_source_coeff
   USE calc_actinic_flux_mod, ONLY: calc_actinic_flux
@@ -88,8 +87,6 @@ SUBROUTINE mcica_column(ierr                                            &
 !       Size allocated for completely clear layers
   , id_ct                                                               &
 !       Topmost declared cloudy layer
-  , nd_max_order                                                        &
-!       Size allocated for orders of spherical harmonics
   , nd_source_coeff                                                     &
 !       Size allocated for coefficients in the source function
   , nd_cloud_type
@@ -112,8 +109,6 @@ SUBROUTINE mcica_column(ierr                                            &
 !       Two-stream scheme
   , i_solver                                                            &
 !       Solver used
-  , i_solver_clear                                                      &
-!       Solver for clear-sky fluxes
   , i_scatter_method
 !       Method of treating scattering
   INTEGER, INTENT(INOUT) ::                                             &
@@ -261,7 +256,7 @@ SUBROUTINE mcica_column(ierr                                            &
 ! DEPENDS ON: two_coeff
     CALL two_coeff(ierr, control                                        &
     , n_profile, 1, n_cloud_top-1                                       &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , ss_prop%phase_fnc_clr                                             &
     , ss_prop%omega_clr, ss_prop%tau_clr_dir, ss_prop%tau_clr           &
     , isolir, sec_0, sph%common%path_div                                &
@@ -271,7 +266,7 @@ SUBROUTINE mcica_column(ierr                                            &
     )
     CALL two_coeff(ierr, control                                        &
     , n_profile, n_cloud_top, n_layer                                   &
-    , i_2stream, l_ir_source_quad                                       &
+    , i_2stream                                                         &
     , ss_prop%phase_fnc(:, :, :, 0)                                     &
     , ss_prop%omega(:, :, 0)                                            &
     , ss_prop%tau_dir(:, :, 0), ss_prop%tau(:, :, 0)                    &
@@ -452,7 +447,7 @@ SUBROUTINE mcica_column(ierr                                            &
 
           CALL two_coeff(ierr, control                                  &
             , n_list(i,k), i, i                                         &
-            , i_2stream, l_ir_source_quad                               &
+            , i_2stream                                                 &
             , asymmetry_gathered, omega_gathered                        &
             , tau_gathered_dir, tau_gathered                            &
             , isolir, sec_0_gathered, path_div_gathered                 &

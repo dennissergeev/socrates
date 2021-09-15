@@ -424,7 +424,7 @@ SUBROUTINE build_sph_matrix(i_sph_algorithm, euler_factor               &
       n_profile, ls_trunc, ms, n_red_eigensystem                        &
     , cg_coeff, mu(1, 1, i_below)                                       &
     , eig_vec(1, 1, 1, i_below), theta(1, 1, i_below)                   &
-    , isolir, i_direct(1, 0), i_direct(1, 1), mu_0, uplm_sol            &
+    , isolir, i_direct(1, 0), mu_0, uplm_sol                            &
     , diff_planck(1, 1), l_ir_source_quad, diff_planck_2(1, 1)          &
     , tau(1, 1), ss(1, 0)                                               &
     , source_top(1, 1, i_below), source_bottom(1, 1, i_below)           &
@@ -603,7 +603,7 @@ SUBROUTINE build_sph_matrix(i_sph_algorithm, euler_factor               &
         n_profile, ls_trunc, ms, n_red_eigensystem                      &
       , cg_coeff, mu(1, 1, i_below)                                     &
       , eig_vec(1, 1, 1, i_below), theta(1, 1, i_below)                 &
-      , isolir, i_direct(1, i-1), i_direct(1, i), mu_0, uplm_sol        &
+      , isolir, i_direct(1, i-1), mu_0, uplm_sol                        &
       , diff_planck(1, i), l_ir_source_quad, diff_planck_2(1, i)        &
       , tau(1, i), ss(1, 0)                                             &
       , source_top(1, 1, i_below), source_bottom(1, 1, i_below)         &

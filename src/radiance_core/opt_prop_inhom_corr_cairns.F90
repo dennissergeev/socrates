@@ -16,7 +16,7 @@
 !
 !- -----------------------------------------------------------------------------
 SUBROUTINE opt_prop_inhom_corr_cairns(                                         &
-      n_profile, n_layer, n_cloud_top, n_cloud_profile, i_cloud_profile        &
+      n_layer, n_cloud_top, n_cloud_profile, i_cloud_profile                   &
     , l_rescale, n_order_forward                                               &
     , rel_var_dens, k_ext_tot_cloud, k_ext_scat_cloud                          &
     , phase_fnc_cloud, forward_scatter_cloud                                   &
@@ -43,9 +43,7 @@ SUBROUTINE opt_prop_inhom_corr_cairns(                                         &
 
 ! Dummy variables.
   INTEGER, INTENT(IN) ::                                                       &
-      n_profile                                                                &
-!       Number of profiles
-    , n_layer                                                                  &
+      n_layer                                                                  &
 !       Number of layers
     , n_order_forward                                                          &
 !       Order used in forming the forward scattering parameter

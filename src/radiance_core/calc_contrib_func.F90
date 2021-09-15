@@ -11,7 +11,7 @@
 !   pressure.
 !
 !------------------------------------------------------------------------------
-SUBROUTINE calc_contrib_func(ierr, n_profile, n_layer, n_cloud_top             &
+SUBROUTINE calc_contrib_func(n_profile, n_layer, n_cloud_top                   &
       , plev, planck_flux_band, ss_prop, contrib_funci_part                    &
       , contrib_funcf_part, nd_profile, nd_layer)
 
@@ -25,9 +25,6 @@ SUBROUTINE calc_contrib_func(ierr, n_profile, n_layer, n_cloud_top             &
   IMPLICIT NONE
   
 ! Dummy arguments.
-  INTEGER, INTENT(INOUT) ::                                                    &
-      ierr
-!       Error flag
 
 ! Input
   INTEGER, INTENT(IN) ::                                                       &

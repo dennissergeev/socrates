@@ -39,7 +39,6 @@ SUBROUTINE mcica_sample(ierr                                            &
     , planck                                                            &
 !                 Conditions at TOA
     , zen_0, flux_inc_direct, flux_inc_down                             &
-    , i_direct                                                          &
 !                 Surface Properties
     , d_planck_flux_surface                                             &
     , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb                          &
@@ -66,12 +65,8 @@ SUBROUTINE mcica_sample(ierr                                            &
     , n_direction, direction                                            &
 !                 Calculated Fluxes
     , flux_direct, flux_total, l_actinic, actinic_flux                  &
-!                 Calculated Radiances
-    , radiance                                                          &
-!                 Calculated mean radiances
-    , j_radiance                                                        &
 !                 Flags for Clear-sky Calculation
-    , l_clear, i_solver_clear                                           &
+    , i_solver_clear                                                    &
 !                 Clear-sky Fluxes Calculated
     , flux_direct_clear, flux_total_clear, actinic_flux_clear           &
 !                 Contribution function
@@ -253,10 +248,6 @@ SUBROUTINE mcica_sample(ierr                                            &
 !       Incident direct flux
     , flux_inc_down(nd_profile)
 !       Incident downward flux
-  REAL (RealK), INTENT(INOUT) ::                                        &
-      i_direct(nd_radiance_profile, 0: nd_layer)
-!       Direct radiance (the first row contains the incident
-!       solar radiance: the other rows are calculated)
 
 !                 Surface properties
   REAL (RealK), INTENT(IN) ::                                           &
@@ -360,19 +351,7 @@ SUBROUTINE mcica_sample(ierr                                            &
   LOGICAL, INTENT(IN) :: l_actinic
 !       Flag for calculation of actinic flux
 
-!                 Calculated radiances
-  REAL (RealK), INTENT(INOUT) ::                                        &
-      radiance(nd_radiance_profile, nd_viewing_level, nd_direction)
-!       Radiances
-!                 Calculated mean radiances
-  REAL (RealK), INTENT(INOUT) ::                                        &
-      j_radiance(nd_j_profile, nd_viewing_level)
-!       Mean radiances
-
 !                 Flags for clear-sky calculations
-  LOGICAL, INTENT(IN) ::                                                &
-      l_clear
-!       Calculate clear-sky properties
   INTEGER, INTENT(IN) ::                                                &
       i_solver_clear
 !       Clear solver used

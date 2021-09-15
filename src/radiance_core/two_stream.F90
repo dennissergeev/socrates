@@ -51,7 +51,6 @@ SUBROUTINE two_stream(ierr                                              &
   USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
-  USE ereport_mod, ONLY: ereport
 
   IMPLICIT NONE
 
@@ -160,7 +159,7 @@ SUBROUTINE two_stream(ierr                                              &
 ! DEPENDS ON: two_coeff
     CALL two_coeff(ierr, control                                        &
       , n_profile, 1, n_layer                                           &
-      , i_2stream, l_ir_source_quad                                     &
+      , i_2stream                                                       &
       , asymmetry, omega, tau_dir, tau                                  &
       , isolir, sec_0, sph%common%path_div                              &
       , trans, reflect, trans_0_dir, trans_0                            &

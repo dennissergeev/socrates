@@ -14,14 +14,14 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE sph_solver(ierr                                              &
+SUBROUTINE sph_solver(                                                  &
 !                 Atmospheric sizes
-    , n_profile, n_layer                                                &
+      n_profile, n_layer                                                &
 !                 Angular integration
     , ms_min, ms_max, i_truncation, ls_local_trunc                      &
     , cg_coeff, uplm_zero, ia_sph_mm                                    &
     , accuracy_adaptive, euler_factor                                   &
-    , i_sph_algorithm, i_sph_mode, l_rescale                            &
+    , i_sph_algorithm, i_sph_mode                                       &
 !                 Spectral Region
     , isolir                                                            &
 !                   Options for Equivalent Extinction
@@ -33,7 +33,6 @@ SUBROUTINE sph_solver(ierr                                              &
     , l_ir_source_quad, diff_planck_2                                   &
 !                   Optical properies
     , tau, omega, phase_fnc, phase_fnc_solar                            &
-    , forward_scatter                                                   &
 !                 Surface Conditions
     , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb                          &
     , f_brdf, brdf_sol, brdf_hemi                                       &
@@ -102,11 +101,6 @@ SUBROUTINE sph_solver(ierr                                              &
 !       viewing level
 
 
-! Dummy variables.
-  INTEGER, INTENT(INOUT) ::                                             &
-      ierr
-!       Error flag
-
   INTEGER, INTENT(IN) ::                                                &
       n_profile                                                         &
 !       Number of profiles
@@ -115,9 +109,6 @@ SUBROUTINE sph_solver(ierr                                              &
     , isolir
 !       Spectral region
 !                 Angular integration
-  LOGICAL, INTENT(IN) ::                                                &
-      l_rescale
-!       Flag for rescaling of the optical properties
   INTEGER, INTENT(IN) ::                                                &
       ms_min                                                            &
 !       Lowest azimuthal order calculated
@@ -163,11 +154,9 @@ SUBROUTINE sph_solver(ierr                                              &
 !       Albedos of single scattering
     , phase_fnc(nd_profile, nd_layer, nd_max_order)                     &
 !       Moments of the phase function
-    , phase_fnc_solar(nd_radiance_profile, nd_layer, nd_direction)      &
+    , phase_fnc_solar(nd_radiance_profile, nd_layer, nd_direction)
 !       The phase function evaluated for scattering from
 !       the solar beam into the viewing directions
-    , forward_scatter(nd_profile, nd_layer)
-!       Forward scattering fractions
 
   REAL(RealK), INTENT(IN) ::                                            &
       mu_0(nd_profile)

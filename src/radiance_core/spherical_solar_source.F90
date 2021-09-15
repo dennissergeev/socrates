@@ -12,14 +12,13 @@ CONTAINS
 ! using spherical geometry.
 !
 !------------------------------------------------------------------------------
-SUBROUTINE spherical_solar_source(control, bound, sph_common, sph_comp,        &
+SUBROUTINE spherical_solar_source(bound, sph_common, sph_comp,                 &
     n_profile, n_layer,                                                        &
     trans_0, source_coeff, l_scale_solar, adjust_solar_ke, s_down, s_up,       &
     nd_profile, nd_layer, nd_source_coeff)
 
 
   USE realtype_rd,            ONLY: RealK
-  USE def_control,            ONLY: StrCtrl
   USE def_bound,              ONLY: StrBound
   USE def_spherical_geometry, ONLY: StrSphCommon, StrSphComp
   USE rad_pcf,                ONLY: ip_scf_solar_up, ip_scf_solar_down
@@ -27,10 +26,6 @@ SUBROUTINE spherical_solar_source(control, bound, sph_common, sph_comp,        &
   USE yomhook,                ONLY: lhook, dr_hook
 
   IMPLICIT NONE
-
-
-! Control options:
-  TYPE(StrCtrl),      INTENT(IN)    :: control
 
 ! Boundary conditions:
   TYPE(StrBound),     INTENT(IN)    :: bound

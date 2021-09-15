@@ -14,9 +14,9 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE calc_radiance_ipa(ierr                                       &
+SUBROUTINE calc_radiance_ipa(                                           &
 !                 Atmospheric Properties
-    , n_profile, n_layer, n_cloud_top                                   &
+      n_profile, n_layer, n_cloud_top                                   &
 !                 Angular Integration
     , n_order_phase, ms_min, ms_max, ls_local_trunc                     &
     , i_truncation, accuracy_adaptive, euler_factor                     &
@@ -48,8 +48,8 @@ SUBROUTINE calc_radiance_ipa(ierr                                       &
 !                 Calculated fluxes or radiances
     , flux_direct, flux_total, i_direct, radiance, j_radiance           &
 !                 Dimensions of Arrays
-    , nd_profile, nd_layer, nd_layer_clr, id_ct                         &
-    , nd_column, nd_cloud_type                                          &
+    , nd_profile, nd_layer                                              &
+    , nd_column                                                         &
     , nd_flux_profile, nd_radiance_profile, nd_j_profile                &
     , nd_max_order, nd_sph_coeff                                        &
     , nd_brdf_basis_fnc, nd_brdf_trunc                                  &
@@ -78,14 +78,10 @@ SUBROUTINE calc_radiance_ipa(ierr                                       &
 !       Size allocated for profiles of radiances
     , nd_j_profile                                                      &
 !       Size allocated for profiles of photolysis rates
-    , nd_layer_clr                                                      &
-!       Size allocated for completely clear layers
     , nd_layer                                                          &
 !       Size allocated for atmospheric layers
     , nd_column                                                         &
 !       Size allocated for columns at a grid-point
-    , nd_cloud_type                                                     &
-!       Size allocated for types of clouds
     , nd_viewing_level                                                  &
 !       Size allowed for levels where the radiance is calculated
     , nd_max_order                                                      &
@@ -110,16 +106,11 @@ SUBROUTINE calc_radiance_ipa(ierr                                       &
 !       on any viewing level
     , nd_direction                                                      &
 !       Size allocated for viewing dierctions
-    , nd_profile_column                                                 &
+    , nd_profile_column
 !       Number of profiles of subcolumns considered at once
-    , id_ct
-!       Topmost declared cloudy layer
 
 
 ! Dummy arguments.
-  INTEGER, INTENT(INOUT) ::                                             &
-      ierr
-!       Error flag
   INTEGER, INTENT(IN) ::                                                &
       n_profile                                                         &
 !       Number of profiles
@@ -623,14 +614,14 @@ SUBROUTINE calc_radiance_ipa(ierr                                       &
 
 
 ! DEPENDS ON: sph_solver
-    CALL sph_solver(ierr                                                &
+    CALL sph_solver(                                                    &
 !                   Atmospheric sizes
-      , n_long, n_layer                                                 &
+        n_long, n_layer                                                 &
 !                   Angular integration
       , ms_min, ms_max, i_truncation, ls_local_trunc                    &
       , cg_coeff, uplm_zero, ia_sph_mm                                  &
       , accuracy_adaptive, euler_factor                                 &
-      , i_sph_algorithm, i_sph_mode, l_rescale                          &
+      , i_sph_algorithm, i_sph_mode                                     &
 !                   Spectral Region
       , isolir                                                          &
 !                   Options for Equivalent Extinction
@@ -642,7 +633,7 @@ SUBROUTINE calc_radiance_ipa(ierr                                       &
       , l_ir_source_quad, diff_planck_2_long                            &
 !                   Optical properies
       , tau_long, omega_long, phase_fnc_long                            &
-      , phase_fnc_solar_long, forward_scatter_long                      &
+      , phase_fnc_solar_long                                            &
 !                   Surface Conditions
       , ls_brdf_trunc, n_brdf_basis_fnc, rho_alb_long                   &
       , f_brdf, brdf_sol_long, brdf_hemi_long                           &

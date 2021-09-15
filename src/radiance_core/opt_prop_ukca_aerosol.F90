@@ -20,8 +20,8 @@
 ! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
-SUBROUTINE opt_prop_ukca_aerosol(ierr                                   &
-    , n_profile, first_layer, last_layer                                &
+SUBROUTINE opt_prop_ukca_aerosol(                                       &
+      n_profile, first_layer, last_layer                                &
     , n_order_phase, l_rescale, n_order_forward                         &
     , n_ukca_mode, ukca_modal_mixr                                      &
     , ukca_absorption, ukca_scattering, ukca_asymmetry                  &
@@ -53,9 +53,6 @@ SUBROUTINE opt_prop_ukca_aerosol(ierr                                   &
 !       Size allocated for UKCA aerosol modes
 
 ! Dummy variables.
-  INTEGER, INTENT(INOUT) ::                                             &
-      ierr
-!       Error flag
 
   INTEGER, INTENT(IN) ::                                                &
       n_profile                                                         &

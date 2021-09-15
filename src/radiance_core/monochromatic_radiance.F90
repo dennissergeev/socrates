@@ -422,7 +422,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 !                 Optical properties
     , ss_prop, k_gas_abs                                                &
 !                 Dimensions of arrays
-    , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_cloud_type          &
+    , nd_profile, nd_layer, nd_layer_clr, id_ct                         &
     )
 
 
@@ -523,7 +523,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 
   IF (control%l_spherical_solar) THEN
     CALL spherical_trans_coeff(n_profile, n_layer, n_cloud_top,         &
-      ss_prop, sph, nd_profile, nd_layer, id_ct)
+      ss_prop, sph)
   END IF
 
 
@@ -582,7 +582,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 ! DEPENDS ON: monochromatic_radiance_sph
     CALL monochromatic_radiance_sph(ierr                                &
 !                   Atmospheric Propertries
-      , control, n_profile, n_layer, d_mass                             &
+      , control, n_profile, n_layer                                     &
 !                   Angular Integration
       , n_order_phase, ms_min, ms_max, i_truncation, ls_local_trunc     &
       , accuracy_adaptive, euler_factor, i_sph_algorithm                &
@@ -596,7 +596,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 !                   Infra-red Properties
       , planck%diff, control%l_ir_source_quad, planck%diff_2            &
 !                   Conditions at TOA
-      , zen_0, flux_inc_direct, flux_inc_down                           &
+      , zen_0, flux_inc_down                                            &
       , i_direct                                                        &
 !                   Surface Properties
       , d_planck_flux_surface                                           &
@@ -605,12 +605,9 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 !                   Optical properties
       , ss_prop                                                         &
 !                   Cloudy Properties
-      , l_cloud, i_cloud                                                &
+      , i_cloud                                                         &
 !                   Cloud Geometry
       , n_cloud_top                                                     &
-      , cld%n_cloud_type, cld%frac_cloud                                &
-      , n_region, k_clr, i_region_cloud, frac_region                    &
-      , w_free, cld%w_cloud, cloud_overlap                              &
       , n_column_slv, list_column_slv                                   &
       , i_clm_lyr_chn, i_clm_cld_typ, area_column                       &
 !                   Levels for calculating radiances
@@ -626,10 +623,9 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 !                   Dimensions of Arrays
       , nd_profile, nd_layer, nd_layer_clr, id_ct, nd_column            &
       , nd_flux_profile, nd_radiance_profile, nd_j_profile              &
-      , nd_cloud_type, nd_region, nd_overlap_coeff                      &
       , nd_max_order, nd_sph_coeff                                      &
       , nd_brdf_basis_fnc, nd_brdf_trunc, nd_viewing_level              &
-      , nd_direction, nd_source_coeff                                   &
+      , nd_direction                                                    &
       )
 
   ELSE IF (i_angular_integration == ip_ir_gauss) THEN
@@ -656,7 +652,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
       , planck%diff, d_planck_flux_surface                              &
       , rho_alb(1, ip_surf_alb_diff)                                    &
       , flux_total                                                      &
-      , control%l_ir_source_quad, planck%diff_2                         &
       , nd_profile, nd_layer                                            &
       )
 
@@ -667,7 +662,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 ! Calculate the contribution function
 ! DEPENDS ON: calc_contrib_func
   IF (control%l_contrib_func .OR. control%l_contrib_func_band) THEN
-    CALL calc_contrib_func(ierr, n_profile, n_layer, n_cloud_top        &
+    CALL calc_contrib_func(n_profile, n_layer, n_cloud_top              &
       , atm%p_level, planck%flux, ss_prop, contrib_funci_part           &
       , contrib_funcf_part, nd_profile, nd_layer)
   END IF
