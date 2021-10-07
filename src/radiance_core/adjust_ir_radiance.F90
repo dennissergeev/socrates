@@ -16,7 +16,8 @@ SUBROUTINE adjust_ir_radiance(control, spectrum, atm, radout, &
   USE def_atm,      ONLY: StrAtm
   USE def_out,      ONLY: StrOut
   USE def_planck,   ONLY: StrPlanck
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_ir_gauss, ip_sph_mode_flux, ip_spherical_harmonic,    &
+                     ip_two_stream, ip_sph_mode_rad
   USE rad_ccf, ONLY: pi
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

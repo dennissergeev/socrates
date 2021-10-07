@@ -16,7 +16,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE spline_fit(n_data, x, y, y2)
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
 
   IMPLICIT NONE
 

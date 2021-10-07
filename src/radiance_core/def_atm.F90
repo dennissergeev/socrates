@@ -13,7 +13,7 @@
 !------------------------------------------------------------------------------
 MODULE def_atm
 
-USE realtype_rd
+USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 
@@ -71,8 +71,8 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_atm(atm, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: StrSpecData
 
 IMPLICIT NONE
 

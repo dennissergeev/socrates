@@ -26,7 +26,7 @@ SUBROUTINE set_rad_layer(ierr                                           &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

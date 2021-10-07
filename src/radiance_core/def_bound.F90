@@ -13,7 +13,7 @@
 !------------------------------------------------------------------------------
 MODULE def_bound
 
-USE realtype_rd
+USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 
@@ -66,8 +66,8 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_bound(bound, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: strspecdata
 
 IMPLICIT NONE
 

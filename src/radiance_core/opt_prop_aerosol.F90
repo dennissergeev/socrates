@@ -41,7 +41,11 @@ SUBROUTINE opt_prop_aerosol(ierr                                        &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_aerosol_param_dry,                 &
+                     ip_aerosol_param_moist, ip_aerosol_param_phf_dry,  &
+                     ip_aerosol_param_phf_moist,                        &
+                     ip_aerosol_unparametrized, ip_aersrc_arcl_ron,     &
+                     ip_aersrc_classic_ron, ip_aersrc_cusack_ron
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

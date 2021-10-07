@@ -89,9 +89,10 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
   USE def_bound,   ONLY: StrBound
   USE def_out,     ONLY: StrOut
   USE def_planck,  ONLY: StrPlanck
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_infra_red, ip_spherical_harmonic,            &
+                     ip_two_stream, ip_ir_gauss
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

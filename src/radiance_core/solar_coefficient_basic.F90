@@ -17,7 +17,9 @@ SUBROUTINE solar_coefficient_basic(control                              &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_2s_test, ip_discrete_ord,          &
+                     ip_eddington, ip_elsasser, ip_hemi_mean, ip_pifm80,&
+                     ip_pifm85
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE def_control, ONLY: StrCtrl

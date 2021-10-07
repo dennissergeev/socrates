@@ -21,7 +21,10 @@ SUBROUTINE two_coeff_basic(ierr                                         &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_2s_test, ip_coakley_chylek_1,      &
+                     ip_coakley_chylek_2, ip_discrete_ord, ip_eddington,&
+                     ip_elsasser, ip_hemi_mean, ip_ifm, ip_krschg_flux, &
+                     ip_meador_weaver, ip_pifm80, ip_pifm85, ip_zdk_flux
   USE diffusivity_factor, ONLY: elsasser_factor
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

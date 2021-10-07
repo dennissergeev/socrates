@@ -16,7 +16,16 @@
 FUNCTION set_n_cloud_parameter(i_scheme, i_component, n_phase_term)
 
 
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_ackerman_stephens, ip_clcmp_cnv_ice,            &
+                     ip_clcmp_cnv_water, ip_clcmp_st_ice,               &
+                     ip_clcmp_st_water, ip_drop_pade_2,                 &
+                     ip_drop_pade_2_phf, ip_ice_adt, ip_ice_adt_10,     &
+                     ip_ice_baran, ip_ice_fu_ir,ip_ice_fu_phf,          &
+                     ip_ice_fu_solar, ip_ice_iwc_only, ip_ice_t_iwc,    &
+                     ip_ps_size_phf, ip_slingo_schr_ice_phf,            &
+                     ip_slingo_schr_phf, ip_slingo_schrecker,           &
+                     ip_slingo_schrecker_ice, ip_sun_shine_vn2_ir,      &
+                     ip_sun_shine_vn2_vis
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

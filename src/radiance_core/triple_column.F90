@@ -62,9 +62,14 @@ SUBROUTINE triple_column(ierr                                           &
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_infra_red, ip_solar,               &
+                     ip_scatter_full, ip_scatter_approx,                &
+                     ip_no_scatter_abs, ip_no_scatter_ext,              &
+                     ip_region_clear, ip_region_strat, ip_region_conv,  &
+                     ip_solver_triple, ip_solver_triple_hogan,          &
+                     ip_solver_triple_app_scat
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

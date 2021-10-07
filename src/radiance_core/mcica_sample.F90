@@ -88,7 +88,7 @@ SUBROUTINE mcica_sample(ierr                                            &
   USE def_cld,     ONLY: StrCld
   USE def_bound,   ONLY: StrBound
   USE def_planck,  ONLY: StrPlanck
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
   USE rad_pcf, ONLY: ip_solar, ip_cloud_homogen, ip_cloud_ice_water, &
     ip_cloud_combine_homogen, ip_cloud_combine_ice_water, &

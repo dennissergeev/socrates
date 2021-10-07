@@ -8,7 +8,7 @@
 
 MODULE def_inst_flt
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
 
   IMPLICIT NONE
 

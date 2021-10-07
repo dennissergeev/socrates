@@ -46,8 +46,15 @@ SUBROUTINE nlte_heating_sw(trop_co2_mmr, coszin, p, heat_rate, &
                            heat_rate_euv_bands, &
                            n_layer, n_profile)
 
-  USE nlte_heating_data_mod
-  USE interpolate_p_mod
+  USE nlte_heating_data_mod, ONLY: n_level, n_x_levs_min, n_co2_levs,          &
+                                   n_x_levs_max, n_x_levs, param_co2_col_am,   &
+                                   param_log_co2_col, matrix_min, molmass_co2, &
+                                   o3e_c0_high, o3e_c0_low, o3e_c1_high,       &
+                                   o3e_c1_low, o3e_c2_high, o3e_c2_low,        &
+                                   polyatom_max, sec_per_day, step_size,       &
+                                   param_heat_rate, o3e_c3_high, o3e_c3_low,   &
+                                   amm, param_co2_vmr, vmr_o
+  USE interpolate_p_mod, ONLY: ip_1_lin_lin, ip_1_log_lin, interpolate_p
 
   ! Imported variables
   INTEGER, INTENT(IN) :: n_layer, n_profile

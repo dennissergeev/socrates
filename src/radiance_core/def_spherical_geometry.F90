@@ -57,7 +57,7 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_sph(sph, dimen)
 
-USE def_dimen
+USE def_dimen, ONLY: strdim
 
 IMPLICIT NONE
 

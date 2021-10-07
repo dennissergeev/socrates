@@ -29,7 +29,7 @@ SUBROUTINE two_coeff_fast_lw(n_profile                                  &
 
   USE realtype_rd, ONLY: RealK
   USE vectlib_mod, ONLY: exp_v
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_scf_ir_1d,ip_scf_ir_2d
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

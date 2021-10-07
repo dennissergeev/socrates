@@ -33,7 +33,9 @@ SUBROUTINE augment_tiled_radiance(control, spectrum, radout             &
   USE def_control, ONLY: StrCtrl
   USE def_spectrum, ONLY: StrSpecData
   USE def_out,     ONLY: StrOut
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_infra_red, ip_ir_gauss, ip_solar,  &
+                     ip_spherical_harmonic, ip_surf_alb_diff,           &
+                     ip_surf_alb_dir, ip_two_stream
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

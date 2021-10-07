@@ -48,7 +48,8 @@ SUBROUTINE two_stream(ierr                                              &
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_infra_red, ip_no_scatter_abs, ip_no_scatter_ext, &
+                     ip_scatter_approx, ip_scatter_full
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

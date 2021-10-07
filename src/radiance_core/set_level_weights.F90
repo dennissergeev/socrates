@@ -45,7 +45,7 @@ SUBROUTINE set_level_weights(i                                          &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_infra_red, ip_solar
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

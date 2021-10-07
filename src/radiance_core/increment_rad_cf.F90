@@ -35,7 +35,8 @@ SUBROUTINE increment_rad_cf(n_profile                                   &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_sph_direct, ip_sph_mode_flux,         &
+                     ip_sph_mode_j, ip_sph_mode_rad, ip_sph_reduced_iter
   USE rad_ccf, ONLY: pi
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

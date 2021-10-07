@@ -109,8 +109,8 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_cld(cld, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: strspecdata
 
 IMPLICIT NONE
 
@@ -171,8 +171,8 @@ END SUBROUTINE allocate_cld
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_cld_prsc(cld, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: strspecdata
 
 IMPLICIT NONE
 
@@ -224,8 +224,8 @@ END SUBROUTINE allocate_cld_prsc
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_cld_mcica(cld, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: strspecdata
 
 IMPLICIT NONE
 

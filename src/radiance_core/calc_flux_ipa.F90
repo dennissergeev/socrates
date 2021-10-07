@@ -53,9 +53,11 @@ SUBROUTINE calc_flux_ipa(ierr                                           &
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_direct_csr_scaling, ip_direct_noscaling,        &
+                     ip_infra_red, ip_solar, ip_surf_alb_diff,          &
+                     ip_surf_alb_dir
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

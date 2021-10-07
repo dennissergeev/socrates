@@ -26,7 +26,11 @@ SUBROUTINE scale_absorb(ierr, n_profile, n_layer                        &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_scale_power_law,                   &
+                     ip_scale_power_quad, ip_scale_doppler_quad,        &
+                     ip_scale_dbl_pow_law, ip_scale_fnc_null,           &
+                     ip_scale_dbl_pow_quad, ip_scale_wenyi,             &
+                     ip_scale_lookup
   USE vectlib_mod, ONLY : rtor_v
   USE scale_wenyi, ONLY: plg, ttb, tto, gk250b, gk4, gk6
   USE yomhook, ONLY: lhook, dr_hook

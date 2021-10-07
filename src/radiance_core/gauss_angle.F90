@@ -31,7 +31,6 @@ SUBROUTINE gauss_angle(n_profile, n_layer                               &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
   USE rad_ccf, ONLY: pi
   USE gaussian_weight_pcf, ONLY : gauss_weight, gauss_point
   USE yomhook, ONLY: lhook, dr_hook

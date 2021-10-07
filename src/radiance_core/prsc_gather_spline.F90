@@ -25,8 +25,8 @@ SUBROUTINE prsc_gather_spline(ierr                                      &
     , nd_profile_prsc, nd_opt_level_prsc                                &
     )
 
-  USE realtype_rd
-  USE rad_pcf
+  USE realtype_rd, ONLY: RealK
+  USE rad_pcf, ONLY: i_err_range, i_normal
 
   IMPLICIT NONE
 

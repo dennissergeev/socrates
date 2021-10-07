@@ -42,7 +42,7 @@ SUBROUTINE calc_surf_rad(n_profile, n_layer, tau                        &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_infra_red
   USE rad_ccf, ONLY: pi
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

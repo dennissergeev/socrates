@@ -44,7 +44,10 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_slingo_schrecker,                  &
+                     ip_ackerman_stephens, ip_drop_pade_2,              &
+                     ip_drop_unparametrized, ip_ps_size_phf,            &
+                     ip_slingo_schr_phf
   USE rad_ccf, ONLY: pi
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

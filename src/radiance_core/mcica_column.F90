@@ -56,9 +56,11 @@ SUBROUTINE mcica_column(ierr                                            &
   USE def_control, ONLY: StrCtrl
   USE def_cld,     ONLY: StrCld
   USE def_bound,   ONLY: StrBound
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_direct_csr_scaling, ip_direct_noscaling,        &
+                     ip_infra_red, ip_no_scatter_abs, ip_no_scatter_ext,&
+                     ip_scatter_approx, ip_solar,  ip_scatter_full
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

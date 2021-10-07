@@ -23,7 +23,8 @@ SUBROUTINE cloud_maxcs_split(ierr, n_profile, n_layer, n_cloud_top      &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, i_normal, ip_cloud_type_conv,         &
+                     ip_cloud_type_strat
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

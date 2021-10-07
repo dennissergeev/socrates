@@ -32,7 +32,7 @@ SUBROUTINE prsc_opt_prop(ierr                                           &
     , nd_phase_term, nd_max_order                                       &
     )
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
 
   IMPLICIT NONE
 

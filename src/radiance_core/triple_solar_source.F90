@@ -31,7 +31,9 @@ SUBROUTINE triple_solar_source(control, bound                           &
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_direct_csr_scaling, ip_direct_noscaling,        &
+                     ip_region_clear, ip_region_conv, ip_region_strat,  &
+                     ip_scf_solar_down, ip_scf_solar_up
   USE parkind1, ONLY: jprb, jpim
   USE yomhook, ONLY: lhook, dr_hook
 

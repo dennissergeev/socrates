@@ -59,9 +59,13 @@ SUBROUTINE monochromatic_radiance_tseq(ierr                             &
   USE def_control, ONLY: StrCtrl
   USE def_cld,     ONLY: StrCld
   USE def_bound,   ONLY: StrBound
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_cloud_clear, ip_surf_alb_diff, ip_surf_alb_dir, &
+                     ip_cloud_mcica, ip_cloud_triple, ip_solar,         &
+                     ip_cloud_mix_max, ip_cloud_mix_random,             &
+                     ip_cloud_part_corr, ip_cloud_part_corr_cnv,        &
+                     ip_cloud_column_max
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE calc_actinic_flux_mod, ONLY: calc_actinic_flux

@@ -16,7 +16,18 @@
 SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
   USE realtype_rd,  ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_solar, ip_two_stream, ip_sph_reduced_iter,&
+                     ip_spherical_harmonic, ip_infra_red, i_normal,            &
+                     ip_aerosol_param_moist, ip_aerosol_param_phf_moist,       &
+                     ip_overlap_single, ip_overlap_random,                     &
+                     ip_overlap_exact_major, ip_overlap_random_resort_rebin,   &
+                     ip_overlap_k_eqv_scl, ip_overlap_k_eqv,                   &
+                     ip_overlap_mix_ses2, ip_cloud_column_max, ip_cloud_mcica, &
+                     ip_cloud_mix_max, ip_cloud_mix_random, ip_cloud_part_corr,&
+                     ip_cloud_part_corr_cnv, ip_cloud_triple, ip_scale_term,   &
+                     ip_overlap_hybrid, ip_scale_lookup, ip_scale_null,        &
+                     ip_overlap_k_eqv_mod, ip_region_clear, ip_region_strat,   &
+                     ip_region_conv, ip_scale_ses2, ip_scale_band
   USE def_spectrum, ONLY: StrSpecData
   USE def_dimen,    ONLY: StrDim
   USE def_control,  ONLY: StrCtrl

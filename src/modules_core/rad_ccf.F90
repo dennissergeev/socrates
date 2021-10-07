@@ -14,7 +14,7 @@ MODULE rad_ccf
 !   configuration files. The original file names are indicated at the
 !   head of each section.
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
 
 ! astron_constants_ccf
 ! ------------------------------------------------------------------

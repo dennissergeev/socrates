@@ -25,7 +25,8 @@ SUBROUTINE set_truncation(ierr                                          &
     , nd_max_order                                                      &
     )
 
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_trunc_adaptive, ip_trunc_azim_sym, &
+                     ip_trunc_rhombohedral, ip_trunc_triangular
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

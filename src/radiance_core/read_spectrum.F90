@@ -18,9 +18,24 @@ SUBROUTINE read_spectrum(file_spectral, Sp)
 
 USE realtype_rd, ONLY: RealK
 USE def_spectrum, ONLY: StrSpecData, allocate_spectrum
-USE rad_pcf
-USE dimensions_spec_ucf
-USE gas_list_pcf
+USE rad_pcf, ONLY: i_err_fatal, ip_rayleigh_total, ip_rayleigh_custom,         &
+                   i_normal, i_warning, ip_ice_adt, ip_ice_adt_10,             &
+                   ip_ice_baran, ip_ice_fu_ir, ip_ice_fu_phf, ip_ice_fu_solar, &
+                   ip_ice_iwc_only, ip_ice_t_iwc, ip_slingo_schr_ice_phf,      &
+                   ip_slingo_schrecker_ice, ip_sun_shine_vn2_ir,               &
+                   ip_sun_shine_vn2_vis, ip_scale_power_law, ip_scale_ses2,    &
+                   ip_scale_power_quad, ip_scale_doppler_quad, ip_scale_null,  &
+                   ip_scale_wenyi, ip_scale_dbl_pow_law, ip_scale_lookup,      &
+                   ip_scale_dbl_pow_quad, ip_scale_dbl_dop_quad,               &
+                   ip_scale_fnc_null, n_scale_variable,  ip_slingo_schrecker,  &
+                   ip_ackerman_stephens, ip_drop_pade_2, ip_aerosol_param_dry, &
+                   ip_aerosol_param_moist, ip_aerosol_param_phf_moist,         &
+                   ip_aerosol_param_phf_dry, ip_slingo_schr_phf,               &
+                   ip_ps_size_phf
+USE dimensions_spec_ucf, ONLY: npd_type, npd_k_term, npd_scale_variable,       &
+                               npd_drop_type, npd_ice_type,                    &
+                               npd_cloud_parameter, npd_humidities
+USE gas_list_pcf, ONLY: ip_h2o
 USE file_manager, ONLY: assign_file_unit, release_file_unit
 USE ereport_mod, ONLY: ereport
 USE errormessagelength_mod, ONLY: errormessagelength

@@ -19,7 +19,9 @@ SUBROUTINE trans_source_coeff(control, n_profile                        &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_infra_red, ip_solar, ip_scf_solar_up,           &
+                     ip_scf_solar_down, ip_direct_noscaling,            &
+                     ip_direct_csr_scaling, ip_scf_ir_1d, ip_scf_ir_2d
   USE vectlib_mod, ONLY : exp_v
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

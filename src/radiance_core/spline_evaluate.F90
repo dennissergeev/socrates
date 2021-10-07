@@ -12,7 +12,7 @@
 !- ---------------------------------------------------------------------
 SUBROUTINE spline_evaluate(ierr, n_data, x, y, y2, x_point, y_point)
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
   USE rad_pcf, ONLY: i_err_range
 
   IMPLICIT NONE

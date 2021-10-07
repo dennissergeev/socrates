@@ -59,9 +59,11 @@ SUBROUTINE mix_column(ierr                                              &
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
-  USE def_ss_prop
+  USE def_ss_prop, ONLY: str_ss_prop
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solver_mix_app_scat,ip_solver_mix_direct,       &
+                     ip_solver_mix_direct_hogan, ip_solar, ip_infra_red,&
+                     i_err_fatal
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

@@ -66,8 +66,11 @@ SUBROUTINE grey_opt_prop(ierr, control, radout, i_band                  &
   USE realtype_rd, ONLY: RealK
   USE def_control, ONLY: StrCtrl
   USE def_out,     ONLY: StrOut
-  USE def_ss_prop
-  USE rad_pcf
+  USE def_ss_prop, ONLY: str_ss_prop
+  USE rad_pcf, ONLY: i_err_fatal, ip_rayleigh_total, ip_rayleigh_custom,&
+                     ip_cairns, ip_cloud_mcica, ip_cloud_type_si,       &
+                     ip_cloud_type_sw, ip_direct_csr_scaling,           &
+                     ip_phase_ice, ip_phase_water
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

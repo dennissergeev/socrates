@@ -25,7 +25,6 @@ SUBROUTINE opt_prop_inhom_corr_cairns(                                         &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

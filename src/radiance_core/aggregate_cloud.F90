@@ -27,7 +27,12 @@ SUBROUTINE aggregate_cloud(ierr                                         &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_cloud_csiw, ip_cloud_split_ice_water,           &
+                     ip_cloud_type_sw, ip_region_strat,ip_cloud_type_si,&
+                     ip_cloud_type_cw, ip_cloud_type_ci, ip_region_conv,&
+                     ip_cloud_conv_strat, ip_cloud_split_homogen,       &
+                     ip_cloud_type_strat, ip_cloud_type_conv,           &
+                     i_err_fatal, ip_cloud_part_corr_cnv,ip_cloud_triple
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

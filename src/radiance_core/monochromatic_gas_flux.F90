@@ -28,7 +28,7 @@ SUBROUTINE monochromatic_gas_flux(n_profile, n_layer                    &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_infra_red, ip_solar
   USE vectlib_mod, ONLY : exp_v
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

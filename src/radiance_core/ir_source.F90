@@ -25,7 +25,7 @@ SUBROUTINE ir_source(n_profile, i_layer_first, i_layer_last             &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_scf_ir_1d, ip_scf_ir_2d
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

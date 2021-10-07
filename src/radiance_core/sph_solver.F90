@@ -55,7 +55,9 @@ SUBROUTINE sph_solver(                                                  &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_sph_direct, ip_sph_mode_flux,         &
+                     ip_sph_mode_rad, ip_sph_reduced_iter,              &
+                     ip_trunc_adaptive
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

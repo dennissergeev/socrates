@@ -40,7 +40,7 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_planck(planck, dimen)
 
-USE def_dimen
+USE def_dimen, ONLY: strdim
 
 IMPLICIT NONE
 

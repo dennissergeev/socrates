@@ -25,7 +25,8 @@ SUBROUTINE single_scattering(i_scatter_method_band                      &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_no_scatter_abs, ip_no_scatter_ext,              &
+                     ip_scatter_approx, ip_scatter_full
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

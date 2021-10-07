@@ -39,7 +39,9 @@ SUBROUTINE augment_radiance(control, sp, atm, radout                    &
   USE def_atm, ONLY: StrAtm
   USE def_out, ONLY: StrOut
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_spherical_harmonic, ip_two_stream,    &
+                     ip_ir_gauss, ip_sph_mode_flux, ip_sph_mode_rad,    &
+                     ip_sph_mode_j
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

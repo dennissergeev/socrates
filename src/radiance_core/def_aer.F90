@@ -13,7 +13,7 @@
 !------------------------------------------------------------------------------
 MODULE def_aer
 
-USE realtype_rd
+USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 
@@ -65,8 +65,8 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_aer(aer, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: StrSpecData
 
 IMPLICIT NONE
 
@@ -116,8 +116,8 @@ END SUBROUTINE allocate_aer
 !------------------------------------------------------------------------------
 SUBROUTINE allocate_aer_prsc(aer, dimen, sp)
 
-USE def_dimen
-USE def_spectrum
+USE def_dimen, ONLY: strdim
+USE def_spectrum, ONLY: StrSpecData
 
 IMPLICIT NONE
 

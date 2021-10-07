@@ -41,7 +41,16 @@ SUBROUTINE opt_prop_ice_cloud(ierr                                      &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_ice_fu_phf, ip_ice_baran,          &
+                     ip_aerosol_param_dry, ip_aerosol_param_moist,      &
+                     ip_aerosol_param_phf_dry, ip_aersrc_classic_ron,   &
+                     ip_aerosol_param_phf_moist, ip_aersrc_cusack_ron,  &
+                     ip_aerosol_unparametrized, ip_aersrc_arcl_ron,     &
+                     ip_sun_shine_vn2_ir, ip_slingo_schrecker_ice,      &
+                     ip_slingo_schr_ice_phf, ip_ice_unparametrized,     &
+                     ip_ice_t_iwc, ip_ice_iwc_only, ip_ice_fu_solar,    &
+                     ip_ice_fu_ir, ip_ice_adt_10, ip_ice_adt,           &
+                     ip_sun_shine_vn2_vis
   USE rad_ccf, ONLY: pi
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim

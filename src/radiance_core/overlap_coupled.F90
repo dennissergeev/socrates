@@ -35,7 +35,10 @@ SUBROUTINE overlap_coupled(n_profile, n_layer, n_cloud_top              &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_cloud_mix_max, ip_cloud_mix_random,             &
+                     ip_cloud_part_corr, ip_cloud_part_corr_cnv,        &
+                     ip_cloud_triple, ip_region_clear, ip_region_conv,  &
+                     ip_region_strat
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

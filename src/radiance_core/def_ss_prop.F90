@@ -108,7 +108,7 @@ CONTAINS
 
   SUBROUTINE allocate_ss_prop(ss_prop, dimen)
 
-    USE def_dimen
+    USE def_dimen, ONLY: strdim
 
     IMPLICIT NONE
 

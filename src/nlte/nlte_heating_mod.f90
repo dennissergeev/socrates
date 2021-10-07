@@ -36,8 +36,12 @@ SUBROUTINE nlte_heating_lw(t, p, co2_mix_ratio, o3_mix_ratio, heat_rate, &
                            n_layer, n_profile)  
 
   USE realtype_rd, ONLY: RealK
-  USE nlte_heating_data_mod
-  USE interpolate_p_mod
+  USE nlte_heating_data_mod, ONLY: n_level, sec_per_day, step_size, amm,       &
+                                   matrix_min, o3_matrix_max, gas_const,       &
+                                   molmass_o3, molmass_co2,                    &
+                                   planck_exp_const_co2, planck_exp_const_o3,  &
+                                   polyatom_max, vmr_o
+  USE interpolate_p_mod, ONLY: ip_1_lin_lin, interpolate_p
 
   ! Imported variables
   INTEGER, INTENT(IN) :: n_layer, n_profile
@@ -212,8 +216,13 @@ END SUBROUTINE nlte_heating_lw
 SUBROUTINE hr_matrix_param(vmr_o3, planck_exp_co2, planck_exp_o3, hr_x, &
                            vmr_co2_base)
 
-  USE nlte_heating_data_mod
-  USE interpolate_p_mod
+  USE realtype_rd, ONLY: RealK
+  USE nlte_heating_data_mod, ONLY: n_level, size_coeff, matrix_min, matrix_max,&
+                                   matrix_coeff_co2_j, matrix_coeff_co2_conc,  &
+                                   matrix_coeff_co2, o3_matrix_max,            &
+                                   matrix_coeff_o3_j, delta_xj_co2_index,      &
+                                   delta_xj_o3_index, matrix_coeff_o3
+  USE interpolate_p_mod, ONLY: ip_1_lin_log, ip_3_lin_lin, interpolate_p
  
   ! Imported variables
   REAL (RealK), DIMENSION(n_level), INTENT(IN) :: vmr_o3
@@ -393,8 +402,13 @@ END SUBROUTINE hr_matrix_param
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE hr_recurr_param(x, t_x, vmr_co2, planck_exp_co2, hr_x)
 
-  USE nlte_heating_data_mod
-  USE interpolate_p_mod
+  USE realtype_rd, ONLY: RealK
+  USE nlte_heating_data_mod, ONLY: n_level, size_esc, size_alpha, boltz,       &
+                                   cdr_o, co2_col_const, co2_col_top,          &
+                                   einstein_a, amm, recurr_const, vmr_o,       &
+                                   vmr_o2, matrix_esc_fcn, matrix_alpha_dep,   &
+                                   vmr_n2
+  USE interpolate_p_mod, ONLY: ip_1_lin_lin, interpolate_p
 
   ! Imported variables
   REAL (RealK), DIMENSION(n_level), INTENT(IN) :: x, t_x

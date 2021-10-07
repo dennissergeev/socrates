@@ -28,7 +28,17 @@ SUBROUTINE check_phf_term(ierr                                          &
     )
 
 
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, i_normal, ip_ackerman_stephens,       &
+                     ip_aerosol_param_dry, ip_aerosol_param_moist,      &
+                     ip_aerosol_param_phf_dry, ip_drop_pade_2,          &
+                     ip_aerosol_param_phf_moist, ip_ice_adt,            &
+                     ip_aerosol_unparametrized, ip_ice_adt_10,          &
+                     ip_drop_unparametrized, ip_ice_fu_ir,              &
+                     ip_ice_fu_phf, ip_ice_fu_solar, ip_phase_ice,      &
+                     ip_ice_unparametrized, ip_phase_water,             &
+                     ip_ps_size_phf, ip_slingo_schr_ice_phf,            &
+                     ip_slingo_schr_phf, ip_slingo_schrecker,           &
+                     ip_slingo_schrecker_ice
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

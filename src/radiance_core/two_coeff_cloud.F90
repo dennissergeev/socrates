@@ -26,7 +26,8 @@ SUBROUTINE two_coeff_cloud(ierr, control                                &
 
   USE realtype_rd, ONLY: RealK
   USE def_spherical_geometry, ONLY: StrSphGeo
-  USE rad_pcf
+  USE rad_pcf, ONLY: ip_solar, ip_direct_noscaling,                     &
+                     ip_direct_csr_scaling
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE def_control, ONLY: StrCtrl 

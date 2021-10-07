@@ -61,8 +61,9 @@ SUBROUTINE calc_radiance_ipa(                                           &
 
 
   USE realtype_rd, ONLY: RealK
-  USE def_ss_prop
-  USE rad_pcf
+  USE def_ss_prop, ONLY: str_ss_prop
+  USE rad_pcf, ONLY: ip_infra_red, ip_solar, ip_sph_mode_flux,          &
+                     ip_sph_reduced_iter, ip_sph_mode_rad
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 

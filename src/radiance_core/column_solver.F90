@@ -33,7 +33,9 @@ SUBROUTINE column_solver(ierr, control, bound, sph_common, sph_comp     &
   USE def_control, ONLY: StrCtrl
   USE def_bound,   ONLY: StrBound
   USE def_spherical_geometry, ONLY: StrSphCommon, StrSphComp
-  USE rad_pcf
+  USE rad_pcf, ONLY: i_err_fatal, ip_solar, ip_no_scatter_abs,          &
+                     ip_no_scatter_ext, ip_solver_pentadiagonal,        &
+                     ip_solver_homogen_direct
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport

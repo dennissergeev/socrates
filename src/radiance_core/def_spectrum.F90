@@ -16,7 +16,7 @@
 !------------------------------------------------------------------------------
 MODULE def_spectrum
 
-USE realtype_rd
+USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 

@@ -15,7 +15,6 @@ SUBROUTINE solver_no_scat(n_profile, n_layer                            &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
 
