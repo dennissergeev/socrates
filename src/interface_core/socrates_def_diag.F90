@@ -25,6 +25,15 @@ real(RealK), pointer :: flux_down(:,:) => null()
 real(RealK), pointer :: flux_up(:,:) => null()
 ! Upwards flux, Wm-2 (n_profile, 0:n_layer)
 
+real(RealK), pointer :: flux_direct_clear(:,:) => null()
+! Clear-sky direct (unscattered) downwards flux, Wm-2 (n_profile, 0:n_layer)
+
+real(RealK), pointer :: flux_down_clear(:,:) => null()
+! Clear-sky downwards flux, Wm-2 (n_profile, 0:n_layer)
+
+real(RealK), pointer :: flux_up_clear(:,:) => null()
+! Clear-sky upwards flux, Wm-2 (n_profile, 0:n_layer)
+
 real(RealK), pointer :: flux_up_tile(:,:) => null()
 ! Upwards flux on tiles, Wm-2 (n_profile, n_tile)
 
@@ -78,6 +87,18 @@ real(RealK), pointer :: ice_dim(:,:) => null()
 
 real(RealK), pointer :: ice_conv_dim(:,:) => null()
 ! Convective cloud ice-crystal effective dimension (n_profile, n_layer)
+
+real(RealK), pointer :: cloud_top_liq_dim(:) => null()
+! Cloud droplet effective radius at cloud top weighted by cloud fraction
+
+real(RealK), pointer :: cloud_top_liq_weight(:) => null()
+! Weight for liquid cloud fraction at cloud top
+
+real(RealK), pointer :: cloud_top_warm_liq_dim(:) => null()
+! Warm cloud droplet effective radius at cloud top weighted by cloud fraction
+
+real(RealK), pointer :: cloud_top_warm_liq_weight(:) => null()
+! Weight for warm liquid cloud fraction at cloud top
 
 real(RealK), pointer :: aerosol_optical_depth(:,:,:) => null()
 ! Total aerosol optical depth (n_profile, n_layer, n_band)

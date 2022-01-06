@@ -16,11 +16,7 @@ subroutine set_control(control, diag, spectrum, l_set_defaults, &
   l_rayleigh, l_gas, l_continuum, l_cont_gen, l_orog, l_solvar, &
   l_rescale, l_ir_source_quad, l_mixing_ratio, &
   l_aerosol, l_aerosol_mode, l_aerosol_ccn, &
-  l_tile, l_clear, &
-  l_flux_up_band, l_flux_down_band, &
-  l_flux_up_clear_band, l_flux_down_clear_band, &
-  l_blue_flux_surf, &
-  n_tile, n_cloud_layer, n_aer_mode, &
+  l_tile, n_tile, n_cloud_layer, n_aer_mode, &
   isolir, i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
   i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re )
 
@@ -63,10 +59,7 @@ logical, intent(in), optional :: l_set_defaults, &
   l_rayleigh, l_gas, l_continuum, l_cont_gen, l_orog, l_solvar, &
   l_rescale, l_ir_source_quad, l_mixing_ratio, &
   l_aerosol, l_aerosol_mode, l_aerosol_ccn, &
-  l_tile, l_clear, &
-  l_flux_up_band, l_flux_down_band, &
-  l_flux_up_clear_band, l_flux_down_clear_band, &
-  l_blue_flux_surf
+  l_tile
 
 integer, intent(in), optional :: n_tile, n_cloud_layer, n_aer_mode
 
@@ -112,19 +105,11 @@ if (present(i_drop_re)) control%i_drop_re = i_drop_re
 
 
 ! Diagnostic options
-if (present(l_flux_up_band)) control%l_flux_up_band = l_flux_up_band
-if (present(l_flux_down_band)) control%l_flux_down_band = l_flux_down_band
-if (present(l_flux_up_clear_band)) &
-  control%l_flux_up_clear_band = l_flux_up_clear_band
-if (present(l_flux_down_clear_band)) &
-  control%l_flux_down_clear_band = l_flux_down_clear_band
-if (present(l_blue_flux_surf)) control%l_blue_flux_surf = l_blue_flux_surf
-
-if (present(l_clear)) control%l_clear = l_clear
-control%l_clear = control%l_clear &
-             .or. control%l_flux_up_clear_band &
-             .or. control%l_flux_down_clear_band
-
+if (associated(diag%flux_direct_clear) .or. &
+    associated(diag%flux_down_clear)   .or. &
+    associated(diag%flux_up_clear) ) then
+  control%l_clear = .true.
+end if
 if (associated(diag%flux_up_blue_tile)     .or. &
     associated(diag%flux_direct_blue_surf) .or. &
     associated(diag%flux_down_blue_surf) ) then

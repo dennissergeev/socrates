@@ -10,6 +10,7 @@ SOURCE90_AUX =	aerosol_profile_pcf.f90 \
 		rand_gauss.f90 \
 		set_moist_aerosol_properties.f90 \
 		socrates_cloud_gen.f90 \
+		socrates_cloud_level_diag.f90 \
 		socrates_illuminate.f90 \
 		socrates_runes.f90 \
 		socrates_bones.f90 \
