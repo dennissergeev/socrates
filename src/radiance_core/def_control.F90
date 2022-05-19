@@ -145,7 +145,28 @@ TYPE StrCtrl
 !   Flag for absorption by atomic oxygen
   LOGICAL :: l_n                                                  = .FALSE.
 !   Flag for absorption by atomic nitrogen
-
+  LOGICAL :: l_hno3                                               = .FALSE.
+!   Flag for absorption by nitric acid
+  LOGICAL :: l_no                                                 = .FALSE.
+!   Flag for absorption by nitric oxide
+  LOGICAL :: l_no3                                                = .FALSE.
+!   Flag for absorption by nitrate radical
+  LOGICAL :: l_n2o5                                               = .FALSE.
+!   Flag for absorption by nitrogen pentoxide
+  LOGICAL :: l_hono                                               = .FALSE.
+!   Flag for absorption by nitrous acid
+  LOGICAL :: l_ho2no2                                             = .FALSE.
+!   Flag for absorption by peroxynitric acid
+  LOGICAL :: l_h2o2                                               = .FALSE.
+!   Flag for absorption by hydrogen peroxide
+  LOGICAL :: l_c2h6                                               = .FALSE.
+!   Flag for absorption by ethane
+  LOGICAL :: l_ch3                                                = .FALSE.
+!   Flag for absorption by methyl radical
+  LOGICAL :: l_h2co                                               = .FALSE.
+!   Flag for absorption by formaldehyde
+  LOGICAL :: l_ho2                                                = .FALSE.
+!   Flag for absorption by hydroperoxy radical
 
 ! Properties of clouds:
   INTEGER :: i_cloud                                              = imdi

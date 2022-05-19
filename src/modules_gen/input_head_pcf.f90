@@ -275,7 +275,10 @@ MODULE input_head_pcf
     'OCS       ', 'Na        ', 'K         ', 'FeH       ', &
     'CrH       ', 'Li        ', 'Rb        ', 'Cs        ', &
     'PH3       ', 'C2H2      ', 'HCN       ', 'H2S       ', &
-    'Ar        ', 'AIR       ', 'O         ', 'N         ' /) 
+    'Ar        ', 'AIR       ', 'O         ', 'N         ', &
+    'NO3       ', 'N2O5      ', 'HONO      ', 'HO2NO2    ', &
+    'H2O2      ', 'C2H6      ', 'CH3       ', 'H2CO      ', &
+    'HO2       '/) 
 !   Headers for gaseous data
 !
 !
@@ -290,7 +293,10 @@ MODULE input_head_pcf
     'ocs         ', 'na          ', 'k           ', 'feh         ', &
     'crh         ', 'li          ', 'rb          ', 'cs          ', &
     'ph3         ', 'c2h2        ', 'hcn         ', 'h2s         ', &
-    'ar          ', 'air         ', 'o           ', 'n           ' /) 
+    'ar          ', 'air         ', 'o           ', 'n           ', &
+    'no3         ', 'n2o5        ', 'hono        ', 'ho2no2      ', &
+    'h2o2        ', 'c2h6        ', 'ch3         ', 'h2co        ', &
+    'ho2         '/) 
 !   File suffixes for gaseous data
 !
 !
@@ -315,7 +321,12 @@ MODULE input_head_pcf
     ' Phosphine                    ', ' Acetylene                    ', &
     ' Hydrogen cyanide             ', ' Hydrogen sulphide            ', &
     ' Argon                        ', ' Dry air                      ', &
-    ' Atomic Oxygen                ', ' Atomic Nitrogen              ' /)
+    ' Atomic Oxygen                ', ' Atomic Nitrogen              ', &
+    ' Nitrate radical              ', ' Dinitrogen Pentoxide         ', &
+    ' Nitrous acid                 ', ' Peroxynitric acid            ', &
+    ' Hydrogen peroxide            ', ' Ethane                       ', &
+    ' Methyl radical               ', ' Formaldehyde                 ', &
+    ' Hydroperoxy radical          '/)
 !   Long titles for gaseous data
 !
 !

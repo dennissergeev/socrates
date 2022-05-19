@@ -18,7 +18,7 @@ USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 
-INTEGER, PARAMETER :: npd_gases = 40
+INTEGER, PARAMETER :: npd_gases = 49
 !   Number of indexed gases
 
 INTEGER, PARAMETER :: IP_h2o = 1
@@ -101,6 +101,24 @@ INTEGER, PARAMETER :: IP_o = 39
 !   Identifier for atomic oxygen
 INTEGER, PARAMETER :: IP_n = 40
 !   Identifier for atomic nitrogen
+INTEGER, PARAMETER :: IP_no3  = 41
+!   Identifier for nitrate radical
+INTEGER, PARAMETER :: IP_n2o5 = 42
+!   Identifier for dinitrogen pentoxide
+INTEGER, PARAMETER :: IP_hono = 43
+!   Identifier for nitrous acid
+INTEGER, PARAMETER :: IP_ho2no2 = 44
+!   Identifier for peroxynitric acid
+INTEGER, PARAMETER :: IP_h2o2 = 45
+!   Identifier for hydrogen peroxide
+INTEGER, PARAMETER :: IP_c2h6 = 46
+!   Identifier for ethane
+INTEGER, PARAMETER :: IP_ch3 = 47
+!   Identifier for methyl radical
+INTEGER, PARAMETER :: IP_h2co = 48
+!   Identifier for formaldehyde
+INTEGER, PARAMETER :: IP_ho2 = 49
+!   Identifier for hydroperoxy radical
 
 CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Water Vapour        ", &
@@ -142,7 +160,16 @@ CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Argon               ", &
                                    "Dry air             ", &
                                    "Atomic oxygen       ", &
-                                   "Atomic nitrogen     " /)
+                                   "Atomic nitrogen     ", &
+                                   "Nitrate radical     ", &
+                                   "Dinitrogen pentoxide", &
+                                   "Nitrous acid        ", &
+                                   "Peroxynitric acid   ", &
+                                   "Hydrogen peroxide   ", &
+                                   "Ethane              ", &
+                                   "Methyl radical      ", &
+                                   "Formaldehyde        ", &
+                                   "Hydroperoxy radical "/)
 
 
 ! Molecular weights taken from "General Inorganic Chemistry"
@@ -187,7 +214,16 @@ REAL (RealK), PARAMETER :: molar_weight(npd_gases) = (/ &
   39.948_RealK,      & ! Ar (from NIST)
   28.966_RealK,      & ! Dry air
   15.9994_RealK,     & ! O (from NIST)
-  14.00674_RealK    /) ! N (from NIST)
+  14.00674_RealK,    & ! N (from NIST)
+  63.0128_RealK,     & ! NO3 (from NIST)
+  108.0104_RealK,    & ! N2O5 (from NIST)
+  47.0134_RealK,     & ! HONO (from NIST)
+  79.0122_RealK,     & ! HO2NO2 (from NIST)
+  34.0147_RealK,     & ! H2O2 (from NIST)
+  30.0690_RealK,     & ! C2H6 (from NIST)
+  15.0345_RealK,     & ! CH3  (from NIST)
+  30.0260_RealK,     & ! H2CO (from NIST
+  33.0067_RealK     /) ! HO2 (from NIST)
 
 
 ! Array of identifiers in HITRAN for each gas in the radiation code.
@@ -231,7 +267,16 @@ INTEGER, PARAMETER :: hitran_number(npd_gases) = (/ &
   0,   & ! Ar
   0,   & ! Dry air
   0,   & ! O
-  0   /) ! N
+  0,   & ! N
+  0,   & ! NO3
+  0,   & ! N2O5
+  0,   & ! HONO
+  0,   & ! HO2NO2
+  25,  & ! H2O2
+  27,  & ! C2H6
+  0,   & ! CH3
+  20,  & ! H2CO
+  33 /)  ! HO2
 
 ! Depolarization factors used to compute the Rayleigh scattering coefficients
 REAL (RealK), PARAMETER :: depolarization_factor(npd_gases) = (/ &
@@ -274,10 +319,19 @@ REAL (RealK), PARAMETER :: depolarization_factor(npd_gases) = (/ &
   0.0006_RealK,  & ! Ar (Parthasarathy, Indian J. Phys. 25, 21 (1951))
   0.0279_RealK,  & ! Dry air
   0.0_RealK,     & ! O
-  0.0_RealK     /) ! N
+  0.0_RealK,     & ! N
+  0.0_RealK,     & ! NO3
+  0.0_RealK,     & ! N2O5
+  0.0_RealK,     & ! HONO
+  0.0_RealK,     & ! HO2NO2
+  0.0_RealK,     & ! H2O2
+  0.0_RealK,     & ! C2H6
+  0.0_RealK,     & ! CH3
+  0.0_RealK,     & ! H2CO
+  0.0_RealK     /) ! HO2
 
 ! Maximum number of photolysis products for a given absorber
-INTEGER, PARAMETER :: npd_products = 8
+INTEGER, PARAMETER :: npd_products = 9
 
 INTEGER, PRIVATE :: i
 CHARACTER(LEN=56), PARAMETER :: blank = ""
@@ -290,7 +344,15 @@ CHARACTER(LEN=56), PARAMETER :: photol_products(npd_products, npd_gases) &
   "H2O -> OH(A2Sigma+) + H       ",  &
   "H2O -> O(3P) + H + H          ",  &
   (blank, i=1, npd_products-5),      & ! H2O
-  (blank, i=1, npd_products),        & ! CO2
+  "CO2 -> CO + O(3P)             ",  &
+  "CO2 -> CO + O(1D)             ",  &
+  "CO2 -> CO + O(1S)             ",  &
+  "CO2 -> CO(a3Pi) + O(3P)       ",  &
+  "CO2 -> CO2+                   ",  &
+  "CO2 -> CO + O+                ",  &
+  "CO2 -> CO+ + O(3P)            ",  &
+  "CO2 -> O2 + C+                ",  &
+  (blank, i=1, npd_products-8),      & ! CO2
   "O3 -> O(3P) + O2(X3Sigmag-)   ",  &
   "O3 -> O(3P) + O2(a1Deltag)    ",  &
   "O3 -> O(3P) + O2(b1Sigmag+)   ",  &
@@ -370,7 +432,36 @@ CHARACTER(LEN=56), PARAMETER :: photol_products(npd_products, npd_gases) &
   (blank, i=1, npd_products-7),      & ! O
   "N -> N+                       ",  &
   "N -> N++                      ",  &
-  (blank, i=1, npd_products-2)       & ! N
+  (blank, i=1, npd_products-2),      & ! N
+  "NO3 -> NO + O2                ",  & !
+  "NO3 -> NO2 + O(3P)            ",  & !
+  (blank, i=1, npd_products-2)    ,  & ! NO3
+  "N2O5 -> NO3 + NO2             ",  & !
+  "N2O5 -> NO3 + NO + O(3P)      ",  & !
+  (blank, i=1, npd_products-2)    ,  & ! N2O5
+  "HONO -> OH + NO               ",  & !
+  "HONO -> H + NO2               ",  & !
+  (blank, i=1, npd_products-2)    ,  & ! HONO
+  "HO2NO2 -> HO2 + NO2           ",  & !
+  "HO2NO2 -> OH + NO3            ",  & !
+  "HO2NO2 -> O(3P) + HNO3        ",  & !
+  "HO2NO2 -> H + NO2 + O2        ",  & !
+  "HO2NO2 -> HO2 + NO + O(3P)    ",  & !
+  "HO2NO2 -> OH + NO2 + O(3P)    ",  & !
+  "HO2NO2 -> H + O(3P) + NO3     ",  & !
+  "HO2NO2 -> HONO + O2(1Sigma)   ",  & !
+  "HO2NO2 -> HONO + O2(1Lambda)  ",  & !
+  (blank, i=1, npd_products-9)    ,  & ! HO2NO2
+  "H2O2 -> OH + OH               ",  & !
+  "H2O2 -> H2O + O(1D)           ",  & !
+  "H2O2 -> H + HO2               ",  & !
+  (blank, i=1, npd_products-3)    ,  & ! H2O2 
+  (blank, i=1, npd_products)      ,  & ! C2H6
+  (blank, i=1, npd_products)      ,  & ! CH3
+  (blank, i=1, npd_products)      ,  & ! H2CO
+  "HO2 -> OH + O(3P)             ",  & !
+  "HO2 -> OH + O(1D)             ",  & !
+  (blank, i=1, npd_products-2)       & ! HO2
   ], shape=[npd_products, npd_gases] )
 
 ! Name used by UKCA for photolysis pathway
@@ -419,7 +510,16 @@ CHARACTER(LEN=56), PARAMETER :: photol_fldname(0:npd_products, npd_gases) &
   (blank, i=0, npd_products),        & ! Ar
   (blank, i=0, npd_products),        & ! Dry air
   (blank, i=0, npd_products),        & ! O
-  (blank, i=0, npd_products)         & ! N
+  (blank, i=0, npd_products),        & ! N
+  (blank, i=0, npd_products),        & ! NO3
+  (blank, i=0, npd_products),        & ! N2O5
+  (blank, i=0, npd_products),        & ! HONO
+  (blank, i=0, npd_products),        & ! HO2NO2
+  (blank, i=0, npd_products),        & ! H2O2
+  (blank, i=0, npd_products),        & ! C2H6
+  (blank, i=0, npd_products),        & ! CH3
+  (blank, i=0, npd_products),        & ! H2CO
+  (blank, i=0, npd_products)         & ! HO2
   ], shape=[npd_products+1, npd_gases] )
 
 ! Threshold wavelength defining energy required for photolysis
@@ -431,7 +531,15 @@ REAL (RealK), PARAMETER :: threshold_wavelength(npd_products, npd_gases) &
   134.0E-09_RealK,                  & ! H2O -> OH(A2Sigma+) + H
   129.0E-09_RealK,                  & ! H2O -> O(3P) + H + H
   (0.0_RealK, i=1, npd_products-5), & ! H2O
-  (0.0_RealK, i=1, npd_products),   & ! CO2
+  227.5E-09_RealK,                  & ! CO2 -> CO + O(3P) : Heubner 92
+  167.1E-09_RealK,                  & ! CO2 -> CO + O(1D) : Heubner 92
+  128.6E-09_RealK,                  & ! CO2 -> CO + O(1S) : Heubner 92
+  108.2E-09_RealK,                  & ! CO2 -> CO(a3Pi) + O(3P) : Heubner 92
+  89.922E-09_RealK,                 & ! CO2 -> CO2+ : Heubner 92
+  65.026E-09_RealK,                 & ! CO2 -> CO + O+ : Heubner 92
+  63.693E-09_RealK,                 & ! CO2 -> CO+ + O : Heubner 92
+  54.655E-09_RealK,                 & ! CO2 -> O2 + C+ : Heubner 92
+  (0.0_RealK, i=1, npd_products-8), & ! CO2
   1180.0E-09_RealK,                 & ! O3 -> O(3P) + O2(X3Sigmag-)
    612.0E-09_RealK,                 & ! O3 -> O(3P) + O2(a1Deltag)
    463.0E-09_RealK,                 & ! O3 -> O(3P) + O2(b1Sigmag+)
@@ -511,9 +619,42 @@ REAL (RealK), PARAMETER :: threshold_wavelength(npd_products, npd_gases) &
   (0.0_RealK, i=1, npd_products-7), & ! O
    85.92E-09_RealK,                 & ! N -> N+
    28.00E-09_RealK,                 & ! N -> N++
-  (0.0_RealK, i=1, npd_products-2)  & ! N
+  (0.0_RealK, i=1, npd_products-2), & ! N
+   7320.0E-09_RealK,                & ! NO3 -> NO + O2 : JPL 19-5
+   574.0E-09_RealK,                 & ! NO3 -> NO2 + O(3P) : JPL 19-5
+  (0.0_RealK, i=1, npd_products-2), & ! NO3
+   1255.0E-09_RealK,                & ! N2O5 -> NO3 + NO2 : JPL 19-5
+   298.0E-09_RealK,                 & ! N2O5 -> NO3 + NO + O(3P) : JPL 19-5
+  (0.0_RealK, i=1, npd_products-2), & ! N2O5
+   579.0E-09_RealK,                 & ! HONO -> OH + NO : JPL 19-5
+   362.0E-09_RealK,                 & ! HONO -> H + NO2 : JPL 19-5
+  (0.0_RealK, i=1, npd_products-2), & ! HONO
+  1207.0E-09_RealK,                 & ! HO2NO2 -> HO2 + NO2 : JPL 19-5
+   726.0E-09_RealK,                 & ! HO2NO2 -> OH + NO3 : JPL 19-5
+   713.0E-09_RealK,                 & ! HO2NO2 -> O(3P) + HNO3 : JPL 19-5
+   393.0E-09_RealK,                 & ! HO2NO2 -> H + NO2 + O2 : JPL 19-5
+   339.0E-09_RealK,                 & ! HO2NO2 -> HO2 + NO + O(3P) : JPL 19-5
+   321.0E-09_RealK,                 & ! HO2NO2 -> OH + NO2 + O(3P) : JPL 19-5
+   201.0E-09_RealK,                 & ! HO2NO2 -> H + O(3P) + NO3 : JPL 19-5
+   911.0E-09_RealK,                 & ! HO2NO2 -> HONO + O2(1Sigma) : JPL 19-5
+   1744.0E-09_RealK,                & ! HO2NO2 -> HONO + O2(1Lambda) : JPL 19-5
+  (0.0_RealK, i=1, npd_products-9), & ! HO2NO2
+   557.0E-09_RealK,                 & ! H2O2 -> OH + OH : JPL 19-5
+   359.0E-09_RealK,                 & ! H2O2 -> H2O + O(1D) : JPL 19-5
+   324.0E-09_RealK,                 & ! H2O2 -> H + HO2 : JPL 19-5
+  (0.0_RealK, i=1, npd_products-3), & ! H2O2
+  (0.0_RealK, i=1, npd_products),   & ! C2H6
+  (0.0_RealK, i=1, npd_products),   & ! CH3
+  (0.0_RealK, i=1, npd_products),   & ! H2CO
+   438.0E-09_RealK,                 & ! HO2 -> OH + O(3P) : JPL 19-5
+   259.0E-09_RealK,                 & ! HO2 -> OH + O(1D) : JPL 19-5
+  (0.0_RealK, i=1, npd_products-2)  & ! HO2
   ], shape=[npd_products, npd_gases] )
 
-
+! Unless otherwise stated, data comes from JPL publication No. 15-10:
+! Chemical Kinetics and Photochemical Data for Use in Atmospheric Studies
+! Other references:
+!  * JPL 19-5   : JPL publication No. 19-5
+!  * Heubner 92 : Heubner et al (1992, p120) DOI: 10.1007/978-94-017-3023-5_1
 
 END MODULE gas_list_pcf
