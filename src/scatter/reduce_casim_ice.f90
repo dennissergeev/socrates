@@ -9,7 +9,7 @@
 ! Method:
 !   Takes as input the large database of ice optical properties calculated
 !   for the CASIM cloud ice and snow size distributions within Anthony Baran's
-!   ensemble ice optics model (66700 blocks).
+!   ensemble ice optics model.
 !   Repeatedly bisects the data into parts containing equal numbers of data
 !   points in order of mass mixing ratio and mean particle mass.
 !   Outputs a reduced database of 1026 blocks of meaned properties in a format
@@ -29,22 +29,24 @@ implicit none
 character (len=256) :: filename(2)
 integer :: filename_len(2)
 
-integer, parameter :: n_block_in = 66700
 integer, parameter :: n_wavelength = 169
 integer, parameter :: n_bisects = 5
 integer, parameter :: n_block_edge = 2
 integer, parameter :: n_block_out = 4**n_bisects + n_block_edge
-integer, parameter :: n_edge = n_block_in/(2*n_block_out)
-integer, parameter :: n_to_bisect = n_block_in - n_block_edge*n_edge
 
-real (RealK) :: mass_mixing_ratio(n_block_in)
-real (RealK) :: number_by_mass(n_block_in)
-real (RealK) :: mean_mass(n_block_in)
-real (RealK) :: air_density(n_block_in)
+integer :: n_block_in
+integer :: n_edge      ! n_block_in/(2*n_block_out)
+integer :: n_to_bisect ! n_block_in - n_block_edge*n_edge
+
+real (RealK), allocatable :: mass_mixing_ratio(:) ! (n_block_in)
+real (RealK), allocatable :: mean_mass(:)         ! (n_block_in)
+real (RealK), allocatable :: air_density(:)       ! (n_block_in)
+real (RealK), allocatable :: absorption(:, :) ! (n_wavelength, n_block_in)
+real (RealK), allocatable :: scattering(:, :) ! (n_wavelength, n_block_in)
+real (RealK), allocatable :: asymmetry(:, :)  ! (n_wavelength, n_block_in)
+
+real (RealK) :: number_by_mass
 real (RealK) :: wavelength(n_wavelength)
-real (RealK) :: absorption(n_wavelength, n_block_in)
-real (RealK) :: scattering(n_wavelength, n_block_in)
-real (RealK) :: asymmetry(n_wavelength, n_block_in)
 
 real (RealK) :: mmr_out(n_block_out)
 real (RealK) :: mass_out(n_block_out)
@@ -56,8 +58,8 @@ real (RealK) :: scattering_out(n_wavelength, n_block_out)
 real (RealK) :: asymmetry_out(n_wavelength, n_block_out)
 real (RealK) :: n_data(n_block_out)
 
-integer :: block_map(n_block_in)
-integer :: mmr_map(n_block_in), mass_map(n_block_in)
+integer, allocatable :: block_map(:)            ! (n_block_in)
+integer, allocatable :: mmr_map(:), mass_map(:) ! (n_block_in)
 integer :: ierr, ios, iu_db, iu_scatter
 integer :: i, j, l, n, a, b
 
@@ -82,14 +84,35 @@ do i=1, 2
   end if
 end do
 
+! Count number of blocks in database
+call get_free_unit(ierr, iu_db)
+open(unit=iu_db, file=filename(1)(1:filename_len(1)), iostat=ios, status='old')
+n_block_in = 0
+outer: do
+  do i = 1, n_wavelength + 4
+    read(iu_db, *, iostat=ios)
+    if (ios /= 0) exit outer
+  end do
+  n_block_in = n_block_in + 1
+end do outer
+close(iu_db)
+write(*, '(a,i0, a)') 'Reading ', n_block_in, ' blocks'
+
+allocate(mass_mixing_ratio(n_block_in))
+allocate(mean_mass(n_block_in))
+allocate(air_density(n_block_in))
+allocate(absorption(n_wavelength, n_block_in))
+allocate(scattering(n_wavelength, n_block_in))
+allocate(asymmetry(n_wavelength, n_block_in))
+
 ! Read database
 call get_free_unit(ierr, iu_db)
 open(unit=iu_db, file=filename(1)(1:filename_len(1)), iostat=ios, status='old')
 do i = 1, n_block_in
   read(iu_db, '(16x,f20.8)') mass_mixing_ratio(i)
-  read(iu_db, '(16x,f20.8)') number_by_mass(i)
+  read(iu_db, '(16x,f20.8)') number_by_mass
   read(iu_db, '(28x,f20.8)') air_density(i)
-  mean_mass(i) = mass_mixing_ratio(i)/number_by_mass(i)
+  mean_mass(i) = mass_mixing_ratio(i)/number_by_mass
 ! Uncomment to debug:
 !  write(101, '(i5, 3(4x, 1pe16.9))') i, mass_mixing_ratio(i), mean_mass(i), &
 !    air_density(i)
@@ -101,6 +124,10 @@ do i = 1, n_block_in
 end do
 close(iu_db)
 
+allocate(block_map(n_block_in))
+allocate(mmr_map(n_block_in))
+allocate(mass_map(n_block_in))
+
 ! Determine the order of the blocks in terms of mass mixing ratio and mass.
 call map_heap_func(mass_mixing_ratio, mmr_map)
 call map_heap_func(mean_mass, mass_map)
@@ -108,6 +135,7 @@ call map_heap_func(mean_mass, mass_map)
 ! First remove the smallest mass particles from the data and place them into
 ! their own output blocks in order to ensure a good fit where the optical
 ! properties are changing most rapidly.
+n_edge = n_block_in/(2*n_block_out)
 block_map(:) = 0
 do i = 1, n_block_edge
   block_map(mass_map(n_edge*(i-1)+1:n_edge*i)) = i - 1 - n_block_edge
@@ -116,6 +144,7 @@ end do
 ! Reduce the remaining data by bisecting into parts containing equal numbers
 ! of data points. This proceeds by alternately splitting each region into two
 ! parts by order of mass mixing ratio and then particle mass.
+n_to_bisect = n_block_in - n_block_edge*n_edge
 do i = 1, n_bisects
   ! Each i loop bisects the data by MMR and then by particle mass.
   do j = 1, 4**(i-1)
@@ -156,6 +185,9 @@ end do
 ! Start the block indexing from 1 rather than -n_block_edge
 block_map(:) = block_map(:) + n_block_edge + 1
 
+deallocate(mass_map)
+deallocate(mmr_map)
+
 ! Average the data in each of the output block regions
 ice_density(:) = 917.0_RealK
 air_density_out(:) = 0.0_RealK
@@ -179,6 +211,15 @@ do i = 1, n_block_in
     + asymmetry(:, i) * scattering(:, i) &
     / (mass_mixing_ratio(i)*air_density(i))
 end do
+
+deallocate(block_map)
+
+deallocate(asymmetry)
+deallocate(scattering)
+deallocate(absorption)
+deallocate(air_density)
+deallocate(mean_mass)
+deallocate(mass_mixing_ratio)
 
 ! Write output
 call get_free_unit(ierr, iu_scatter)

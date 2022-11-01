@@ -138,6 +138,8 @@ PROGRAM tidy_90
       '7.   Reorder the aerosols.'
     WRITE(iu_stdout, '(6x, a)') &
       '8.   Set overlap treatment for generalised continua.'
+    WRITE(iu_stdout, '(6x, a)') &
+      '9.   Scale extinction for ice-crystals.'
     WRITE(iu_stdout, '(/5x, a//)') &
       '-1.  to finish.'
 !
@@ -252,6 +254,14 @@ PROGRAM tidy_90
             'The file contains no generalised continuum data: the process ' &
             //'cannot be carried out.'
         END IF
+      CASE(9)
+        IF (Spectrum%Basic%l_present(12)) THEN
+          CALL scale_ice
+        ELSE
+          WRITE(iu_err,'(/a)') &
+            'The file contains no ice cloud data: the process ' &
+            //'cannot be carried out.'
+        ENDIF
       CASE DEFAULT
         WRITE(iu_err, '(a)') '+++ Invalid type of process:'
         IF (l_interactive) THEN
@@ -793,5 +803,55 @@ CONTAINS
     END DO
 
   END SUBROUTINE set_cont_overlap
+
+
+!+ ---------------------------------------------------------------------
+! Subrouine to scale the ice extinction in each band for a given type
+!- ---------------------------------------------------------------------
+  SUBROUTINE scale_ice
+
+    USE rad_pcf, only: ip_ice_baran, &
+      ip_slingo_schrecker_ice, ip_slingo_schr_ice_phf, &
+      ip_ice_pade_2_phf, ip_ice_fu_phf
+
+    IMPLICIT NONE
+
+    INTEGER :: type_ice
+    REAL (RealK) :: scaling
+
+    WRITE(*, '(a)') 'Enter ice type number to scale extinction:'
+    READ(*, *, IOSTAT=IOS) type_ice
+
+    IF (Spectrum%Ice%l_ice_type(type_ice)) THEN
+      SELECT CASE (Spectrum%Ice%i_ice_parm(type_ice))
+      CASE (ip_ice_baran)
+        WRITE(*, '(a)') 'Enter scaling factor for ice extinction:'
+        READ(*, *, IOSTAT=IOS) scaling
+        DO j=1, Spectrum%Basic%n_band
+          Spectrum%Ice%parm_list(1, j, type_ice) = scaling &
+            * Spectrum%Ice%parm_list(1, j, type_ice)
+        END DO
+      CASE (ip_slingo_schrecker_ice, ip_slingo_schr_ice_phf)
+        WRITE(*, '(a)') 'Enter scaling factor for ice extinction:'
+        READ(*, *, IOSTAT=IOS) scaling
+        DO j=1, Spectrum%Basic%n_band
+          Spectrum%Ice%parm_list(1:2, j, type_ice) = scaling &
+            * Spectrum%Ice%parm_list(1:2, j, type_ice)
+        END DO
+      CASE (ip_ice_pade_2_phf, ip_ice_fu_phf)
+        WRITE(*, '(a)') 'Enter scaling factor for ice extinction:'
+        READ(*, *, IOSTAT=IOS) scaling
+        DO j=1, Spectrum%Basic%n_band
+          Spectrum%Ice%parm_list(1:3, j, type_ice) = scaling &
+            * Spectrum%Ice%parm_list(1:3, j, type_ice)
+        END DO
+      CASE DEFAULT
+        WRITE(iu_err, '(a)') 'Scaling not implemented for this type'
+      END SELECT
+    ELSE
+      WRITE(iu_err, '(a)') 'Ice type not present in spectral file'
+    END IF
+
+  END SUBROUTINE scale_ice
 
 END PROGRAM tidy_90
