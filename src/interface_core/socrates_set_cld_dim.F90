@@ -18,6 +18,7 @@ subroutine set_cld_dim(cld, control, dimen, spectrum, atm, &
   liq_dim, ice_dim, liq_conv_dim, ice_conv_dim, &
   liq_nc_1d, ice_nc_1d, liq_conv_nc_1d, ice_conv_nc_1d, &
   liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d, &
+  liq_dim_aparam, liq_dim_bparam, &
   l_invert, l_profile_last, l_debug, i_profile_debug)
 
 use def_cld,      only: StrCld
@@ -65,6 +66,10 @@ real(RealExt), intent(in), dimension(:), optional :: &
   liq_nc_1d, ice_nc_1d, liq_conv_nc_1d, ice_conv_nc_1d, &
   liq_dim_1d, ice_dim_1d, liq_conv_dim_1d, ice_conv_dim_1d
 !   Liquid and ice number concentration and effective dimensions
+
+real(RealExt), intent(in), optional :: liq_dim_aparam
+real(RealExt), intent(in), optional :: liq_dim_bparam
+!   Parameters for calculating cloud droplet effective radius
 
 logical, intent(in), optional :: l_invert
 !   Flag to invert fields in the vertical
@@ -277,9 +282,21 @@ contains
     real(RealK), parameter :: eps = epsilon(1.0_RealK)
 
     ! Parameters for Liu spectral dispersion
-    real(RealK), parameter :: aparam = 0.07_RealK
-    real(RealK), parameter :: bparam = -0.14_RealK
+    real(RealK) :: aparam
+    real(RealK) :: bparam
     real(RealK) :: beta
+
+    if (present(liq_dim_aparam)) then
+      aparam = real(liq_dim_aparam, RealK)
+    else
+      aparam = 0.07_RealK
+    end if
+
+    if (present(liq_dim_bparam)) then
+      bparam = real(liq_dim_bparam, RealK)
+    else
+      bparam = -0.14_RealK
+    end if
 
     select case (control%i_drop_re)
     case (ip_re_liu)

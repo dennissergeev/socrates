@@ -50,7 +50,8 @@ subroutine runes(n_profile, n_layer, diag, &
   albedo_diff_1d, albedo_dir_1d, &
   l_tile, l_flux_tile, &
   frac_tile, t_tile, flux_tile, albedo_diff_tile, albedo_dir_tile, &
-  frac_tile_1d, t_tile_1d, flux_tile_1d, albedo_diff_tile_1d, albedo_dir_tile_1d, &
+  frac_tile_1d, t_tile_1d, flux_tile_1d, &
+  albedo_diff_tile_1d, albedo_dir_tile_1d, &
   cloud_frac, conv_frac, &
   liq_frac, ice_frac, liq_conv_frac, ice_conv_frac, &
   liq_mmr, ice_mmr, liq_conv_mmr, ice_conv_mmr, &
@@ -65,6 +66,7 @@ subroutine runes(n_profile, n_layer, diag, &
   liq_nc_1d, ice_nc_1d, liq_conv_nc_1d, ice_conv_nc_1d, &
   cloud_vertical_decorr, conv_vertical_decorr, &
   cloud_horizontal_rsd, &
+  liq_dim_aparam, liq_dim_bparam, &
   layer_heat_capacity, layer_heat_capacity_1d, &
   i_source, i_cloud_representation, i_overlap, i_inhom, &
   i_mcica_sampling, i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re, &
@@ -276,6 +278,9 @@ real(RealExt), intent(in), optional :: conv_vertical_decorr
 !   Decorrelation pressure scale for convective cloud vertical overlap
 real(RealExt), intent(in), optional :: cloud_horizontal_rsd
 !   Relative standard deviation of sub-grid cloud condensate
+real(RealExt), intent(in), optional :: liq_dim_aparam
+real(RealExt), intent(in), optional :: liq_dim_bparam
+!   Parameters for calculating cloud droplet effective radius
 
 real(RealExt), intent(in), optional :: layer_heat_capacity(:, :)
 real(RealExt), intent(in), optional :: layer_heat_capacity_1d(:)
@@ -612,6 +617,8 @@ call set_cld_dim(cld, control, dimen, spec, atm, &
   ice_dim_1d      = ice_dim_1d, &
   liq_conv_dim_1d = liq_conv_dim_1d, &
   ice_conv_dim_1d = ice_conv_dim_1d, &
+  liq_dim_aparam  = liq_dim_aparam, &
+  liq_dim_bparam  = liq_dim_bparam, &
   l_invert        = l_invert, &
   l_profile_last  = l_profile_last, &
   l_debug         = l_debug, &
