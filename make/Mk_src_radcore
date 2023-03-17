@@ -62,6 +62,9 @@ SOURCE_RADCORE=	adjust_ir_radiance.f90 \
 		opt_prop_ukca_aerosol.f90 \
 		opt_prop_ice_cloud.f90 \
 		opt_prop_water_cloud.f90 \
+		opt_prop_pade_2_mod.f90 \
+		opt_prop_fu_phf_mod.f90 \
+		opt_prop_baran_mod.f90 \
 		opt_prop_inhom_corr_cairns.f90 \
 		overlap_coupled.f90 \
 		planck_flux_band_mod.f90 \

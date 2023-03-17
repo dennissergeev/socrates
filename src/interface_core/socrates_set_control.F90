@@ -113,9 +113,15 @@ if (present(i_drop_re)) control%i_drop_re = i_drop_re
 
 
 ! Diagnostic options
-if (associated(diag%flux_direct_clear) .or. &
-    associated(diag%flux_down_clear)   .or. &
-    associated(diag%flux_up_clear) ) then
+if (associated(diag%flux_direct_clear)      .or. &
+    associated(diag%flux_down_clear)        .or. &
+    associated(diag%flux_up_clear)          .or. &
+    associated(diag%flux_direct_clear_surf) .or. &
+    associated(diag%flux_down_clear_surf)   .or. &
+    associated(diag%flux_up_clear_surf)     .or. &
+    associated(diag%flux_direct_clear_toa)  .or. &
+    associated(diag%flux_down_clear_toa)    .or. &
+    associated(diag%flux_up_clear_toa) ) then
   control%l_clear = .true.
 end if
 if (associated(diag%flux_up_blue_tile)     .or. &

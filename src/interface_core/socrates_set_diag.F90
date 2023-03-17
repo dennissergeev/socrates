@@ -35,6 +35,8 @@ use rad_pcf, only: ip_cloud_off, ip_mcica, &
   ip_clcmp_st_water, ip_clcmp_st_ice, ip_clcmp_cnv_water, ip_clcmp_cnv_ice, &
   ip_ice_adt, ip_ice_agg_de, ip_ice_agg_de_sun, ip_ice_baran
 
+use socrates_cloud_abs_diag, only: cloud_abs_diag
+use socrates_cloud_ext_diag, only: cloud_ext_diag
 use socrates_cloud_level_diag, only: cloud_level_diag
 
 implicit none
@@ -206,18 +208,52 @@ if (associated(diag%heating_rate)) then
       end do
     end if
   end if
+  ! Fill extra layers with zeros
+  if (l_last) then
+    do l=1, n_profile
+      do i=lbound(diag%heating_rate, 1), 0
+        diag%heating_rate(i, list(l)) = 0.0_RealExt
+      end do
+      do i=n_layer+1, ubound(diag%heating_rate, 1)
+        diag%heating_rate(i, list(l)) = 0.0_RealExt
+      end do
+    end do
+  else
+    do i=lbound(diag%heating_rate, 2), 0
+      do l=1, n_profile
+        diag%heating_rate(list(l), i) = 0.0_RealExt
+      end do
+    end do
+    do i=n_layer+1, ubound(diag%heating_rate, 2)
+      do l=1, n_profile
+        diag%heating_rate(list(l), i) = 0.0_RealExt
+      end do
+    end do
+  end if
 end if
 
 
 !------------------------------------------------------------------------------
 ! Fluxes
 !------------------------------------------------------------------------------
-call sum_flux_channels(diag%flux_direct, radout%flux_direct)
-call sum_flux_channels(diag%flux_down, radout%flux_down)
-call sum_flux_channels(diag%flux_up, radout%flux_up)
-call sum_flux_channels(diag%flux_direct_clear, radout%flux_direct_clear)
-call sum_flux_channels(diag%flux_down_clear, radout%flux_down_clear)
-call sum_flux_channels(diag%flux_up_clear, radout%flux_up_clear)
+call sum_flux_channels(diag%flux_direct, radout%flux_direct, &
+                  surf=diag%flux_direct_surf, &
+                   toa=diag%flux_direct_toa)
+call sum_flux_channels(diag%flux_down, radout%flux_down, &
+                  surf=diag%flux_down_surf, &
+                   toa=diag%flux_down_toa)
+call sum_flux_channels(diag%flux_up, radout%flux_up, &
+                  surf=diag%flux_up_surf, &
+                   toa=diag%flux_up_toa)
+call sum_flux_channels(diag%flux_direct_clear, radout%flux_direct_clear, &
+                  surf=diag%flux_direct_clear_surf, &
+                   toa=diag%flux_direct_clear_toa)
+call sum_flux_channels(diag%flux_down_clear, radout%flux_down_clear, &
+                  surf=diag%flux_down_clear_surf, &
+                   toa=diag%flux_down_clear_toa)
+call sum_flux_channels(diag%flux_up_clear, radout%flux_up_clear, &
+                  surf=diag%flux_up_clear_surf, &
+                   toa=diag%flux_up_clear_toa)
 
 call sum_tile_channels(diag%flux_up_tile, radout%flux_up_tile)
 call sum_tile_channels(diag%flux_up_blue_tile, radout%flux_up_blue_tile)
@@ -259,7 +295,8 @@ if (associated(diag%total_cloud_cover)) then
 end if
 
 if (associated(diag%n_subcol_cloud)) then
-  if (control%i_inhom == ip_mcica) then
+  if (control%i_cloud_representation /= ip_cloud_off .and. &
+      control%i_inhom == ip_mcica) then
     do l=1, n_profile
       diag%n_subcol_cloud(list(l)) = cld%n_subcol_cld(l)
     end do
@@ -271,65 +308,75 @@ if (associated(diag%n_subcol_cloud)) then
 end if
 
 if (associated(diag%total_cloud_fraction)) then
-  if (l_last) then
-    do l=1, n_profile
-      do i=1, n_layer
-        diag%total_cloud_fraction(i, list(l)) = 0.0_RealExt
-      end do
-    end do
-  else
-    do i=1, n_layer
-      do l=1, n_profile
-        diag%total_cloud_fraction(list(l), i) = 0.0_RealExt
-      end do
-    end do
-  end if
+  call set_layer_scalar(diag%total_cloud_fraction, 0.0_RealExt)
   if (control%i_cloud_representation /= ip_cloud_off) then
     call set_cloud_prop(diag%total_cloud_fraction, cld%w_cloud)
   end if
 end if
 
 ! Cloud component diagnostics
-if (associated(diag%liq_dim))            diag%liq_dim            = 0.0_RealExt
-if (associated(diag%liq_incloud_mmr))    diag%liq_incloud_mmr    = 0.0_RealExt
-if (associated(diag%liq_frac))           diag%liq_frac           = 0.0_RealExt
-if (associated(diag%liq_part_frac))      diag%liq_part_frac      = 0.0_RealExt
-if (associated(diag%ice_dim))            diag%ice_dim            = 0.0_RealExt
-if (associated(diag%ice_re))             diag%ice_re             = 0.0_RealExt
-if (associated(diag%ice_incloud_mmr))    diag%ice_incloud_mmr    = 0.0_RealExt
-if (associated(diag%ice_frac))           diag%ice_frac           = 0.0_RealExt
-if (associated(diag%ice_part_frac))      diag%ice_part_frac      = 0.0_RealExt
-if (associated(diag%liq_conv_dim))       diag%liq_conv_dim       = 0.0_RealExt
-if (associated(diag%liq_inconv_mmr))     diag%liq_inconv_mmr     = 0.0_RealExt
-if (associated(diag%liq_conv_frac))      diag%liq_conv_frac      = 0.0_RealExt
-if (associated(diag%liq_conv_part_frac)) diag%liq_conv_part_frac = 0.0_RealExt
-if (associated(diag%ice_conv_dim))       diag%ice_conv_dim       = 0.0_RealExt
-if (associated(diag%ice_conv_re))        diag%ice_conv_re        = 0.0_RealExt
-if (associated(diag%ice_inconv_mmr))     diag%ice_inconv_mmr     = 0.0_RealExt
-if (associated(diag%ice_conv_frac))      diag%ice_conv_frac      = 0.0_RealExt
-if (associated(diag%ice_conv_part_frac)) diag%ice_conv_part_frac = 0.0_RealExt
-if (associated(diag%liq_subcol_scaling)) diag%liq_subcol_scaling = 0.0_RealExt
-if (associated(diag%ice_subcol_scaling)) diag%ice_subcol_scaling = 0.0_RealExt
+call set_layer_scalar(diag%liq_dim, 0.0_RealExt)
+call set_layer_scalar(diag%liq_incloud_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%liq_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%liq_frac, 0.0_RealExt)
+call set_layer_scalar(diag%liq_part_frac, 0.0_RealExt)
+call set_layer_scalar(diag%ice_dim, 0.0_RealExt)
+call set_layer_scalar(diag%ice_re, 0.0_RealExt)
+call set_layer_scalar(diag%ice_incloud_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%ice_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%ice_frac, 0.0_RealExt)
+call set_layer_scalar(diag%ice_part_frac, 0.0_RealExt)
+call set_layer_scalar(diag%liq_conv_dim, 0.0_RealExt)
+call set_layer_scalar(diag%liq_inconv_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%liq_conv_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%liq_conv_frac, 0.0_RealExt)
+call set_layer_scalar(diag%liq_conv_part_frac, 0.0_RealExt)
+call set_layer_scalar(diag%ice_conv_dim, 0.0_RealExt)
+call set_layer_scalar(diag%ice_conv_re, 0.0_RealExt)
+call set_layer_scalar(diag%ice_inconv_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%ice_conv_mmr, 0.0_RealExt)
+call set_layer_scalar(diag%ice_conv_frac, 0.0_RealExt)
+call set_layer_scalar(diag%ice_conv_part_frac, 0.0_RealExt)
+call set_layer_scalar(diag%cloud_solar_extinction, 0.0_RealExt)
+call set_layer_scalar(diag%cloud_thermal_absorptivity, 0.0_RealExt)
+call set_list_scalar(diag%liq_path, 0.0_RealExt)
+call set_list_scalar(diag%ice_path, 0.0_RealExt)
+call set_list_scalar(diag%liq_conv_path, 0.0_RealExt)
+call set_list_scalar(diag%ice_conv_path, 0.0_RealExt)
+call set_3d_scalar(diag%liq_subcol_scaling, 0.0_RealExt)
+call set_3d_scalar(diag%ice_subcol_scaling, 0.0_RealExt)
 if (control%i_cloud_representation /= ip_cloud_off) then
   do k=1, cld%n_condensed
     select case (cld%type_condensed(k))
     case (ip_clcmp_st_water)
       call set_cloud_prop(diag%liq_dim, cld%condensed_dim_char(:,:,k))
       call set_cloud_prop(diag%liq_incloud_mmr, cld%condensed_mix_ratio(:,:,k))
+      call set_cloud_prop(diag%liq_mmr, cld%condensed_mix_ratio(:,:,k), &
+                          cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%liq_frac, cld%w_cloud, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%liq_part_frac, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
+      call set_cloud_path(diag%liq_path, atm%mass, cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)), &
+                          cld%condensed_mix_ratio(:,:,k))
       if (control%i_inhom == ip_mcica) &
         call set_cloud_subcol(diag%liq_subcol_scaling, &
                               cld%c_sub(:, :, :, cld%i_cloud_type(k)))
     case (ip_clcmp_st_ice)
       call set_cloud_prop(diag%ice_dim, cld%condensed_dim_char(:,:,k))
       call set_cloud_prop(diag%ice_incloud_mmr, cld%condensed_mix_ratio(:,:,k))
+      call set_cloud_prop(diag%ice_mmr, cld%condensed_mix_ratio(:,:,k), &
+                          cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%ice_frac, cld%w_cloud, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%ice_part_frac, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
+      call set_cloud_path(diag%ice_path, atm%mass, cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)), &
+                          cld%condensed_mix_ratio(:,:,k))
       if (control%i_inhom == ip_mcica) &
         call set_cloud_subcol(diag%ice_subcol_scaling, &
                               cld%c_sub(:, :, :, cld%i_cloud_type(k)))
@@ -344,17 +391,29 @@ if (control%i_cloud_representation /= ip_cloud_off) then
     case (ip_clcmp_cnv_water)
       call set_cloud_prop(diag%liq_conv_dim, cld%condensed_dim_char(:,:,k))
       call set_cloud_prop(diag%liq_inconv_mmr, cld%condensed_mix_ratio(:,:,k))
+      call set_cloud_prop(diag%liq_conv_mmr, cld%condensed_mix_ratio(:,:,k), &
+                          cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%liq_conv_frac, cld%w_cloud, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%liq_conv_part_frac, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
+      call set_cloud_path(diag%liq_conv_path, atm%mass, cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)), &
+                          cld%condensed_mix_ratio(:,:,k))
     case (ip_clcmp_cnv_ice)
       call set_cloud_prop(diag%ice_conv_dim, cld%condensed_dim_char(:,:,k))
       call set_cloud_prop(diag%ice_inconv_mmr, cld%condensed_mix_ratio(:,:,k))
+      call set_cloud_prop(diag%ice_conv_mmr, cld%condensed_mix_ratio(:,:,k), &
+                          cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%ice_conv_frac, cld%w_cloud, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
       call set_cloud_prop(diag%ice_conv_part_frac, &
                           cld%frac_cloud(:, :, cld%i_cloud_type(k)))
+      call set_cloud_path(diag%ice_conv_path, atm%mass, cld%w_cloud, &
+                          cld%frac_cloud(:, :, cld%i_cloud_type(k)), &
+                          cld%condensed_mix_ratio(:,:,k))
       if (associated(diag%ice_conv_re)) then
         call set_cloud_prop(diag%ice_conv_re, cld%condensed_dim_char(:,:,k))
         select case (cld%i_condensed_param(ip_clcmp_cnv_ice))
@@ -394,6 +453,16 @@ if (associated(diag%cloud_weight_extinction)) &
   call set_layer_prop(diag%cloud_weight_extinction, &
                       radout%cloud_weight_extinction)
 
+if (associated(diag%cloud_solar_extinction)) &
+  call cloud_ext_diag(diag%cloud_solar_extinction, &
+                      control, dimen, spectrum, atm, cld, &
+                      list, layer_offset, l_last)
+
+if (associated(diag%cloud_thermal_absorptivity)) &
+  call cloud_abs_diag(diag%cloud_thermal_absorptivity, &
+                      control, dimen, spectrum, atm, cld, &
+                      list, layer_offset, l_last)
+
 !------------------------------------------------------------------------------
 ! Aerosol diagnostics
 !------------------------------------------------------------------------------
@@ -408,12 +477,14 @@ call set_aerosol_prop(diag%aerosol_asymmetry_scat, &
 !------------------------------------------------------------------------------
 contains
 !------------------------------------------------------------------------------
-subroutine sum_flux_channels(field, field_channels)
+subroutine sum_flux_channels(field, field_channels, surf, toa)
 
   implicit none
   
   real(RealExt), intent(inout), pointer :: field(:, :)
   real(RealK), intent(in), allocatable :: field_channels(:, :, :)
+  real(RealExt), intent(inout), optional, pointer :: surf(:)
+  real(RealExt), intent(inout), optional, pointer :: toa(:)
   
   if (associated(field)) then
     if (l_last) then
@@ -424,6 +495,20 @@ subroutine sum_flux_channels(field, field_channels)
             = real(sum(field_channels(l, i, 1:control%n_channel)), RealExt)
         end do
       end do
+      if (present(surf)) then
+        if (associated(surf)) then
+          do l=1, n_profile
+            surf(list(l)) = field(abs(level_offset-n_layer), list(l))
+          end do
+        end if
+      end if
+      if (present(toa)) then
+        if (associated(toa)) then
+          do l=1, n_profile
+            toa(list(l)) = field(abs(level_offset), list(l))
+          end do
+        end if
+      end if
     else
       do i=0, n_layer
         ii = abs(level_offset-i)
@@ -432,6 +517,37 @@ subroutine sum_flux_channels(field, field_channels)
             = real(sum(field_channels(l, i, 1:control%n_channel)), RealExt)
         end do
       end do
+      if (present(surf)) then
+        if (associated(surf)) then
+          do l=1, n_profile
+            surf(list(l)) = field(list(l), abs(level_offset-n_layer))
+          end do
+        end if
+      end if
+      if (present(toa)) then
+        if (associated(toa)) then
+          do l=1, n_profile
+            toa(list(l)) = field(list(l), abs(level_offset))
+          end do
+        end if
+      end if
+    end if
+  else
+    if (present(surf)) then
+      if (associated(surf)) then
+        do l=1, n_profile
+          surf(list(l)) &
+            = real(sum(field_channels(l, n_layer, 1:control%n_channel)),RealExt)
+        end do
+      end if
+    end if
+    if (present(toa)) then
+      if (associated(toa)) then
+        do l=1, n_profile
+          toa(list(l)) &
+            = real(sum(field_channels(l, 0, 1:control%n_channel)), RealExt)
+        end do
+      end if
     end if
   end if
 
@@ -475,13 +591,14 @@ end subroutine sum_tile_channels
 
 
 !------------------------------------------------------------------------------
-subroutine set_cloud_prop(field, cld_field1, cld_field2)
+subroutine set_cloud_prop(field, cld_field1, cld_field2, cld_field3)
 
   implicit none
 
   real(RealExt), intent(inout), pointer :: field(:, :)
   real(RealK), intent(in) :: cld_field1(:, dimen%id_cloud_top:)
   real(RealK), intent(in), optional :: cld_field2(:, dimen%id_cloud_top:)
+  real(RealK), intent(in), optional :: cld_field3(:, dimen%id_cloud_top:)
   integer :: i_lower, i_upper, i_dim
 
   if (associated(field)) then
@@ -499,7 +616,25 @@ subroutine set_cloud_prop(field, cld_field1, cld_field2)
       i_upper = min(ubound(field, i_dim), n_layer)
     end if
     ! Fill diagnostic between requested layers
-    if (present(cld_field2)) then
+    if (present(cld_field2).and.present(cld_field3)) then
+      if (l_last) then
+        do i=i_lower, i_upper
+          ii = abs(layer_offset-i)
+          do l=1, n_profile
+            field(ii, list(l)) = real( &
+              cld_field1(l, i) * cld_field2(l, i) * cld_field3(l, i), RealExt)
+          end do
+        end do
+      else
+        do i=i_lower, i_upper
+          ii = abs(layer_offset-i)
+          do l=1, n_profile
+            field(list(l), ii) = real( &
+              cld_field1(l, i) * cld_field2(l, i) * cld_field3(l, i), RealExt)
+          end do
+        end do
+      end if
+    else if (present(cld_field2)) then
       if (l_last) then
         do i=i_lower, i_upper
           ii = abs(layer_offset-i)
@@ -540,25 +675,48 @@ end subroutine set_cloud_prop
 
 
 !------------------------------------------------------------------------------
+subroutine set_cloud_path(field, d_mass, cld_field1, cld_field2, cld_field3)
+
+  implicit none
+
+  real(RealExt), intent(inout), pointer :: field(:)
+  real(RealK), intent(in) :: d_mass(:, :)
+  real(RealK), intent(in) :: cld_field1(:, dimen%id_cloud_top:)
+  real(RealK), intent(in) :: cld_field2(:, dimen%id_cloud_top:)
+  real(RealK), intent(in) :: cld_field3(:, dimen%id_cloud_top:)
+
+  if (associated(field)) then
+    do i=dimen%id_cloud_top, n_layer
+      do l=1, n_profile
+        field(list(l)) = field(list(l)) + real( d_mass(l, i) &
+          * cld_field1(l, i) * cld_field2(l, i) * cld_field3(l, i), RealExt)
+      end do
+    end do
+  end if
+
+end subroutine set_cloud_path
+
+
+!------------------------------------------------------------------------------
 subroutine set_cloud_subcol(field, cld_field)
 
   implicit none
 
   real(RealExt), intent(inout), pointer :: field(:, :, :)
   real(RealK), intent(in) :: cld_field(:, dimen%id_cloud_top:, :)
-  integer :: k_lower, k_upper, k_dim
+  integer :: j_lower, j_upper, j_dim, j
   integer :: i_lower, i_upper, i_dim
 
   if (associated(field)) then
     if (l_last) then
       i_dim = 1
-      k_dim = 2
+      j_dim = 2
     else
       i_dim = 2
-      k_dim = 3
+      j_dim = 3
     end if
-    k_lower = max(lbound(field, k_dim), 1)
-    k_upper = min(ubound(field, k_dim), dimen%nd_subcol_gen)
+    j_lower = max(lbound(field, j_dim), 1)
+    j_upper = min(ubound(field, j_dim), dimen%nd_subcol_gen)
     if (layer_offset == n_layer + 1) then
       ! Field output is inverted
       i_lower = max(n_layer + 1 - ubound(field, i_dim), dimen%id_cloud_top)
@@ -569,20 +727,20 @@ subroutine set_cloud_subcol(field, cld_field)
     end if
     ! Fill diagnostic between requested layers
     if (l_last) then
-      do k=k_lower, k_upper
+      do j=j_lower, j_upper
         do i=i_lower, i_upper
           ii = abs(layer_offset-i)
           do l=1, n_profile
-            field(ii, k, list(l)) = real(cld_field(l, i, k), RealExt)
+            field(ii, j, list(l)) = real(cld_field(l, i, j), RealExt)
           end do
         end do
       end do
     else
-      do k=k_lower, k_upper
+      do j=j_lower, j_upper
         do i=i_lower, i_upper
           ii = abs(layer_offset-i)
           do l=1, n_profile
-            field(list(l), ii, k) = real(cld_field(l, i, k), RealExt)
+            field(list(l), ii, j) = real(cld_field(l, i, j), RealExt)
           end do
         end do
       end do
@@ -611,23 +769,117 @@ subroutine set_layer_prop(field, field_in)
     i_upper = min(ubound(field, i_dim), n_layer)
     ! Fill diagnostic between requested layers
     if (l_last) then
-      do i=i_lower, i_upper
-        ii = abs(layer_offset-i)
-        do l=1, n_profile
+      do l=1, n_profile
+        do i=lbound(field, i_dim), i_lower-1
+          field(i, list(l)) = 0.0_RealExt
+        end do
+        do i=i_lower, i_upper
+          ii = abs(layer_offset-i)
           field(i, list(l)) = real(field_in(l, ii), RealExt)
+        end do
+        do i=i_upper+1, ubound(field, i_dim)
+          field(i, list(l)) = 0.0_RealExt
         end do
       end do
     else
+      do i=lbound(field, i_dim), i_lower-1
+        do l=1, n_profile
+          field(list(l), i) = 0.0_RealExt
+        end do
+      end do
       do i=i_lower, i_upper
         ii = abs(layer_offset-i)
         do l=1, n_profile
           field(list(l), i) = real(field_in(l, ii), RealExt)
         end do
       end do
+      do i=i_upper+1, ubound(field, i_dim)
+        do l=1, n_profile
+          field(list(l), i) = 0.0_RealExt
+        end do
+      end do
     end if
   end if
 
 end subroutine set_layer_prop
+
+
+!------------------------------------------------------------------------------
+subroutine set_list_scalar(field, scalar)
+
+  implicit none
+
+  real(RealExt), intent(inout), pointer :: field(:)
+  real(RealExt), intent(in) :: scalar
+
+  if (associated(field)) then
+    do l=1, n_profile
+      field(list(l)) = scalar
+    end do
+  end if
+
+end subroutine set_list_scalar
+
+
+!------------------------------------------------------------------------------
+subroutine set_layer_scalar(field, scalar)
+
+  implicit none
+
+  real(RealExt), intent(inout), pointer :: field(:, :)
+  real(RealExt), intent(in) :: scalar
+
+  if (associated(field)) then
+    ! Fill diagnostic between requested layers
+    if (l_last) then
+      do l=1, n_profile
+        do i=lbound(field, 1), ubound(field, 1)
+          field(i, list(l)) = scalar
+        end do
+      end do
+    else
+      do i=lbound(field, 2), ubound(field, 2)
+        do l=1, n_profile
+          field(list(l), i) = scalar
+        end do
+      end do
+    end if
+  end if
+
+end subroutine set_layer_scalar
+
+
+!------------------------------------------------------------------------------
+subroutine set_3d_scalar(field, scalar)
+
+  implicit none
+
+  real(RealExt), intent(inout), pointer :: field(:, :, :)
+  real(RealExt), intent(in) :: scalar
+  integer :: j
+
+  if (associated(field)) then
+    ! Fill diagnostic between requested layers
+    if (l_last) then
+      do l=1, n_profile
+        do j=lbound(field, 2), ubound(field, 2)
+          do i=lbound(field, 1), ubound(field, 1)
+            field(i, j, list(l)) = scalar
+          end do
+        end do
+      end do
+    else
+      do j=lbound(field, 3), ubound(field, 3)
+        do i=lbound(field, 2), ubound(field, 2)
+          do l=1, n_profile
+            field(list(l), i, j) = scalar
+          end do
+        end do
+      end do
+    end if
+  end if
+
+end subroutine set_3d_scalar
 
 
 !------------------------------------------------------------------------------
@@ -654,6 +906,31 @@ subroutine set_aerosol_prop(field, aer_field1, aer_field2)
     i_lower = max(lbound(field, i_dim), 1)
     i_upper = min(ubound(field, i_dim), n_layer)
 
+    if (l_last) then
+      do l=1, n_profile
+        do k=k_lower, k_upper
+          do i=lbound(field, i_dim), i_lower-1
+            field(i, k, list(l)) = 0.0_RealExt
+          end do
+          do i=i_upper+1, ubound(field, i_dim)
+            field(i, k, list(l)) = 0.0_RealExt
+          end do
+        end do
+      end do
+    else
+      do k=k_lower, k_upper
+        do i=lbound(field, i_dim), i_lower-1
+          do l=1, n_profile
+            field(list(l), i, k) = 0.0_RealExt
+          end do
+        end do
+        do i=i_upper+1, ubound(field, i_dim)
+          do l=1, n_profile
+            field(list(l), i, k) = 0.0_RealExt
+          end do
+        end do
+      end do
+    end if
     if (present(aer_field2)) then
       if (l_last) then
         do k=k_lower, k_upper

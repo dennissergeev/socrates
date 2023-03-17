@@ -680,6 +680,12 @@ if (associated(diag%heating_rate) .or. &
     associated(diag%flux_direct) .or. &
     associated(diag%flux_down) .or. &
     associated(diag%flux_up) .or. &
+    associated(diag%flux_direct_surf) .or. &
+    associated(diag%flux_down_surf) .or. &
+    associated(diag%flux_up_surf) .or. &
+    associated(diag%flux_direct_toa) .or. &
+    associated(diag%flux_down_toa) .or. &
+    associated(diag%flux_up_toa) .or. &
     associated(diag%flux_up_tile) .or. &
     control%l_clear .or. &
     control%l_blue_flux_surf .or. &

@@ -40,11 +40,47 @@ real(RealExt), pointer :: flux_up_tile(:,:) => null()
 real(RealExt), pointer :: flux_up_blue_tile(:,:) => null()
 ! Upwards blue flux on tiles, Wm-2 (n_profile, n_tile)
 
+real(RealExt), pointer :: flux_direct_surf(:) => null()
+! Direct (unscattered) downwards flux at the surface, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_down_surf(:) => null()
+! Downwards flux at the surface, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_up_surf(:) => null()
+! Upwards flux at the surface, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_direct_clear_surf(:) => null()
+! Clear-sky direct downwards surface flux, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_down_clear_surf(:) => null()
+! Clear-sky downwards surface flux, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_up_clear_surf(:) => null()
+! Clear-sky upwards surface flux, Wm-2 (n_profile)
+
 real(RealExt), pointer :: flux_direct_blue_surf(:) => null()
 ! Direct blue flux at the surface, Wm-2 (n_profile)
 
 real(RealExt), pointer :: flux_down_blue_surf(:) => null()
 ! Total downward blue flux at the surface, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_direct_toa(:) => null()
+! Direct downwards flux at top-of-atmosphere, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_down_toa(:) => null()
+! Downwards flux at top-of-atmosphere, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_up_toa(:) => null()
+! Upwards flux at top-of-atmosphere, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_direct_clear_toa(:) => null()
+! Clear-sky direct downwards flux at top-of-atmosphere, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_down_clear_toa(:) => null()
+! Clear-sky downwards flux at top-of-atmosphere, Wm-2 (n_profile)
+
+real(RealExt), pointer :: flux_up_clear_toa(:) => null()
+! Clear-sky upwards flux at top-of-atmosphere, Wm-2 (n_profile)
 
 real(RealExt), pointer :: total_cloud_cover(:) => null()
 ! Total cloud cover (n_profile)
@@ -67,14 +103,26 @@ real(RealExt), pointer :: liq_conv_part_frac(:,:) => null()
 real(RealExt), pointer :: liq_incloud_mmr(:,:) => null()
 ! Liquid in-cloud mean mixing ratio (n_profile, n_layer)
 
+real(RealExt), pointer :: liq_mmr(:,:) => null()
+! Liquid gridbox mean mixing ratio (n_profile, n_layer)
+
 real(RealExt), pointer :: liq_inconv_mmr(:,:) => null()
 ! Liquid convective in-cloud mean mixing ratio (n_profile, n_layer)
+
+real(RealExt), pointer :: liq_conv_mmr(:,:) => null()
+! Liquid convective gridbox mean mixing ratio (n_profile, n_layer)
 
 real(RealExt), pointer :: liq_dim(:,:) => null()
 ! Cloud droplet effective dimension (n_profile, n_layer)
 
 real(RealExt), pointer :: liq_conv_dim(:,:) => null()
 ! Convective cloud droplet effective dimension (n_profile, n_layer)
+
+real(RealExt), pointer :: liq_path(:) => null()
+! Liquid mass path in grid column (n_profile)
+
+real(RealExt), pointer :: liq_conv_path(:) => null()
+! Convective liquid mass path in grid column (n_profile)
 
 real(RealExt), pointer :: ice_frac(:,:) => null()
 ! Ice cloud fraction (n_profile, n_layer)
@@ -91,8 +139,14 @@ real(RealExt), pointer :: ice_conv_part_frac(:,:) => null()
 real(RealExt), pointer :: ice_incloud_mmr(:,:) => null()
 ! Ice in-cloud mean mixing ratio (n_profile, n_layer)
 
+real(RealExt), pointer :: ice_mmr(:,:) => null()
+! Ice gridbox mean mixing ratio (n_profile, n_layer)
+
 real(RealExt), pointer :: ice_inconv_mmr(:,:) => null()
 ! Ice convective in-cloud mean mixing ratio (n_profile, n_layer)
+
+real(RealExt), pointer :: ice_conv_mmr(:,:) => null()
+! Ice convective gridbox mean mixing ratio (n_profile, n_layer)
 
 real(RealExt), pointer :: ice_dim(:,:) => null()
 ! Cloud ice-crystal effective dimension (n_profile, n_layer)
@@ -105,6 +159,12 @@ real(RealExt), pointer :: ice_re(:,:) => null()
 
 real(RealExt), pointer :: ice_conv_re(:,:) => null()
 ! Convective cloud ice-crystal effective radius (n_profile, n_layer)
+
+real(RealExt), pointer :: ice_path(:) => null()
+! Ice mass path in grid column (n_profile)
+
+real(RealExt), pointer :: ice_conv_path(:) => null()
+! Convective ice mass path in grid column (n_profile)
 
 real(RealExt), pointer :: cloud_top_liq_dim(:) => null()
 ! Cloud droplet effective radius at cloud top weighted by cloud fraction
@@ -144,6 +204,13 @@ real(RealExt), pointer :: cloud_extinction(:, :) => null()
 real(RealExt), pointer :: cloud_weight_extinction(:, :) => null()
 ! Weight for cloud_extinction:
 ! cloud fraction * downward clear-sky solar flux
+
+real(RealExt), pointer :: cloud_thermal_absorptivity(:, :) => null()
+! Absorptivity of cloud averaged using the Planckian flux
+! in each band for the local temperature
+
+real(RealExt), pointer :: cloud_solar_extinction(:, :) => null()
+! Cloud extinction averaged using solar spectrum in each band
 
 real(RealExt), pointer :: aerosol_optical_depth(:,:,:) => null()
 ! Total aerosol optical depth (n_profile, n_layer, n_band)

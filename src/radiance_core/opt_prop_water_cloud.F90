@@ -4,7 +4,7 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to calculate optical properties of water clouds.
+! Subroutine to calculate optical properties of water clouds.
 !
 ! Method:
 !   If the optical properties come from an observational
@@ -16,9 +16,6 @@
 !
 !   Note that this routine produces optical propeties for a
 !   single condensed component of the cloud.
-!
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
 !
 !- ---------------------------------------------------------------------
 SUBROUTINE opt_prop_water_cloud(ierr                                    &
@@ -53,6 +50,7 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport
   USE errormessagelength_mod, ONLY: errormessagelength
+  USE opt_prop_pade_2_mod, ONLY: opt_prop_pade_2
 
   IMPLICIT NONE
 
@@ -175,7 +173,7 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
     , ls
 !       Loop variable
   REAL (RealK) ::                                                       &
-      asymmetry_process(nd_profile)                                     &
+      asymmetry_process(nd_profile, id_ct: nd_layer)                    &
 !       Asymmetry of current process.
     , phf_tmp                                                           &
 !       Temporary Phase Function
@@ -200,7 +198,7 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
   INTEGER(KIND=jpim), PARAMETER :: zhook_in  = 0
   INTEGER(KIND=jpim), PARAMETER :: zhook_out = 1
   REAL(KIND=jprb)               :: zhook_handle
-  CHARACTER (LEN=errormessagelength)           :: cmessage
+  CHARACTER (LEN=errormessagelength) :: cmessage
   CHARACTER (LEN=*), PARAMETER  :: RoutineName = 'OPT_PROP_WATER_CLOUD'
 
 
@@ -210,73 +208,11 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
     (i_parametrization_drop == ip_drop_pade_2) .AND.                    &
     l_rescale .AND. (n_order_forward == 2) ) THEN
 
-    DO i=n_cloud_top, n_layer
-!CDIR NODEP
-      DO ll=1, n_cloud_profile(i)
-        l=i_cloud_profile(ll, i)
-        k_ext_tot_cloud(l, i)=liq_water_mass_frac(l, i)                 &
-          *(cloud_parameter(1)+radius_effect(l, i)                      &
-          *(cloud_parameter(2)+radius_effect(l, i)                      &
-          *cloud_parameter(3)))                                         &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(4)+radius_effect(l, i)                      &
-          *(cloud_parameter(5)+radius_effect(l, i)                      &
-          *cloud_parameter(6))))
-        k_ext_scat_cloud(l, i)=k_ext_tot_cloud(l, i)                    &
-          *(1.0e+00                                                     &
-          -(cloud_parameter(7)+radius_effect(l, i)                      &
-          *(cloud_parameter(8)+radius_effect(l, i)                      &
-          *cloud_parameter(9)))                                         &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(10)+radius_effect(l, i)                     &
-          *cloud_parameter(11))))
-        asymmetry_process(l)                                            &
-          =(cloud_parameter(12)+radius_effect(l, i)                     &
-          *(cloud_parameter(13)+radius_effect(l, i)                     &
-          *cloud_parameter(14)))                                        &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(15)+radius_effect(l, i)                     &
-          *cloud_parameter(16)))
-        phase_fnc_cloud(l, i, 1)                                        &
-          =k_ext_scat_cloud(l, i)*asymmetry_process(l)
-        forward_scatter_cloud(l, i)                                     &
-            =phase_fnc_cloud(l, i, 1)*asymmetry_process(l)
-      END DO
-    END DO
-
-  ELSE IF ( (n_order_phase == 1) .AND.                                  &
-    (i_parametrization_drop == ip_drop_pade_2) .AND.                    &
-    .NOT. l_rescale ) THEN
-
-    DO i=n_cloud_top, n_layer
-!CDIR NODEP
-      DO ll=1, n_cloud_profile(i)
-        l=i_cloud_profile(ll, i)
-        k_ext_tot_cloud(l, i)=liq_water_mass_frac(l, i)                 &
-          *(cloud_parameter(1)+radius_effect(l, i)                      &
-          *(cloud_parameter(2)+radius_effect(l, i)                      &
-          *cloud_parameter(3)))                                         &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(4)+radius_effect(l, i)                      &
-          *(cloud_parameter(5)+radius_effect(l, i)                      &
-          *cloud_parameter(6))))
-        k_ext_scat_cloud(l, i)=k_ext_tot_cloud(l, i)                    &
-          *(1.0e+00                                                     &
-          -(cloud_parameter(7)+radius_effect(l, i)                      &
-          *(cloud_parameter(8)+radius_effect(l, i)                      &
-          *cloud_parameter(9)))                                         &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(10)+radius_effect(l, i)                     &
-          *cloud_parameter(11))))
-        phase_fnc_cloud(l, i, 1)=k_ext_scat_cloud(l, i)                 &
-          *(cloud_parameter(12)+radius_effect(l, i)                     &
-          *(cloud_parameter(13)+radius_effect(l, i)                     &
-          *cloud_parameter(14)))                                        &
-          /(1.0e+00+radius_effect(l, i)                                 &
-          *(cloud_parameter(15)+radius_effect(l, i)                     &
-          *cloud_parameter(16)))
-      END DO
-    END DO
+    CALL opt_prop_pade_2(id_ct, &
+      n_cloud_top, n_layer, n_cloud_profile, i_cloud_profile, &
+      cloud_parameter, liq_water_mass_frac, radius_effect, &
+      k_ext_tot_cloud, k_ext_scat_cloud, asymmetry_process, &
+      phase_fnc_cloud, forward_scatter_cloud)
 
   ELSE IF ( (i_parametrization_drop == ip_slingo_schrecker).OR.         &
        (i_parametrization_drop == ip_ackerman_stephens).OR.             &
@@ -285,19 +221,10 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
          (i_parametrization_drop == ip_slingo_schr_phf) ) ) THEN
 
 !   Optical properties are calculated from parametrized data.
+    SELECT CASE(i_parametrization_drop)
 
-    DO i=n_cloud_top, n_layer
-
-
-!     To avoid the repetition of blocks of code or excessive
-!     use of memory it is easiest to have an outer loop over
-!     layers.
-
-
-      SELECT CASE(i_parametrization_drop)
-
-      CASE(ip_slingo_schrecker, ip_slingo_schr_phf)
-
+    CASE(ip_slingo_schrecker, ip_slingo_schr_phf)
+      DO i=n_cloud_top, n_layer
         DO ll=1, n_cloud_profile(i)
           l=i_cloud_profile(ll, i)
           k_ext_tot_cloud(l, i)                                         &
@@ -306,17 +233,16 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
           k_ext_scat_cloud(l, i)=k_ext_tot_cloud(l, i)                  &
             *(1.0e+00_RealK-cloud_parameter(3)                          &
             -cloud_parameter(4)*radius_effect(l, i))
-          asymmetry_process(l)=                                         &
+          asymmetry_process(l, i)=                                      &
             cloud_parameter(5)+cloud_parameter(6)                       &
             *radius_effect(l, i)
           phase_fnc_cloud(l, i, 1)=                                     &
-            k_ext_scat_cloud(l, i)*asymmetry_process(l)
+            k_ext_scat_cloud(l, i)*asymmetry_process(l, i)
         END DO
+      END DO
 
-
-      CASE(ip_ackerman_stephens)
-
-
+    CASE(ip_ackerman_stephens)
+      DO i=n_cloud_top, n_layer
         DO ll=1, n_cloud_profile(i)
           l=i_cloud_profile(ll, i)
           k_ext_tot_cloud(l, i)=liq_water_mass_frac(l, i)               &
@@ -326,73 +252,51 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
             *(1.0e+00_RealK-cloud_parameter(4)                          &
             -cloud_parameter(5)*EXP(cloud_parameter(6)                  &
             *LOG(radius_effect(l, i))))
-          asymmetry_process(l)                                          &
+          asymmetry_process(l, i)                                       &
             =cloud_parameter(7)+cloud_parameter(8)                      &
             *EXP(cloud_parameter(9)*LOG(radius_effect(l, i)))
           phase_fnc_cloud(l, i, 1)                                      &
-            =k_ext_scat_cloud(l, i)*asymmetry_process(l)
-        END DO
-
-
-      CASE(ip_drop_pade_2)
-
-
-        DO ll=1, n_cloud_profile(i)
-          l=i_cloud_profile(ll, i)
-          k_ext_tot_cloud(l, i)=liq_water_mass_frac(l, i)               &
-            *(cloud_parameter(1)+radius_effect(l, i)                    &
-            *(cloud_parameter(2)+radius_effect(l, i)                    &
-            *cloud_parameter(3)))                                       &
-            /(1.0e+00_RealK+radius_effect(l, i)                         &
-            *(cloud_parameter(4)+radius_effect(l, i)                    &
-            *(cloud_parameter(5)+radius_effect(l, i)                    &
-            *cloud_parameter(6))))
-          k_ext_scat_cloud(l, i)=k_ext_tot_cloud(l, i)                  &
-            *(1.0e+00_RealK                                             &
-            -(cloud_parameter(7)+radius_effect(l, i)                    &
-            *(cloud_parameter(8)+radius_effect(l, i)                    &
-            *cloud_parameter(9)))                                       &
-            /(1.0e+00_RealK+radius_effect(l, i)                         &
-            *(cloud_parameter(10)+radius_effect(l, i)                   &
-            *cloud_parameter(11))))
-          asymmetry_process(l)                                          &
-            =(cloud_parameter(12)+radius_effect(l, i)                   &
-            *(cloud_parameter(13)+radius_effect(l, i)                   &
-            *cloud_parameter(14)))                                      &
-            /(1.0e+00_RealK+radius_effect(l, i)                         &
-            *(cloud_parameter(15)+radius_effect(l, i)                   &
-            *cloud_parameter(16)))
-          phase_fnc_cloud(l, i, 1)                                      &
-            =k_ext_scat_cloud(l, i)*asymmetry_process(l)
-        END DO
-
-
-      END SELECT
-
-
-!     Since these parametrizations include only the asymmetry,
-!     it seems reasonable to extend them to higher
-!     truncations using the Henyey-Greenstein phase function.
-
-      DO ls=2, n_order_phase
-        DO ll=1, n_cloud_profile(i)
-          l=i_cloud_profile(ll, i)
-          phase_fnc_cloud(l, i, ls)                                     &
-            =phase_fnc_cloud(l, i, ls-1)*asymmetry_process(l)
+            =k_ext_scat_cloud(l, i)*asymmetry_process(l, i)
         END DO
       END DO
 
-      IF (l_rescale) THEN
+    CASE(ip_drop_pade_2)
+      CALL opt_prop_pade_2(id_ct, &
+        n_cloud_top, n_layer, n_cloud_profile, i_cloud_profile, &
+        cloud_parameter, liq_water_mass_frac, radius_effect, &
+        k_ext_tot_cloud, k_ext_scat_cloud, asymmetry_process, &
+        phase_fnc_cloud)
+
+    END SELECT
+
+
+!   Since these parametrizations include only the asymmetry,
+!   it seems reasonable to extend them to higher
+!   truncations using the Henyey-Greenstein phase function.
+    DO ls=2, n_order_phase
+      DO i=n_cloud_top, n_layer
+        DO ll=1, n_cloud_profile(i)
+          l=i_cloud_profile(ll, i)
+          phase_fnc_cloud(l, i, ls)                                     &
+            =phase_fnc_cloud(l, i, ls-1)*asymmetry_process(l, i)
+        END DO
+      END DO
+    END DO
+
+    IF (l_rescale) THEN
+      DO i=n_cloud_top, n_layer
         DO ll=1, n_cloud_profile(i)
           l=i_cloud_profile(ll, i)
             forward_scatter_cloud(l, i)                                 &
               =k_ext_scat_cloud(l, i)                                   &
-              *asymmetry_process(l)**n_order_forward
+              *asymmetry_process(l, i)**n_order_forward
         END DO
-      END IF
+      END DO
+    END IF
 
-      IF (l_solar_phf) THEN
-!       Calculate the solar phase function to higher accuracy.
+    IF (l_solar_phf) THEN
+!     Calculate the solar phase function to higher accuracy.
+      DO i=n_cloud_top, n_layer
         DO id=1, n_direction
 !         The Legendre polynomials are not stored so as to reduce
 !         the requirement for memory at very high orders of solar
@@ -403,7 +307,7 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
 !           first orders.
             p_legendre_ls_m1(l)=1.0e+00_RealK
             p_legendre_ls(l)=cos_sol_view(l, id)
-            ks_phf(l)=k_ext_scat_cloud(l, i)*asymmetry_process(l)
+            ks_phf(l)=k_ext_scat_cloud(l, i)*asymmetry_process(l, i)
             phase_fnc_solar_cloud(l, i, id)=k_ext_scat_cloud(l, i)      &
               +ks_phf(l)*p_legendre_ls(l)*REAL(2*1+1, RealK)
           END DO
@@ -418,7 +322,7 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
                 =(1.0e+00_RealK+cnst1)*p_legendre_ls(l)                 &
                 *cos_sol_view(l, id)-cnst1*p_legendre_ls_m1(l)
               p_legendre_ls_m1(l)=p_legendre_tmp(l)
-              ks_phf(l)=ks_phf(l)*asymmetry_process(l)
+              ks_phf(l)=ks_phf(l)*asymmetry_process(l, i)
               phase_fnc_solar_cloud(l, i, id)                           &
                 =phase_fnc_solar_cloud(l, i, id)                        &
                 +ks_phf(l)*p_legendre_ls(l)                             &
@@ -433,13 +337,11 @@ SUBROUTINE opt_prop_water_cloud(ierr                                    &
           DO ll=1, n_cloud_profile(i)
             l=i_cloud_profile(ll, i)
             forward_solar_cloud(l, i)                                   &
-              =ks_phf(l)*asymmetry_process(l)
+              =ks_phf(l)*asymmetry_process(l, i)
           END DO
         END IF
-
-      END IF
-
-    END DO
+      END DO
+    END IF
 
 
   ELSE IF (.NOT. l_henyey_greenstein_pf .AND.                           &
