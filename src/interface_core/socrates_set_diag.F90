@@ -556,37 +556,49 @@ end subroutine sum_flux_channels
 
 !------------------------------------------------------------------------------
 subroutine sum_tile_channels(field, field_channels)
-  
+
   implicit none
-  
+
   real(RealExt), intent(inout), pointer :: field(:, :)
   real(RealK), intent(in), allocatable :: field_channels(:, :, :)
-  
-  integer :: ll
-  
+
+  integer :: j
+
   if (associated(field).and.present(n_tile)) then
-    field = 0.0_RealExt
+    if (l_last) then
+      do l=1, n_profile
+        do i=1, n_tile
+          field(i, list(l)) = 0.0_RealExt
+        end do
+      end do
+    else
+      do i=1, n_tile
+        do l=1, n_profile
+          field(list(l), i) = 0.0_RealExt
+        end do
+      end do
+    end if
     if (control%l_tile) then
       if (l_last) then
         do i=1, n_tile
-          do ll=1, bound%n_point_tile
-            l = bound%list_tile(ll)
+          do j=1, bound%n_point_tile
+            l = bound%list_tile(j)
             field(i, list(l)) &
-              = real(sum(field_channels(ll, i, 1:control%n_channel)), RealExt)
+              = real(sum(field_channels(j, i, 1:control%n_channel)), RealExt)
           end do
         end do
       else
         do i=1, n_tile
-          do ll=1, bound%n_point_tile
-            l = bound%list_tile(ll)
+          do j=1, bound%n_point_tile
+            l = bound%list_tile(j)
             field(list(l), i) &
-              = real(sum(field_channels(ll, i, 1:control%n_channel)), RealExt)
+              = real(sum(field_channels(j, i, 1:control%n_channel)), RealExt)
           end do
         end do
       end if
     end if
   end if
-  
+
 end subroutine sum_tile_channels
 
 
