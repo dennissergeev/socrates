@@ -52,6 +52,14 @@ MODULE def_hitran_record
   CHARACTER (LEN = 74), PARAMETER :: hitran_record_frmt = &
     "(i2,i1,f12.6,2(1pe10.3),2(0pf5.4),f10.4,f4.2,f8.6,4a15,6i1,6i2,a1,2f7.1)"
 
+! Bespoke format for HITRAN Parameters downloaded from hitran.org
+  CHARACTER (LEN = 74), PARAMETER :: hitran_bespoke_frmt = &
+    "(i3,i3,f12.6,2(1pe10.3),f6.4,f5.3,f10.4,f7.4,f9.6,4a15,6i1,6i2,a1,2f7.1)"
+
+! Pointer to either standard or bespoke format depending on input options
+! (default set here, options set in corr_k.f90)
+  CHARACTER (LEN = 74) :: hitran_record_format = hitran_record_frmt
+
   TYPE StrHitranRec
 
     INTEGER           :: mol_num         ! 1=h20, 2=co2, 3=o3, etc

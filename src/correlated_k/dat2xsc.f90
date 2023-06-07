@@ -9,7 +9,8 @@ PROGRAM dat2xsc
 
   USE realtype_rd, ONLY: RealK
   USE def_std_io_icf, ONLY: iu_err
-  USE def_hitran_record, ONLY: StrXscHead, uvxsc_header_frmt, uvxsc_data_frmt
+  USE def_hitran_record, ONLY: StrXscHead, &
+    xsc_header_format, xsc_data_format, uvxsc_header_frmt, uvxsc_data_frmt
 
   IMPLICIT NONE
 
@@ -17,7 +18,7 @@ PROGRAM dat2xsc
 !   Error flag
   INTEGER :: iu_dat, iu_xsc
 !   File unit numbers
-  INTEGER :: i, j, jj, k
+  INTEGER :: jj, k, l
   INTEGER :: data_length
   TYPE(StrXscHead) :: xsc
   INTEGER :: xsc_res
@@ -108,6 +109,15 @@ PROGRAM dat2xsc
     STOP
   END IF
 
+! Select the cross-section file format based on the filename extension
+! The default is the HITRAN xsc format.
+  l = LEN_TRIM(outfile)
+  IF (outfile(MAX(l-5,1):l) == '.uvxsc') THEN
+    ! A bespoke format is used for UV cross-section data
+    xsc_header_format = uvxsc_header_frmt
+    xsc_data_format = uvxsc_data_frmt
+  END IF
+
   DO jj = 1, data_length
     k = data_length + 1 - jj
     xsc%wavenumber_min = out_wn(1,k)
@@ -120,8 +130,8 @@ PROGRAM dat2xsc
     xsc%max_xsc = MAXVAL(xsc_data)
     WRITE(xsc%resolution,'(i5)') xsc_res
 !   Write out the data in HITRAN xsc format
-    WRITE(iu_xsc, uvxsc_header_frmt) xsc
-    WRITE(iu_xsc, uvxsc_data_frmt) xsc_data
+    WRITE(iu_xsc, xsc_header_format) xsc
+    WRITE(iu_xsc, xsc_data_format) xsc_data
     DEALLOCATE(xsc_data)
   END DO
 

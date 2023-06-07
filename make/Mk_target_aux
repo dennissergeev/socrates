@@ -10,7 +10,8 @@ AUX_CDL: l_run_cdl run_mono assign_subcols dentomix dentoq format_size \
 		gen_view_cdl hmrsph inc_field ice_size interp \
 		merge mid_point nettohr phgt prep_opt_profile \
 		raw_input scale_field solar_inc vert_int wadd \
-		samson2cdl cdl2samson runes_driver
+		samson2cdl cdl2samson runes_driver phoenix2sol \
+		orb_elem
 
 
 TARGET_AUX: AUX_CDL AUX_CDF
@@ -149,3 +150,9 @@ wadd: wadd.o radlib.$(LIBSUFFIX)
 calc_horizon_angles: calc_horizon_angles.o radlib.$(LIBSUFFIX)
 	$(LINK) -L$(LIBCDF_PATH) -o calc_horizon_angles  \
 	   calc_horizon_angles.o $(CDF_OBJ) radlib.$(LIBSUFFIX) -l$(LIBCDF_NAME)
+
+phoenix2sol: phoenix2sol.o radlib.$(LIBSUFFIX)
+	$(LINK) -o phoenix2sol phoenix2sol.o radlib.$(LIBSUFFIX)
+
+orb_elem: orb_elem.o radlib.$(LIBSUFFIX)
+	$(LINK) -o orb_elem orb_elem.o radlib.$(LIBSUFFIX)

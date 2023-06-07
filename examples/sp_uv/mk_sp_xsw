@@ -14,7 +14,8 @@ if [ ! $SW_DATA ] ; then
 fi
 
 procs=24
-solspec='cmip6_picontrol_solar_spectrum'
+specfile="sp_xsw_photol"
+solspec="$RAD_DATA/solar/cmip6_picontrol"
 
 HITRAN_DIR="$RAD_DATA/gases"
 
@@ -118,8 +119,8 @@ so2_pt_file="$RAD_DATA/gases/pt_so2_uv"
 ref_pt_file="$RAD_DATA/gases/ref_pt"
 
 # Create skeleton spectral file
-specfile="sp_xsw_skel"
-rm -f $specfile
+skelfile="sp_xsw_skel"
+rm -f $skelfile
 . mk_sp_xsw_skel > /dev/null
 
 # Gases
@@ -130,7 +131,7 @@ rm -f $specfile
 ##   rm -f ch4_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CH4 \
 ##     -R 1 1 -i 100.0 -l 6 1.0e-2 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o ch4_xuv10_l -m ch4_xuv10_lm -L $SW_DATA/ch4_lbl_xuv10.nc -np $procs \
 ##      > ch4_xuv10_log
 ## fi
@@ -139,7 +140,7 @@ rm -f $specfile
 ##   rm -f ch4_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CH4 \
 ##     -R 2 2 -i 10.0 -l 6 1.0e-2 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o ch4_euv10_l -m ch4_euv10_lm -L $SW_DATA/ch4_lbl_euv10.nc -np $procs \
 ##      > ch4_euv10_log
 ## fi
@@ -148,7 +149,7 @@ rm -f $specfile
 ##   rm -f ch4_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CH4 \
 ##     -R 3 4 -i 1.0 -l 6 1.0e-2 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o ch4_uv10_l -m ch4_uv10_lm -L $SW_DATA/ch4_lbl_uv10.nc -np $procs \
 ##      > ch4_uv10_log
 ## fi
@@ -159,7 +160,7 @@ rm -f $specfile
 ##   rm -f co2_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO2 \
 ##     -R 1 9 -i 100.0 -l 2 1.0e1 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co2_xuv10_l -m co2_xuv10_lm -L $SW_DATA/co2_lbl_xuv10.nc -np $procs \
 ##      > co2_xuv10_log
 ## fi
@@ -168,7 +169,7 @@ rm -f $specfile
 ##   rm -f co2_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO2 \
 ##     -R 10 99 -i 10.0 -l 2 1.0e1 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co2_euv10_l -m co2_euv10_lm -L $SW_DATA/co2_lbl_euv10.nc -np $procs \
 ##      > co2_euv10_log
 ## fi
@@ -177,7 +178,7 @@ rm -f $specfile
 ##   rm -f co2_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO2 \
 ##     -R 100 299 -i 1.0 -l 2 1.0e1 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co2_uv10_l -m co2_uv10_lm -L $SW_DATA/co2_lbl_uv10.nc -np $procs \
 ##      > co2_uv10_log
 ## fi
@@ -188,7 +189,7 @@ rm -f $specfile
 ##   rm -f co_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO \
 ##     -R 7 9 -i 100.0 -l 5 2.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co_xuv10_l -m co_xuv10_lm -L $SW_DATA/co_lbl_xuv10.nc -np $procs \
 ##      > co_xuv10_log
 ## fi
@@ -197,7 +198,7 @@ rm -f $specfile
 ##   rm -f co_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO \
 ##     -R 10 99 -i 10.0 -l 5 2.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co_euv10_l -m co_euv10_lm -L $SW_DATA/co_lbl_euv10.nc -np $procs \
 ##      > co_euv10_log
 ## fi
@@ -206,7 +207,7 @@ rm -f $specfile
 ##   rm -f co_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_CO \
 ##     -R 100 163 -i 1.0 -l 5 2.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o co_uv10_l -m co_uv10_lm -L $SW_DATA/co_lbl_uv10.nc -np $procs \
 ##      > co_uv10_log
 ## fi
@@ -217,7 +218,7 @@ rm -f $specfile
 ##   rm -f h2_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_H2 \
 ##     -R 5 9 -i 100.0 -l 23 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o h2_xuv10_l -m h2_xuv10_lm -L $SW_DATA/h2_lbl_xuv10.nc -np $procs \
 ##      > h2_xuv10_log
 ## fi
@@ -226,7 +227,7 @@ rm -f $specfile
 ##   rm -f h2_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_H2 \
 ##     -R 10 99 -i 10.0 -l 23 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o h2_euv10_l -m h2_euv10_lm -L $SW_DATA/h2_lbl_euv10.nc -np $procs \
 ##      > h2_euv10_log
 ## fi
@@ -235,7 +236,7 @@ rm -f $specfile
 ##   rm -f h2_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_H2 \
 ##     -R 100 116 -i 1.0 -l 23 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o h2_uv10_l -m h2_uv10_lm -L $SW_DATA/h2_lbl_uv10.nc -np $procs \
 ##      > h2_uv10_log
 ## fi
@@ -246,7 +247,7 @@ rm -f $specfile
 ##   rm -f n2o_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_N2O \
 ##     -R 7 9 -i 100.0 -l 4 5.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o n2o_xuv10_l -m n2o_xuv10_lm -L $SW_DATA/n2o_lbl_xuv10.nc -np $procs \
 ##      > n2o_xuv10_log
 ## fi
@@ -255,7 +256,7 @@ rm -f $specfile
 ##   rm -f n2o_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_N2O \
 ##     -R 10 99 -i 10.0 -l 4 5.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o n2o_euv10_l -m n2o_euv10_lm -L $SW_DATA/n2o_lbl_euv10.nc -np $procs \
 ##      > n2o_euv10_log
 ## fi
@@ -264,7 +265,7 @@ rm -f $specfile
 ##   rm -f n2o_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_N2O \
 ##     -R 100 249 -i 1.0 -l 4 5.0e-3 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o n2o_uv10_l -m n2o_uv10_lm -L $SW_DATA/n2o_lbl_uv10.nc -np $procs \
 ##      > n2o_uv10_log
 ## fi
@@ -275,7 +276,7 @@ rm -f $specfile
 ##   rm -f no2_xuv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_NO2 \
 ##     -R 7 9 -i 100.0 -l 10 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o no2_xuv10_l -m no2_xuv10_lm -L $SW_DATA/no2_lbl_xuv10.nc -np $procs \
 ##      > no2_xuv10_log
 ## fi
@@ -284,7 +285,7 @@ rm -f $specfile
 ##   rm -f no2_euv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_NO2 \
 ##     -R 10 99 -i 10.0 -l 10 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o no2_euv10_l -m no2_euv10_lm -L $SW_DATA/no2_lbl_euv10.nc -np $procs \
 ##      > no2_euv10_log
 ## fi
@@ -293,7 +294,7 @@ rm -f $specfile
 ##   rm -f no2_uv10_l*
 ##   Ccorr_k -F $pt_uv -UVX $UV_NO2 \
 ##     -R 100 320 -i 1.0 -l 10 5.0e-4 -t 1.0e-3  \
-##     -s $specfile +S $solspec \
+##     -s $skelfile +S $solspec \
 ##     -o no2_uv10_l -m no2_uv10_lm -L $SW_DATA/no2_lbl_uv10.nc -np $procs \
 ##      > no2_uv10_log
 ## fi
@@ -304,7 +305,7 @@ if [ ! -s n2_xuv_x_l ] || [ ! -s $SW_DATA/n2_lbl_xuv_x.nc ] ; then
   rm -f n2_xuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_N2_HIRES \
     -R 1 5 -i 1000.0 -l 13 7.5e3 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o n2_xuv_x_l -m n2_xuv_x_lm -L $SW_DATA/n2_lbl_xuv_x.nc -np $procs \
      > n2_xuv_x_log
 fi
@@ -313,7 +314,7 @@ if [ ! -s n2_euv_x_l ] || [ ! -s $SW_DATA/n2_lbl_euv_x.nc ] ; then
   rm -f n2_euv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_N2_HIRES \
     -R 6 14 -i 10.0 -l 13 7.5e3 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o n2_euv_x_l -m n2_euv_x_lm -L $SW_DATA/n2_lbl_euv_x.nc -np $procs \
      > n2_euv_x_log
 fi
@@ -324,7 +325,7 @@ if [ ! -s o2_xuv_x_l ] || [ ! -s $SW_DATA/o2_lbl_xuv_x.nc ] ; then
   rm -f o2_xuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O2_HIRES \
     -R 1 5 -i 1000.0 -l 7 2.3e3 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o2_xuv_x_l -m o2_xuv_x_lm -L $SW_DATA/o2_lbl_xuv_x.nc -np $procs \
      > o2_xuv_x_log
 fi
@@ -333,7 +334,7 @@ if [ ! -s o2_euv_x_l ] || [ ! -s $SW_DATA/o2_lbl_euv_x.nc ] ; then
   rm -f o2_euv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O2_HIRES \
     -R 6 14 -i 10.0 -l 7 2.3e3 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o2_euv_x_l -m o2_euv_x_lm -L $SW_DATA/o2_lbl_euv_x.nc -np $procs \
      > o2_euv_x_log
 fi
@@ -342,7 +343,7 @@ if [ ! -s o2_uv_x_l ] || [ ! -s $SW_DATA/o2_lbl_uv_x.nc ] ; then
   rm -f o2_uv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O2_HIRES \
     -R 15 20 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o2_uv_x_l -m o2_uv_x_lm -L $SW_DATA/o2_lbl_uv_x.nc -np $procs \
      > o2_uv_x_log
 fi
@@ -353,7 +354,7 @@ if [ ! -s o3_uv_x_l ] || [ ! -s $SW_DATA/o3_lbl_uv_x.nc ] ; then
   rm -f o3_uv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O3 \
     -R 17 17 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o3_uv_x_l -m o3_uv_x_lm -L $SW_DATA/o3_lbl_uv_x.nc -np $procs \
      > o3_uv_x_log
 fi
@@ -362,7 +363,7 @@ if [ ! -s o3_nuv_x_l ] ; then
   rm -f o3_nuv_x_l*
   Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
     -R 18 21 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
-    -s $specfile +S $solspec -q -r $ref_pt_file \
+    -s $skelfile +S $solspec -q -r $ref_pt_file \
     -o o3_nuv_x_l -m o3_nuv_x_lm -L $SW_DATA/o3_lbl_nuv_x.nc -np $procs \
     > o3_nuv_x_log
 fi
@@ -371,7 +372,7 @@ if [ ! -s o3_uva_x_l ] ; then
   rm -f o3_uva_x_l*
   Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
     -R 22 22 -i 1.0 -l 3 1.0e-2 -n 2  \
-    -s $specfile +S $solspec -q -r $ref_pt_file \
+    -s $skelfile +S $solspec -q -r $ref_pt_file \
     -o o3_uva_x_l -m o3_uva_x_lm -L $SW_DATA/o3_lbl_uva_x.nc -np $procs \
     > o3_uva_x_log
 fi
@@ -380,7 +381,7 @@ if [ ! -s o3_vis_x_l ] ; then
   rm -f o3_vis_x_l*
   Ccorr_k -F $o3_pt_file -X $HITRAN_UV_O3 \
     -R 23 24 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
-    -s $specfile +S $solspec -q -r $ref_pt_file \
+    -s $skelfile +S $solspec -q -r $ref_pt_file \
     -o o3_vis_x_l -m o3_vis_x_lm -L $SW_DATA/o3_lbl_vis_x.nc -np $procs \
     > o3_vis_x_log
 fi
@@ -389,7 +390,7 @@ if [ ! -s o3_x_l ] ; then
   rm -f o3_x_l*
   Ccorr_k -F $pt_file -D $HITRAN_O3 \
     -R 26 26 -c 2500.0 -i 1.0 -l 3 1.0e-2 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o o3_x_l -m o3_x_lm -L $SW_DATA/o3_lbl_xsw.nc -np $procs \
     > o3_x_log
 fi
@@ -400,7 +401,7 @@ if [ ! -s o_xuv_x_l ] || [ ! -s $SW_DATA/o_lbl_xuv_x.nc ] ; then
   rm -f o_xuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O \
     -R 1 5 -i 1000.0 -l 39 2.6e-4 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o_xuv_x_l -m o_xuv_x_lm -L $SW_DATA/o_lbl_xuv_x.nc -np $procs \
      > o_xuv_x_log
 fi
@@ -409,7 +410,7 @@ if [ ! -s o_euv_x_l ] || [ ! -s $SW_DATA/o_lbl_euv_x.nc ] ; then
   rm -f o_euv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_O \
     -R 6 12 -i 10.0 -l 39 2.6e-4 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o o_euv_x_l -m o_euv_x_lm -L $SW_DATA/o_lbl_euv_x.nc -np $procs \
      > o_euv_x_log
 fi
@@ -420,7 +421,7 @@ if [ ! -s n_xuv_x_l ] || [ ! -s $SW_DATA/n_lbl_xuv_x.nc ] ; then
   rm -f n_xuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_N \
     -R 1 5 -i 1000.0 -l 40 3.0e-10 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o n_xuv_x_l -m n_xuv_x_lm -L $SW_DATA/n_lbl_xuv_x.nc -np $procs \
      > n_xuv_x_log
 fi
@@ -429,7 +430,7 @@ if [ ! -s n_euv_x_l ] || [ ! -s $SW_DATA/n_lbl_euv_x.nc ] ; then
   rm -f n_euv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_N \
     -R 6 12 -i 10.0 -l 40 3.0e-10 -t 1.0e-2  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o n_euv_x_l -m n_euv_x_lm -L $SW_DATA/n_lbl_euv_x.nc -np $procs \
      > n_euv_x_log
 fi
@@ -440,7 +441,7 @@ if [ ! -s h2o_xuv_x_l ] || [ ! -s $SW_DATA/h2o_lbl_xuv_x.nc ] ; then
   rm -f h2o_xuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_H2O \
     -R 5 5 -i 1000.0 -l 1 1.0e-5 -t 1.0e-3  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o h2o_xuv_x_l -m h2o_xuv_x_lm -L $SW_DATA/h2o_lbl_xuv_x.nc \
     -np $procs \
      > h2o_xuv_x_log
@@ -450,7 +451,7 @@ if [ ! -s h2o_euv_x_l ] || [ ! -s $SW_DATA/h2o_lbl_euv_x.nc ] ; then
   rm -f h2o_euv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_H2O \
     -R 6 14 -i 10.0 -l 1 1.0e-5 -t 1.0e-3  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o h2o_euv_x_l -m h2o_euv_x_lm -L $SW_DATA/h2o_lbl_euv_x.nc \
     -np $procs \
      > h2o_euv_x_log
@@ -460,7 +461,7 @@ if [ ! -s h2o_fuv_x_l ] || [ ! -s $SW_DATA/h2o_lbl_fuv_x.nc ] ; then
   rm -f h2o_fuv_x_l*
   Ccorr_k -F $pt_uv -UVX $UV_H2O \
     -R 15 17 -i 1.0 -l 1 1.0e-5 -t 1.0e-3  \
-    -s $specfile +S $solspec \
+    -s $skelfile +S $solspec \
     -o h2o_fuv_x_l -m h2o_fuv_x_lm -L $SW_DATA/h2o_lbl_fuv_x.nc \
     -np $procs \
      > h2o_fuv_x_log
@@ -481,7 +482,7 @@ if [ ! -s h2o_x_23l ] ; then
   rm -f h2o_x_23l*
   Ccorr_k -F $pt_file -D $HITRAN_H2O \
     -R 23 23 -c 2500.0 -i 1.0 -l 1 1.0e2 -n 2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -k -x $RAD_DATA/continua/caviar_frn \
     -o h2o_x_23l -m h2o_x_23lm -L $SW_DATA/h2o_lbl_swf.nc
 fi
@@ -490,7 +491,7 @@ if [ ! -s h2o_x_24l ] ; then
   rm -f h2o_x_24l*
   Ccorr_k -F $pt_file -D $HITRAN_H2O \
     -R 24 24 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -k -x $RAD_DATA/continua/caviar_frn \
     -o h2o_x_24l -m h2o_x_24lm -L $SW_DATA/h2o_lbl_swf.nc
 fi
@@ -499,7 +500,7 @@ if [ ! -s h2o_x_25l ] ; then
   rm -f h2o_x_25l*
   Ccorr_k -F $pt_file -D $HITRAN_H2O \
     -R 25 25 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -k -x $RAD_DATA/continua/caviar_frn \
     -o h2o_x_25l -m h2o_x_25lm -L $SW_DATA/h2o_lbl_swf.nc
 fi
@@ -508,7 +509,7 @@ if [ ! -s h2o_x_26l ] ; then
   rm -f h2o_x_26l*
   Ccorr_k -F $pt_file -D $HITRAN_H2O \
     -R 26 26 -c 2500.0 -i 1.0 -l 1 1.0e2 -t 1.2e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -k -x $RAD_DATA/continua/caviar_frn \
     -o h2o_x_26l -m h2o_x_26lm -L $SW_DATA/h2o_lbl_swf.nc
 fi
@@ -519,7 +520,7 @@ if [ ! -s h2o_x_s ] ; then
   Ccorr_k -C 33 1.0e-4 1.0e4 -F $pt_file -D $HITRAN_H2O \
     -P 7 -R 23 26 -c 2500.0 -i 1.0 \
     -e $RAD_DATA/continua/caviar_s296 $RAD_DATA/continua/caviar_s260 \
-    -k -s $specfile +S $solspec -q -r $ref_pt_file \
+    -k -s $skelfile +S $solspec -q -r $ref_pt_file \
     -o h2o_x_s -m h2o_x_sm -L $SW_DATA/h2o_lbl_swf.nc
 fi
 
@@ -538,7 +539,7 @@ if [ ! -s co2_x_25l ] ; then
   rm -f co2_x_25l*
   Ccorr_k -F $pt_file -D $HITRAN_CO2 \
     -R 25 25 -c 2500.0 -i 1.0 -l 2 1.0e1 -t 4.0e-3  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o co2_x_25l -m co2_x_25lm -L $SW_DATA/co2_lbl_sw.nc
 fi
 if [ ! -s co2_x_26l ] ; then
@@ -546,7 +547,7 @@ if [ ! -s co2_x_26l ] ; then
   rm -f co2_x_26l*
   Ccorr_k -F $pt_file -D $HITRAN_CO2 \
     -R 26 26 -c 2500.0 -i 1.0 -l 2 1.0e1 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o co2_x_26l -m co2_x_26lm -L $SW_DATA/co2_lbl_sw.nc
 fi
 
@@ -555,7 +556,7 @@ if [ ! -s n2o_x_26l ] ; then
   rm -f n2o_x_26l*
   Ccorr_k -F $pt_file -D $HITRAN_N2O \
     -R 26 26 -c 2500.0 -i 1.0 -l 4 5.0e-3 -t 6.0e-3  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o n2o_x_26l -m n2o_x_26lm -L $SW_DATA/n2o_lbl_xsw.nc
 fi
 
@@ -574,7 +575,7 @@ if [ ! -s ch4_x_25l ] ; then
   rm -f ch4_x_25l*
   Ccorr_k -F $pt_file -D $HITRAN_CH4 \
     -R 25 25 -c 2500.0 -i 1.0 -l 6 1.0e-2 -t 6.0e-3  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o ch4_x_25l -m ch4_x_25lm -L $SW_DATA/ch4_lbl_sw.nc
 fi
 if [ ! -s ch4_x_26l ] ; then
@@ -582,7 +583,7 @@ if [ ! -s ch4_x_26l ] ; then
   rm -f ch4_x_26l*
   Ccorr_k -F $pt_file -D $HITRAN_CH4 \
     -R 26 26 -c 2500.0 -i 1.0 -l 6 1.0e-2 -t 6.0e-3  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o ch4_x_26l -m ch4_x_26lm -L $SW_DATA/ch4_lbl_sw.nc
 fi
 
@@ -601,7 +602,7 @@ if [ ! -s o2_x_23l ] ; then
   rm -f o2_x_23l*
   Ccorr_k -F $pt_file -D $HITRAN_O2 \
     -R 23 23 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o o2_x_23l -m o2_x_23lm -L $SW_DATA/o2_lbl_sw.nc
 fi
 if [ ! -s o2_x_24l ] ; then
@@ -609,7 +610,7 @@ if [ ! -s o2_x_24l ] ; then
   rm -f o2_x_24l*
   Ccorr_k -F $pt_file -D $HITRAN_O2 \
     -R 24 24 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 2.2e-3  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o o2_x_24l -m o2_x_24lm -L $SW_DATA/o2_lbl_sw.nc
 fi
 if [ ! -s o2_x_25l ] ; then
@@ -617,7 +618,7 @@ if [ ! -s o2_x_25l ] ; then
   rm -f o2_x_25l*
   Ccorr_k -F $pt_file -D $HITRAN_O2 \
     -R 25 25 -c 2500.0 -i 1.0 -l 7 2.3e3 -t 1.0e-2  \
-    -s $specfile +S $solspec -lk \
+    -s $skelfile +S $solspec -lk \
     -o o2_x_25l -m o2_x_25lm -L $SW_DATA/o2_lbl_sw.nc
 fi
 
@@ -626,13 +627,13 @@ fi
 
 if [ ! -s fit_sw_drop5_26 ] ; then
   rm -f mon_sw_drop5_26
-  Cscatter_average -s $specfile -P 1 -t -S $solspec \
+  Cscatter_average -s $skelfile -P 1 -t -S $solspec \
     -f 5 fit_sw_drop5_26 mon_sw_drop5_26 1.e3 \
     $RAD_DATA/cloud/scatter_drop_sw_type5
 fi
 if [ ! -s fit_sw_ice8_26 ] ; then
   rm -f mon_sw_ice8_26
-  Cscatter_average -s $specfile -P 1 -w -S $solspec \
+  Cscatter_average -s $skelfile -P 1 -w -S $solspec \
     -f 12 fit_sw_ice8_26 mon_sw_ice8_26 920 \
     $RAD_DATA/cloud/scatter_ice_sw_type8
 fi
@@ -641,113 +642,119 @@ fi
 # Aerosols
 
 if [ ! -s soluble_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a soluble_26.avg $RAD_DATA/aerosol/soluble.mon
 fi
 if [ ! -s dustlike_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dustlike_26.avg $RAD_DATA/aerosol/dustlike.mon
 fi
 if [ ! -s oceanic_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a oceanic_26.avg $RAD_DATA/aerosol/oceanic.mon
 fi
 if [ ! -s soot_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a soot_26.avg $RAD_DATA/aerosol/soot.mon
 fi
 if [ ! -s sulphuric_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a sulphuric_26.avg $RAD_DATA/aerosol/sulphuric.mon
 fi
 if [ ! -s accumsulp_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a accumsulp_26.avg $RAD_DATA/aerosol/accumsulp.mon
 fi
 if [ ! -s aitkensulp_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a aitkensulp_26.avg $RAD_DATA/aerosol/aitkensulp.mon
 fi
 if [ ! -s freshsoot_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a freshsoot_26.avg $RAD_DATA/aerosol/freshsoot.mon
 fi
 if [ ! -s agedsoot_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a agedsoot_26.avg $RAD_DATA/aerosol/agedsoot.mon
 fi
 if [ ! -s seasaltfilm_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a seasaltfilm_26.avg $RAD_DATA/aerosol/seasaltfilm.mon
 fi
 if [ ! -s seasaltjet_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a seasaltjet_26.avg $RAD_DATA/aerosol/seasaltjet.mon
 fi
 if [ ! -s dust_div1_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div1_26.avg $RAD_DATA/aerosol/dust_div1.mon
 fi
 if [ ! -s dust_div2_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div2_26.avg $RAD_DATA/aerosol/dust_div2.mon
 fi
 if [ ! -s dust_div3_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div3_26.avg $RAD_DATA/aerosol/dust_div3.mon
 fi
 if [ ! -s dust_div4_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div4_26.avg $RAD_DATA/aerosol/dust_div4.mon
 fi
 if [ ! -s dust_div5_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div5_26.avg $RAD_DATA/aerosol/dust_div5.mon
 fi
 if [ ! -s dust_div6_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a dust_div6_26.avg $RAD_DATA/aerosol/dust_div6.mon
 fi
 if [ ! -s freshbiomass_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a freshbiomass_26.avg $RAD_DATA/aerosol/freshbiomass.mon
 fi
 if [ ! -s agedbiomass_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a agedbiomass_26.avg $RAD_DATA/aerosol/agedbiomass.mon
 fi
 if [ ! -s biogenic_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a biogenic_26.avg $RAD_DATA/aerosol/biogenic.mon
 fi
 if [ ! -s freshocff_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a freshocff_26.avg $RAD_DATA/aerosol/freshocff.mon
 fi
 if [ ! -s agedocff_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a agedocff_26.avg $RAD_DATA/aerosol/agedocff.mon
 fi
 if [ ! -s nitrate_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a nitrate_26.avg $RAD_DATA/aerosol/nitrate.mon
 fi
 if [ ! -s twobindust_1_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a twobindust_1_26.avg $RAD_DATA/aerosol/twobindust_1.mon
 fi
 if [ ! -s twobindust_2_26.avg ] ; then
-Cscatter_average -s $specfile -P 1 -w -S $solspec \
+Cscatter_average -s $skelfile -P 1 -w -S $solspec \
   -a twobindust_2_26.avg $RAD_DATA/aerosol/twobindust_2.mon
 fi
 
-mv sp_xsw sp_xsw_old
-mv sp_xsw_k sp_xsw_old_k
+mv ${specfile} ${specfile}_old
+mv ${specfile}_k ${specfile}_old_k
 # Construct spectral file
 prep_spec << EOF
-sp_xsw_skel
+${skelfile}
 n
-sp_xsw
+${specfile}
+2
+n
+${solspec}
+y
+3
+a
 5
 h2o_xuv_x_l
 5
@@ -912,7 +919,7 @@ EOF
 # Column amount for Atomic Oxygen     0.262064E-03    0.228072E-03
 # Column amount for Atomic Nitrogen   0.299410E-09    0.260047E-09
 tidy_90 <<EOF
-sp_xsw
+${specfile}
 o
 6
 0.156458E-04
@@ -931,12 +938,9 @@ o
 -1
 EOF
 
-mv sp_xsw_photol sp_xsw_photol_old
-mv sp_xsw_photol_k sp_xsw_photol_old_k
 prep_spec << EOF
-sp_xsw
-n
-sp_xsw_photol
+${specfile}
+a
 17
 2
 3
@@ -952,7 +956,7 @@ sp_xsw_photol
 21
 22
 0
-cmip6_picontrol_solar_spectrum
+${solspec}
 a
 0
 0

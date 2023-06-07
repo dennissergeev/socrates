@@ -131,30 +131,6 @@
         ENDDO
       ENDDO
 !
-!     Nitrogen continuum.
-      L_SET_CONTINUUM=.FALSE.
-      DO J=1, N_BAND
-        DO K=1, N_BAND_CONTINUUM(J)
-          IF ( (INDEX_CONTINUUM(J, K).EQ.IP_N2_CONTINUUM).AND.
-     &         (.NOT.L_SET_CONTINUUM) ) THEN
-            WRITE(IU_USER, '(/A, A, /A)') 'ENTER AMOUNT OF '
-     &        , 'NITROGEN TO TEST FOR NEGLECTING THE NITROGEN '
-     &        , 'CONTINUUM IN A BAND.'
-3              READ(IU_STDIN, *, IOSTAT=IOS) COLUMN(IP_N2_CONTINUUM)
-            IF (IOS.NE.0) THEN
-              WRITE(IU_ERR, '(A)') '+++ ERRONEOUS RESPONSE:'
-              IF (LOCK_CODE(.TRUE.)) THEN
-                INCLUDE 'batch_error_main.finc'
-              ELSE
-                WRITE(IU_USER, '(A)') 'PLEASE RE-TYPE.'
-                GOTO 3
-              ENDIF
-            ENDIF
-            L_SET_CONTINUUM=.TRUE.
-          ENDIF
-        ENDDO
-      ENDDO
-!
       WRITE(IU_USER, '(/A)')
      &  'ENTER THE TRANSMISSION FOR NEGLECTING CONTINUA.'
 4     READ(IU_STDIN, *, IOSTAT=IOS) TRANS_NEGLECT

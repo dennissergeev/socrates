@@ -64,6 +64,7 @@ do case $1 in
       -L) lanczos=T ; shift ;;
       -m) rad_mcica_sigma=$2 ; shift 2 ;;
       +m) rad_mcica_sampling=$2 ; shift 2 ;;
+      -N) nml_file=$2 ; shift 2 ;;
       -n) c_nlte=n ; shift ;;
       -o) verbose=T ; shift ;;
       +P) sph_phtl=T ; shift ;;
@@ -108,8 +109,13 @@ fi
 #
 # BUILD UP INPUT FILE TO INTERACTIVE VERSION CHECKING AS WE GO
 #
+if [ "$nml_file" ] 
+   then echo $nml_file > /tmp/lrcdl.$$
+else
+   echo " " > /tmp/lrcdl.$$
+fi
 if [ "$spectral_file" ] 
-   then echo $spectral_file > /tmp/lrcdl.$$
+   then echo $spectral_file >> /tmp/lrcdl.$$
 else
    echo "Spectral file not set."
    exit  

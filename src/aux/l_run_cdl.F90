@@ -36,8 +36,8 @@ PROGRAM l_run_cdl
   USE rad_pcf
   USE gas_list_pcf
   USE input_head_pcf
-  USE rad_ccf, ONLY: seconds_per_day, grav_acc, cp_air_dry, r, c_virtual, &
-    earth_radius, pi
+  USE rad_ccf, ONLY: seconds_per_day, grav_acc, cp_air_dry, r_gas_dry, &
+                     mol_weight_air, pi
   USE socrates_set_spectrum, only: set_spectrum
   USE socrates_set_cld_mcica, only: set_cld_mcica
 
@@ -1031,14 +1031,15 @@ PROGRAM l_run_cdl
   IF (Spectrum%Cont%index_water > 0) THEN
     DO i=1, atm%n_layer
       DO l=1, atm%n_profile
-        atm%density(l, i)=atm%p(l, i)/(r*atm%t(l, i)*(1.0e+00_RealK     &
-          + c_virtual*atm%gas_mix_ratio(l, i, Spectrum%Cont%index_water)))
+        atm%density(l, i)=atm%p(l, i)/(r_gas_dry*atm%t(l, i)*(1.0e+00_RealK &
+          + (mol_weight_air/(molar_weight(ip_h2o)*1.0E-03_RealK) - 1.0_RealK) &
+          * atm%gas_mix_ratio(l, i, Spectrum%Cont%index_water)))
       END DO
     END DO
   ELSE
     DO i=1, atm%n_layer
       DO l=1, atm%n_profile
-        atm%density(l, i)=atm%p(l, i)/(r*atm%t(l, i))
+        atm%density(l, i)=atm%p(l, i)/(r_gas_dry*atm%t(l, i))
       END DO
     END DO   
   END IF

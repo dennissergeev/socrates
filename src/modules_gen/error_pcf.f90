@@ -24,5 +24,7 @@ MODULE error_pcf
 !                           Interpolation range error
   INTEGER, PARAMETER  ::  i_err_exist = 6
 !                           Existence error
+  INTEGER, PARAMETER  ::  i_warning = -1
+!                           Non-fatal warning
 
 END MODULE error_pcf

@@ -299,7 +299,7 @@
 	 
 ! If the limits agree then interpolate filter function onto regular 
 ! grid. This step is required in order to do the integration. If the
-! linits do not agree the weights are all set to 1.
+! limits do not agree the weights are all set to 1.
 
 ! EPS1 is used as a dummy variable     
       

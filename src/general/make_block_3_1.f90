@@ -106,8 +106,8 @@ SUBROUTINE make_block_3_1(Sp, Sol, Refract, l_h2he_atm)
           Refract%wavelength, Refract%re_part, Refract%n_points)
 
         Sp%Rayleigh%rayleigh_coeff(i)=trapezoid(n_int, wave_int, product_int)
-        Sp%Rayleigh%rayleigh_coeff(i)= &
-          Sp%Rayleigh%rayleigh_coeff(i)/trapezoid(n_int, wave_int, weight_int)
+        Sp%Rayleigh%rayleigh_coeff(i)=Sp%Rayleigh%rayleigh_coeff(i) &
+          / MAX(trapezoid(n_int, wave_int, weight_int), TINY(1.0_RealK))
       
       ELSE      
         n_int=1
@@ -123,8 +123,8 @@ SUBROUTINE make_block_3_1(Sp, Sol, Refract, l_h2he_atm)
           *rayleigh_scatter_air(wave_int(n_int))
 
         Sp%Rayleigh%rayleigh_coeff(i)=trapezoid(n_int, wave_int, product_int)
-        Sp%Rayleigh%rayleigh_coeff(i) &
-          =Sp%Rayleigh%rayleigh_coeff(i)/trapezoid(n_int, wave_int, weight_int)
+        Sp%Rayleigh%rayleigh_coeff(i)=Sp%Rayleigh%rayleigh_coeff(i) &
+          / MAX(trapezoid(n_int, wave_int, weight_int), TINY(1.0_RealK))
       
       END IF
 
@@ -148,7 +148,7 @@ SUBROUTINE make_block_3_1(Sp, Sol, Refract, l_h2he_atm)
           =trapezoid(n_int, wave_int, product_int)
         Sp%Rayleigh%rayleigh_coeff_gas(j,i) &
           =Sp%Rayleigh%rayleigh_coeff_gas(j,i) &
-          /trapezoid(n_int, wave_int, weight_int)
+          /MAX(trapezoid(n_int, wave_int, weight_int), TINY(1.0_RealK))
       END DO
     CASE DEFAULT
       

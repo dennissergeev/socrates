@@ -25,8 +25,8 @@ MODULE rad_ccf
 !   Effective solar temperature
   REAL (RealK), PARAMETER :: solar_radius      = 6.957E+08_RealK
 !   Radius of the Sun (IAU recommendation: https://arxiv.org/abs/1510.07674)
-  REAL (RealK), PARAMETER :: earth_radius      = 6.37E+06_RealK
-!   Radius of the Earth
+  REAL (RealK), PROTECTED :: planet_radius     = 6.37E+06_RealK
+!   Radius of the planet
   REAL (RealK), PARAMETER :: eccentricity      = 1.67E-02_RealK
 !   Eccentricity of earth's orbit
   REAL (RealK), PARAMETER :: length_year       = 3.652422E+02_RealK
@@ -45,30 +45,24 @@ MODULE rad_ccf
 ! physical_constants_0_ccf, phycn03a
 ! ------------------------------------------------------------------
 ! Module setting physical constants for the Earth.
-  REAL (RealK), PARAMETER :: mol_weight_air  = 28.966e-03_RealK
+  REAL (RealK), PROTECTED :: mol_weight_air  = 28.966e-03_RealK
 !   Molar weight of dry air
   REAL (RealK), PARAMETER :: seconds_per_day = 8.6400e+04_RealK
 !   Number of seconds in a day
-  REAL (RealK), PARAMETER :: n2_mass_frac    = 0.781e+00_RealK
-!   Mass fraction of nitrogen
 
 ! ------------------------------------------------------------------
 ! physical_constants_1_ccf
 ! ------------------------------------------------------------------
-  REAL (RealK), PARAMETER :: grav_acc           = 9.80665_RealK
+  REAL (RealK), PROTECTED :: grav_acc           = 9.80665_RealK
 !   Acceleration due to gravity
   REAL (RealK), PARAMETER :: r_gas              = 8.3143_RealK
 !   Universal gas constant
-  REAL (RealK), PARAMETER :: r_gas_dry          = 287.026_RealK
+  REAL (RealK), PROTECTED :: r_gas_dry          = 287.026_RealK
 !   Gas constant for dry air
-  REAL (RealK), PARAMETER :: cp_air_dry         = 1.005e+03_RealK
+  REAL (RealK), PROTECTED :: cp_air_dry         = 1.005e+03_RealK
 !   Specific heat of dry air
-  REAL (RealK), PARAMETER :: ratio_molar_weight = 28.966_RealK /        &
-                                                   18.0153_RealK
-!   Molecular weight of dry air/ molecular weight of water
-  REAL (RealK), PARAMETER :: r = r_gas_dry
-  REAL (RealK), PARAMETER :: c_virtual = ratio_molar_weight - 1.0_RealK
-  REAL (RealK), PARAMETER :: repsilon = 1.0_RealK / ratio_molar_weight
+  REAL (RealK), PROTECTED :: repsilon = 18.0153_RealK / 28.966_RealK
+!   Molecular weight of water / molecular weight of dry air
 
 ! ------------------------------------------------------------------
 ! physical_constants_pp_ccf
@@ -105,5 +99,26 @@ MODULE rad_ccf
 !   Depolarizing factor
   REAL (RealK), PARAMETER :: rho_h2he_stp    = 1.042921e-01_RealK
 !   Density at standard temperature and pressure
+
+CONTAINS
+
+SUBROUTINE set_socrates_constants(iu_nml)
+
+  USE gas_list_pcf, ONLY: molar_weight, ip_h2o
+  IMPLICIT NONE
+
+  ! Unit number of namelist file
+  INTEGER, INTENT(IN) :: iu_nml
+
+  NAMELIST /socrates_constants/ &
+    planet_radius, mol_weight_air, grav_acc, r_gas_dry, cp_air_dry
+
+  ! Read planet-specific constants from namelist
+  READ(NML=socrates_constants, UNIT=iu_nml)
+
+  ! Ensure repsilon is consistent with mol_weight_air
+  repsilon = molar_weight(ip_h2o)*1.0E-03_RealK / mol_weight_air
+
+END SUBROUTINE set_socrates_constants
 
 END MODULE rad_ccf

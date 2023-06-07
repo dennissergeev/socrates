@@ -18,7 +18,9 @@ USE realtype_rd, ONLY: RealK
 
 IMPLICIT NONE
 
-INTEGER, PARAMETER :: npd_gases = 49
+INTEGER, PRIVATE :: i
+
+INTEGER, PARAMETER :: npd_gases = 55
 !   Number of indexed gases
 
 INTEGER, PARAMETER :: IP_h2o = 1
@@ -119,6 +121,18 @@ INTEGER, PARAMETER :: IP_h2co = 48
 !   Identifier for formaldehyde
 INTEGER, PARAMETER :: IP_ho2 = 49
 !   Identifier for hydroperoxy radical
+INTEGER, PARAMETER :: IP_hdo = 50
+!   Identifier for semiheavy water
+INTEGER, PARAMETER :: IP_hcl = 51
+!   Identifier for hydrogen chloride
+INTEGER, PARAMETER :: IP_hf = 52
+!   Identifier for hydrogen fluoride
+INTEGER, PARAMETER :: IP_cosso = 53
+!   Identifier for cis-OSSO
+INTEGER, PARAMETER :: IP_tosso = 54
+!   Identifier for trans-OSSO
+INTEGER, PARAMETER :: IP_yosos = 55
+!   Identifier for OSO-S
 
 CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Water Vapour        ", &
@@ -169,7 +183,13 @@ CHARACTER (LEN=20), PARAMETER :: name_absorb(npd_gases) = (/ &
                                    "Ethane              ", &
                                    "Methyl radical      ", &
                                    "Formaldehyde        ", &
-                                   "Hydroperoxy radical "/)
+                                   "Hydroperoxy radical ", &
+                                   "Semiheavy water     ", &
+                                   "Hydrogen chloride   ", &
+                                   "Hydrogen fluoride   ", &
+                                   "cis-OSSO            ", &
+                                   "trans-OSSO          ", &
+                                   "OSO-S               "/)
 
 
 ! Molecular weights taken from "General Inorganic Chemistry"
@@ -223,7 +243,13 @@ REAL (RealK), PARAMETER :: molar_weight(npd_gases) = (/ &
   30.0690_RealK,     & ! C2H6 (from NIST)
   15.0345_RealK,     & ! CH3  (from NIST)
   30.0260_RealK,     & ! H2CO (from NIST
-  33.0067_RealK     /) ! HO2 (from NIST)
+  33.0067_RealK,     & ! HO2 (from NIST)
+  19.0214_RealK,     & ! HDO (from NIST)
+  36.461_RealK,      & ! HCl (from NIST)
+  20.00689_RealK,    & ! HF (from NIST)
+  96.129_RealK,      & ! cis-OSSO (from NIST)
+  96.129_RealK,      & ! trans-OSSO (from NIST)
+  96.129_RealK      /) ! OSO-S (from NIST)     
 
 
 ! Array of identifiers in HITRAN for each gas in the radiation code.
@@ -250,7 +276,7 @@ INTEGER, PARAMETER :: hitran_number(npd_gases) = (/ &
   0,   & ! CFC114
   0,   & ! TiO
   0,   & ! VO
-  0,   & ! H2
+  45,  & ! H2
   0,   & ! He
   19,  & ! OCS
   0,   & ! Na
@@ -266,7 +292,7 @@ INTEGER, PARAMETER :: hitran_number(npd_gases) = (/ &
   31,  & ! H2S
   0,   & ! Ar
   0,   & ! Dry air
-  0,   & ! O
+  34,  & ! O
   0,   & ! N
   0,   & ! NO3
   0,   & ! N2O5
@@ -276,7 +302,24 @@ INTEGER, PARAMETER :: hitran_number(npd_gases) = (/ &
   27,  & ! C2H6
   0,   & ! CH3
   20,  & ! H2CO
-  33 /)  ! HO2
+  33,  & ! HO2
+  1,   & ! HDO
+  15,  & ! HCl
+  14,  & ! HF
+  0,   & ! cis-OSSO
+  0,   & ! trans-OSSO
+  0  /)  ! OSO-S
+
+! Maximum number of specified HITRAN isotopes for a given absorber
+INTEGER, PARAMETER :: npd_isotopes = 3
+
+! List of HITRAN isotopes for each absorber (0 for all isotopes)
+INTEGER, PARAMETER :: hitran_isotopes(npd_isotopes, npd_gases) &
+  = RESHAPE ( [INTEGER :: &
+  (0, i=1, npd_isotopes*ip_ho2),           & ! H2O -> HO2
+  4, 5, 6, (0, i=1, npd_isotopes-3),       & ! HDO: HD16O, HD18O, HD17O
+  (0, i=1, npd_isotopes*(ip_yosos-ip_hdo)) & ! HCl -> OSO-S
+  ], shape=[npd_isotopes, npd_gases] )
 
 ! Depolarization factors used to compute the Rayleigh scattering coefficients
 REAL (RealK), PARAMETER :: depolarization_factor(npd_gases) = (/ &
@@ -328,12 +371,17 @@ REAL (RealK), PARAMETER :: depolarization_factor(npd_gases) = (/ &
   0.0_RealK,     & ! C2H6
   0.0_RealK,     & ! CH3
   0.0_RealK,     & ! H2CO
-  0.0_RealK     /) ! HO2
+  0.0_RealK,     & ! HO2
+  0.0_RealK,     & ! HDO
+  0.0_RealK,     & ! HCl
+  0.0_RealK,     & ! HF
+  0.0_RealK,     & ! cis-OSSO
+  0.0_RealK,     & ! trans-OSSO
+  0.0_RealK     /) ! OSO-S
 
 ! Maximum number of photolysis products for a given absorber
 INTEGER, PARAMETER :: npd_products = 9
 
-INTEGER, PRIVATE :: i
 CHARACTER(LEN=56), PARAMETER :: blank = ""
 ! Description of photolysis products
 CHARACTER(LEN=56), PARAMETER :: photol_products(npd_products, npd_gases) &
@@ -378,7 +426,8 @@ CHARACTER(LEN=56), PARAMETER :: photol_products(npd_products, npd_gases) &
   "O2 -> O+ + O                  ",  &
   (blank, i=1, npd_products-7),      & ! O2
   (blank, i=1, npd_products),        & ! NO
-  (blank, i=1, npd_products),        & ! SO2
+  "SO2 -> SO + O(3P)             ",  &
+  (blank, i=1, npd_products-1),      & ! SO2
   "NO2 -> NO + O(3P)             ",  &
   "NO2 -> NO + O(1D)             ",  &
   (blank, i=1, npd_products-2),      & ! NO2
@@ -461,7 +510,13 @@ CHARACTER(LEN=56), PARAMETER :: photol_products(npd_products, npd_gases) &
   (blank, i=1, npd_products)      ,  & ! H2CO
   "HO2 -> OH + O(3P)             ",  & !
   "HO2 -> OH + O(1D)             ",  & !
-  (blank, i=1, npd_products-2)       & ! HO2
+  (blank, i=1, npd_products-2)    ,  & ! HO2
+  (blank, i=1, npd_products)      ,  & ! HDO
+  (blank, i=1, npd_products)      ,  & ! HCl
+  (blank, i=1, npd_products)      ,  & ! HF
+  (blank, i=1, npd_products)      ,  & ! cis-OSSO
+  (blank, i=1, npd_products)      ,  & ! trans-OSSO
+  (blank, i=1, npd_products)         & ! OSO-S
   ], shape=[npd_products, npd_gases] )
 
 ! Name used by UKCA for photolysis pathway
@@ -519,7 +574,13 @@ CHARACTER(LEN=56), PARAMETER :: photol_fldname(0:npd_products, npd_gases) &
   (blank, i=0, npd_products),        & ! C2H6
   (blank, i=0, npd_products),        & ! CH3
   (blank, i=0, npd_products),        & ! H2CO
-  (blank, i=0, npd_products)         & ! HO2
+  (blank, i=0, npd_products),        & ! HO2
+  (blank, i=0, npd_products),        & ! HDO
+  (blank, i=0, npd_products),        & ! HCl
+  (blank, i=0, npd_products),        & ! HF
+  (blank, i=0, npd_products),        & ! cis-OSSO
+  (blank, i=0, npd_products),        & ! trans-OSSO
+  (blank, i=0, npd_products)         & ! OSO-S
   ], shape=[npd_products+1, npd_gases] )
 
 ! Threshold wavelength defining energy required for photolysis
@@ -565,7 +626,8 @@ REAL (RealK), PARAMETER :: threshold_wavelength(npd_products, npd_gases) &
    66.2E-09_RealK,                  & ! O2 -> O+ + O
   (0.0_RealK, i=1, npd_products-7), & ! O2
   (0.0_RealK, i=1, npd_products),   & ! NO
-  (0.0_RealK, i=1, npd_products),   & ! SO2
+  218.7E-09_RealK,                  & ! SO2 -> SO + O(3P) : Becker 95
+  (0.0_RealK, i=1, npd_products-1), & ! SO2
   398.0E-09_RealK,                  & ! NO2 -> NO + O(3P)
   244.0E-09_RealK,                  & ! NO2 -> NO + O(1D)
   (0.0_RealK, i=1, npd_products-2), & ! NO2
@@ -648,7 +710,13 @@ REAL (RealK), PARAMETER :: threshold_wavelength(npd_products, npd_gases) &
   (0.0_RealK, i=1, npd_products),   & ! H2CO
    438.0E-09_RealK,                 & ! HO2 -> OH + O(3P) : JPL 19-5
    259.0E-09_RealK,                 & ! HO2 -> OH + O(1D) : JPL 19-5
-  (0.0_RealK, i=1, npd_products-2)  & ! HO2
+  (0.0_RealK, i=1, npd_products-2), & ! HO2
+  (0.0_RealK, i=1, npd_products),   & ! HDO
+  (0.0_RealK, i=1, npd_products),   & ! HCl
+  (0.0_RealK, i=1, npd_products),   & ! HF
+  (0.0_RealK, i=1, npd_products),   & ! cis-OSSO
+  (0.0_RealK, i=1, npd_products),   & ! trans-OSSO
+  (0.0_RealK, i=1, npd_products)    & ! OSO-S
   ], shape=[npd_products, npd_gases] )
 
 ! Unless otherwise stated, data comes from JPL publication No. 15-10:
@@ -656,5 +724,6 @@ REAL (RealK), PARAMETER :: threshold_wavelength(npd_products, npd_gases) &
 ! Other references:
 !  * JPL 19-5   : JPL publication No. 19-5
 !  * Heubner 92 : Heubner et al (1992, p120) DOI: 10.1007/978-94-017-3023-5_1
+!  * Becker 95 : Becker et al (1995) DOI: 10.1016/0301-0104(95)00114-4
 
 END MODULE gas_list_pcf

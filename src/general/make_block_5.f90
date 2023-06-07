@@ -150,8 +150,8 @@ SUBROUTINE make_block_5(Spectrum, ierr)
         Spectrum%Gas%i_scale_fnc(i, j)=IP_scale_fnc_null
         Spectrum%Gas%k(1, i, j)=0.0_RealK
         Spectrum%Gas%w(1, i, j)=1.0_RealK
-        Spectrum%Gas%p_ref(i, j)=1.0_RealK
-        Spectrum%Gas%t_ref(i, j)=200.0_RealK
+        Spectrum%Gas%p_ref(j, i)=1.0_RealK
+        Spectrum%Gas%t_ref(j, i)=200.0_RealK
       ENDDO
     ENDDO
   ENDIF
@@ -229,7 +229,8 @@ SUBROUTINE make_block_5(Spectrum, ierr)
     END IF
 
 !   Set self-broadening flag
-    IF (i_input_type == it_file_line_fit_self) THEN
+    IF (i_input_type == it_file_line_fit_self .OR. &
+        i_input_type == it_file_line_fit_self_id) THEN
 !     Self-broadening is included
       IF (Spectrum%Gas%index_sb(i_index) == 0) THEN
 !       Create new index for this gas for use in self-broadened arrays

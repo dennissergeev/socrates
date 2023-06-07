@@ -22,7 +22,8 @@
       USE dimensions_cdl_ucf
       USE def_std_io_icf
       USE error_pcf
-      USE rad_ccf, ONLY: r_gas_dry, ratio_molar_weight
+      USE gas_list_pcf
+      USE rad_ccf, ONLY: r_gas_dry, mol_weight_air
 !
 !
       IMPLICIT NONE
@@ -78,6 +79,8 @@
 !           Mixing ratio
      &  , density_air
 !           Denisty of air
+     &  , ratio_molar_weight
+!           Molecular weight of dry air/ molecular weight of water
 !
 !     Subroutines called:
       EXTERNAL
@@ -89,7 +92,8 @@
       data n_latitude/0/
       data n_longitude/0/
 !
-!
+      ratio_molar_weight
+     &  = mol_weight_air/(molar_weight(ip_h2o)*1.0E-03_RealK)
 !
       WRITE(iu_stdout, '(/a)')
      &   'enter the name of the file containing the mass densities.'

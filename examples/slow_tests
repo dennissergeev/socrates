@@ -10,9 +10,21 @@ fi
 err=0
 
 echo ---
+echo "Checking HITRAN Total Internal Partition Sums:"
+cd tips
+./run_me || err=1
+cd ../
+
+echo ---
 echo "Testing spectral file creation for photolysis:"
 cd sp_uv
 ./run_me_sp || err=1
+cd ../
+
+echo ---
+echo "Testing Cl_run_cdf for photolysis intercomparison case:"
+cd sparcj
+./run_me || err=1
 cd ../
 
 echo ---

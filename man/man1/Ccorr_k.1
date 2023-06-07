@@ -2,11 +2,12 @@
 .SH NAME
 Ccorr_k \- Generate gaseous absorption and water vapour continuum data
 .SH USAGE
-Ccorr_k \fB\-D\fR \fIhitran\-par\-file\fR | \fB\-X\fR \fIhitran\-xsc\-file\fR | \fB\-UVX\fR \fIuvxsc\-file\fR
-        [\fB\-CIA\fR \fIhitran\-cia\-file\fR]
+Ccorr_k \fB\-D\fR \fIhitran\-par\-file\fR | \fB\-BD\fR \fIbespoke\-par\-file\fR | \fB\-X\fR \fIhitran\-xsc\-file\fR |
+        \fB\-UVX\fR \fIuvxsc\-file\fR | \fB\-CIA\fR \fIhitran\-cia\-file\fR
         \fB\-s\fR \fIspectral\-file\fR [\fB\-I\fR \fIinstrument\-file\fR]
         \fB\-R\fR \fIfirst\-band\fR \fIlast\-band\fR \fB\-F\fR \fIpt\-file\fR  [\fB\-r\fR \fIref\-pt\-file\fR]
-        [\fB\-l\fR \fIgas\fR \fImax\-path\fR | \fB\-ct\fR \fIgas1\fR \fIgas2\fR \fImax\-path\fR [\fB\-cw\fR \fIgas\fR \fImax\-path\fR]
+        \fB\-lo\fR \fIgas\fR | [\fB\-l\fR \fIgas\fR \fImax\-path\fR |
+        \fB\-ct\fR \fIgas1\fR \fIgas2\fR \fImax\-path\fR [\fB\-cw\fR \fIgas\fR \fImax\-path\fR]
         \fB\-n\fR \fIk_terms\fR \fB| \-t\fR \fItol\fR \fB| \-b\fR \fItol\fR]
         \fB\-p|\-q|\-d|-p2|\-q2|\-d2|-lk\fR
         [\fB\-k\fR] [\fB\-x\fR \fIfilename\fR] \fB\-i\fR \fIincrement\fR
@@ -30,6 +31,10 @@ continuum absorption across the band.
 .TP
 \fB\-D\fR \fIhitran\-par\-file\fR
 Pathname of HITRAN line database. This is a .par file and may be in either 100 or 160 character format.
+
+.TP
+\fB\-BD\fR \fIbespoke\-par\-file\fR
+Pathname of HITRAN line database. This is a .bpar file in hitran_bespoke_frmt from src/correlated_k/def_hitran_record.f90.
 
 .TP
 \fB\-X\fR \fIhitran\-xsc\-file\fR
@@ -64,6 +69,10 @@ Pathname of file containing pressures and temperatures at which to calculate coe
 Pathname of file containing the reference conditions for scaling. Each line of data should follow the format: *REF \fIfirst\-band\fR \fIlast\-band\fR \fIgas\fR \fIpressure\fR \fItemperature\fR. There should be as many lines as required to cover the full range of bands for which the gas is included. The type number (identifier) of the gas is specified so that reference conditions for all gases may be given in the same file. Pressure and temperature are in Pa and K respectively.
 
 Note: The mapping to g-space for line absorption data no longer uses the reference conditions. They will only be used as the reference conditions for scaling when using a scaling function (when using a look-up table for scaling the reference conditions need not be supplied). 
+
+.TP
+\fB\-lo\fR \fIgas\fR
+Generate line absorption data. \fIgas\fR is the type number (identifier) of the gas to be considered. This option can be used in place of -l (see below) where only the line-by-line cross-sections are to be generated (i.e. no correlated-k fit type is selected and no k-terms generated). In this case, the max-path is not required.
 
 .TP
 \fB\-l\fR \fIgas\fR \fImax\-path\fR

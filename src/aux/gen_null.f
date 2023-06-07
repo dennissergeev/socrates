@@ -53,10 +53,11 @@
 !           Number of pressure levels
      &  , pointer(npd_layer+1)
 !           Pointer for sorting
-      CHARACTER
-     &    unit*6
+      CHARACTER(LEN=len_col_header) ::
+     &    unit
 !           Unit for pressure
-     &  , file_null*80
+      CHARACTER(LEN=80) ::
+     &    file_null
 !           Name of null file
 !
       LOGICAL

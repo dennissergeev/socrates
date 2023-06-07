@@ -174,7 +174,7 @@ SUBROUTINE read_ref_pt_90 &
       IF (i_gas_in == i_gas) THEN
 !       The gas is valid.
         IF (i_last_band > SIZE(p_ref)) THEN
-          WRITE(iu_err, '(/a)') &
+          WRITE(*, '(/a)') &
             'Warning: too many bands in reference P/T file.'
           i_last_band=SIZE(p_ref)
         END IF

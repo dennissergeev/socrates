@@ -97,7 +97,7 @@ LOGICAL :: l_interactive
   INTEGER :: n_add_sw=10
 !       Number of additional sub-columns in the SW
 
-  INTEGER :: order_lw(9999), order_lw_single(9999)
+  INTEGER :: order_lw(99999), order_lw_single(99999)
 !       Re-ordering of sub-columns required to match importance
 
   INTEGER :: total_k_lw
@@ -329,7 +329,7 @@ LOGICAL :: l_interactive
       WRITE(iu_mcd,'(a/,i5)') 'ipph', mcica_data%ipph
       WRITE(iu_mcd,'(a/,i5,/)') 'ioverlap', ioverlap
       WRITE(iu_mcd,'(A24)') "lw_subcol_reorder_single"
-      WRITE(iu_mcd,'(10i5)') order_lw_single(1:total_k_lw)
+      WRITE(iu_mcd,'(10i6)') order_lw_single(1:total_k_lw)
       WRITE(iu_mcd,'(/A11)') "sw_subcol_k"
       DO i=1, Spectrum_sw%Basic%n_band
         i_gas = Spectrum_sw%Gas%index_absorb(1, i)
@@ -351,7 +351,7 @@ LOGICAL :: l_interactive
       ENDDO
       WRITE(iu_mcd,'(A12/)') ' -99   0   0'
       WRITE(iu_mcd,'(A25)') "lw_subcol_reorder_optimal"
-      WRITE(iu_mcd,'(10i5)') order_lw(1:total_k_lw+n_add_lw)
+      WRITE(iu_mcd,'(10i6)') order_lw(1:total_k_lw+n_add_lw)
       WRITE(iu_mcd,'(2(/a/,i6))') 'n1', mcica_data%n1, 'n2', mcica_data%n2
       WRITE(iu_mcd,'(a/,(5e15.8))') 'xcw', mcica_data%xcw
       WRITE(iu_mcd,'(a)') '*END'
@@ -595,7 +595,7 @@ CONTAINS
 
 
 !   Output variable
-    INTEGER, Intent(OUT) :: order_lw(9999)
+    INTEGER, Intent(OUT) :: order_lw(99999)
 !       Re-ordering of sub-columns required to match importance
 
 !   Local variables

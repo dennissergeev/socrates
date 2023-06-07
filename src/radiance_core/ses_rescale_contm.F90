@@ -63,8 +63,7 @@ SUBROUTINE ses_rescale_contm(nd_profile, nd_layer                       &
 
    PARAMETER(o2mix=0.2315e-23, n2mix=0.7552e-23                         &
      , o2n2=1.e-10*n_avogadro*o2mix*n2mix                               &
-     , o2o2=1.e-10*n_avogadro*o2mix*o2mix                               &
-     , k_m_air=k_boltzmann*mol_weight_air)
+     , o2o2=1.e-10*n_avogadro*o2mix*o2mix)
 
 !  Note: E-23 in o2mix n2mix is for unit conversion
 !        E-10 for o2n2 o2o2 also for unit conversion
@@ -78,6 +77,7 @@ SUBROUTINE ses_rescale_contm(nd_profile, nd_layer                       &
 
   IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
 
+  k_m_air=k_boltzmann*mol_weight_air
   IF (i_continuum  ==  ip_cont_h2o ) THEN
     DO i=1, n_layer
       DO l=1, n_profile

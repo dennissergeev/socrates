@@ -26,8 +26,9 @@ SUBROUTINE adjust_path ( &
   
 ! Modules used:
 !
-  USE realtype_rd
-  USE hitran_cnst
+  USE realtype_rd, ONLY: RealK
+  USE hitran_cnst, ONLY: number_isotopes, q296, qcoeff, iso_mass, &
+    speed_of_light, atomic_mass_unit, molar_gas_constant, c2
 
   IMPLICIT NONE
 
@@ -94,8 +95,8 @@ SUBROUTINE adjust_path ( &
 
   lse_SI = lse * 100.0   ! now in m-1
 
-  QT     = qcoeff(INT(T)-69,reqd_species) + (T-REAL(INT(T),RealK)) &
-           *(qcoeff(INT(T)-68,reqd_species) - qcoeff(INT(T)-69,reqd_species))
+  QT     = qcoeff(INT(T), reqd_species) + (T - REAL(INT(T),RealK)) &
+           *(qcoeff(INT(T)+1, reqd_species) - qcoeff(INT(T), reqd_species))
 
   QT_ref = q296(reqd_species)
 

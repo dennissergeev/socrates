@@ -100,12 +100,18 @@ SUBROUTINE make_block_1(Spectrum, l_interactive, ierr)
           char_unit, range_low, range_high, range_inc
         IF ( (char_unit.eq.'m').OR.(char_unit.eq.'M') ) THEN
           l_metre=.TRUE.
+          l_inverse_cm=.FALSE.
+          l_micron=.FALSE.
           EXIT
         ELSE IF ( (char_unit.eq.'c').OR.(char_unit.eq.'C') ) THEN
           l_inverse_cm=.TRUE.
+          l_metre=.FALSE.
+          l_micron=.FALSE.
           EXIT
         ELSE IF ( (char_unit.eq.'u').OR.(char_unit.eq.'U') ) THEN
           l_micron=.TRUE.
+          l_metre=.FALSE.
+          l_inverse_cm=.FALSE.
           EXIT
         ELSE
           WRITE(iu_err, '(a)') 'Unknown reponse:'

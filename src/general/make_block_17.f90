@@ -34,7 +34,7 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
 !   Temporary spectral file data for sub-bands
   TYPE(StrSpecVar) :: SpVarTmp
 !   Temporary spectral variability data
-  TYPE (StrSolarSpec) :: VSol
+  TYPE (StrSolarSpec) :: VSol, VSolMean
 !   Varying Solar spectrum
   TYPE (StrRefract) :: Refract
 !   Refractive index of atmosphere
@@ -490,9 +490,29 @@ SUBROUTINE make_block_17(Sp, Sol, ierr)
         ! Scale the values to the correct units:
         VSol%irrad = ssi(1,:) * scale_irr
 
-        ! Uncomment to output a solar spectrum file for the first time
+        ! Uncomment to output a mean solar spectrum file
         ! IF (k==1) THEN
-        !   CALL write_solar_spectrum('cmip6_solar_spectrum', VSol, ierr)
+        !   VSolMean%n_points    = VSol%n_points
+        !   VSolMean%t_effective = VSol%t_effective
+        !   VSolMean%radius      = VSol%radius
+        !   VSolMean%l_binned    = VSol%l_binned
+        !   ALLOCATE(VSolMean%wavelength( VSolMean%n_points))
+        !   ALLOCATE(VSolMean%irrad(      VSolMean%n_points))
+        !   ALLOCATE(VSolMean%bandsize(   VSolMean%n_points))
+        !   ALLOCATE(VSolMean%bandbnds(2, VSolMean%n_points))
+        !   VSolMean%wavelength = VSol%wavelength
+        !   VSolMean%irrad = 0.0_RealK
+        !   VSolMean%bandsize = VSol%bandsize
+        !   VSolMean%bandbnds = VSol%bandbnds
+        ! END IF
+        ! VSolMean%irrad = VSolMean%irrad + VSol%irrad
+        ! IF (k==n_times) THEN
+        !   VSolMean%irrad = VSolMean%irrad/REAL(n_times, RealK)
+        !   CALL write_solar_spectrum('cmip6_solar_spectrum', VSolMean, ierr)
+        !   DEALLOCATE(VSolMean%bandbnds)
+        !   DEALLOCATE(VSolMean%bandsize)
+        !   DEALLOCATE(VSolMean%irrad)
+        !   DEALLOCATE(VSolMean%wavelength)
         ! END IF
 
         ! Calculate the normalised solar flux in each sub-band

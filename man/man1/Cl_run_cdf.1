@@ -3,7 +3,7 @@
 Cl_run_cdf \- Driver for the SOCRATES Radiative Transfer Code
 .SH USAGE
 Cl_run_cdf \fB\-s\fR \fIspectral\-file\fR \fB\-R\fR \fIfirst\-band last\-band\fR
-           \fB\-B\fR \fIbasename\fR \fB \-I|\-S \fR
+           \fB\-B\fR \fIbasename\fR \fB \-I|\-S \fR [\fB\-N\fR \fInamelist\-file\fR]
            \fB\-C\fR \fIcloud\-scheme\fR [\fB\-K\fR \fIcloud\-representation\fR]
            [\fB\-dp\fR \fIdecorrelation\-scale\fR]
            [\fB+dp\fR \fIconvective\-decorrelation\-scale\fR]
@@ -51,6 +51,10 @@ Solve for a thermal source (LW).
 .TP
 \fB\-S\fR
 Solve for a solar source (SW).
+
+.TP
+\fB\-N\fR \fInamelist\-file\fR
+Optional file containing the \fIsocrates\_constants\fR namelist as defined in modules\_core/rad\_ccf.f90.
 
 .TP
 \fB\-C\fR \fIcloud\-scheme\fR

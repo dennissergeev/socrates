@@ -16,7 +16,8 @@
      &  )
 !
       USE realtype_rd, ONLY: RealK
-      USE rad_ccf, ONLY: repsilon
+      USE rad_ccf, ONLY: mol_weight_air
+      USE gas_list_pcf, ONLY: molar_weight, ip_h2o
       USE yomhook, ONLY: lhook, dr_hook
       USE parkind1, ONLY: jprb, jpim
       IMPLICIT NONE
@@ -73,7 +74,7 @@
 !     zerodegc is a conversion between degrees centigrade and kelvin
       REAL, PARAMETER :: zerodegc = 273.15
 
-      REAL (RealK) :: ONE_MINUS_EPSILON
+      REAL (RealK) :: ONE_MINUS_EPSILON, REPSILON
 !       ONE MINUS THE RATIO OF THE MOLECULAR WEIGHTS OF WATER AND DRY AIR
 
       REAL (RealK) :: T_LOW
@@ -91,8 +92,7 @@
       INTEGER N         ! SIZE OF LOOK-UP TABLE OF SATURATION
                         ! WATER VAPOUR PRESSURES
 !
-      PARAMETER ( ONE_MINUS_EPSILON = 1.0 - REPSILON,                   &
-     &            T_LOW = 183.15,                                       &
+      PARAMETER ( T_LOW = 183.15,                                       &
      &            T_HIGH = 338.15,                                      &
      &            DELTA_T = 0.1,                                        &
      &            N = ((T_HIGH - T_LOW + (DELTA_T*0.5))/DELTA_T) + 1.0  &
@@ -486,7 +486,10 @@
      &0.250152E+05,0.250152E+05/
 
       IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
-!
+
+      REPSILON = molar_weight(ip_h2o)*1.0E-03_RealK / mol_weight_air
+      ONE_MINUS_EPSILON = 1.0 - REPSILON
+
 ! Npnts_do_1:
 
       ! Parameters Used: zerodegc, delta_t,repsilon,one_minus_epsilon

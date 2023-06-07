@@ -66,9 +66,16 @@ except:
     for i in np.arange(layers):
         vmean[i] = np.sum(var[i, :, :]) / (n_lon * n_lat)
     ax1 = plt.figure().add_subplot(111)
-    ax1.plot(vmean, -np.log(p/max(p))*CONST)
-    ax1.set_title('Average profile')
-    ax1.set_xlabel(name)
+    ax1.plot(vmean, -np.log(p/max(p))*CONST, label=name)
+    ax1.set_title(dgs.variables[name].title)
+    if ('ph_rate' in name):
+        ax1.set_xlabel('J rate (s$^{-1}$)')
+    elif (name == 'aflx'):
+        ax1.set_xlabel('Actinic Flux (W m$^{-2}$)')
+    elif (name == 'hrts'):
+        ax1.set_xlabel('Heating rate (K day$^{-1}$)')
+    else:
+        ax1.set_xlabel('Flux (W m$^{-2}$)')
     ax1.set_ylabel('Approx height (km)')
 else:
     fig=plt.figure()
@@ -94,7 +101,7 @@ else:
     ax2.plot(wl, toa_spec, color='blue', label='TOA')
     ax2.set_xlabel('Wavelength (micron)')
     if ('ph_rate' in name):
-        ax2.set_ylabel('J rate (s-1m-1)')
+        ax2.set_ylabel('J rate (s$^{-1}$ m$^{-1}$)')
         ax2.set_yscale('symlog')
         e_height = -np.log(p[e_layer]/max(p))*CONST
         ax1.plot([min(vmean),max(vmean)], [e_height,e_height], color='green')
@@ -106,9 +113,9 @@ else:
         ax2.set_title('Top & Mid atmosphere spectra')
         ax2.set_xlim(right=xlim)
     elif (name == 'aflx'):
-        ax2.set_ylabel('Actinic Flux (Wm-2m-1)')
+        ax2.set_ylabel('Actinic Flux (W m$^{-2} m$^{-1})')
         ax2.set_yscale('symlog')
-        e_layer = layers/2
+        e_layer = int(layers/2)
         e_height = -np.log(p[e_layer]/max(p))*CONST
         ax1.plot([min(vmean),max(vmean)], [e_height,e_height], color='green')
         mid_spec = np.zeros(n_channel)
@@ -117,8 +124,8 @@ else:
         ax2.plot(wl, mid_spec, color='green', label='Mid atmos')
         ax2.set_title('Top & Mid atmosphere spectra')
     elif (name == 'hrts'):
-        ax2.set_ylabel('Heating rate (Kday-1m-1)')
-        e_layer = layers/2
+        ax2.set_ylabel('Heating rate (K day$^{-1} m$^{-1})')
+        e_layer = int(layers/2)
         e_height = -np.log(p[e_layer]/max(p))*CONST
         ax1.plot([min(vmean),max(vmean)], [e_height,e_height], color='green')
         mid_spec = np.zeros(n_channel)

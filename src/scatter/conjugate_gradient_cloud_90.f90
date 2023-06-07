@@ -68,8 +68,12 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
 !   Former value of residual
   REAL  (RealK) :: residual_new
 !   Newer value of residual
+  REAL  (RealK) :: residual_best
+!   Best value of residual
   REAL  (RealK) :: residual_typical
 !   Typical value of residual
+  REAL  (RealK), Dimension(n_parameter) :: parm_best
+!   Best fitting parameters
   REAL  (RealK), Allocatable, Dimension(:) :: gradient
 !   Gradient
   REAL  (RealK), Allocatable, Dimension(:) :: g
@@ -99,7 +103,10 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
   residual_old=cloud_residual(fit_species, d, actual, &
     i_fit, property, parm &
     )
-!
+
+  residual_best=residual_old
+  parm_best=parm
+
 ! Take the initial residual as an indication of the typical size.
   residual_typical=residual_old
 !
@@ -151,6 +158,10 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
     residual_new=cloud_residual(fit_species, d, actual, &
       i_fit, property, parm &
       )
+    IF (residual_new < residual_best) THEN
+      residual_best=residual_new
+      parm_best=parm
+    END IF
     WRITE(iu_monitor, '(/a, i4)') 'Iteration = ', iteration
     WRITE(iu_monitor, '(a, 1pe16.9)') &
       'Mean square error = ', residual_new
@@ -158,6 +169,7 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
       'Scaling parameters = ', (parm(i), i=1, n_parameter)
     IF (ABS(residual_new-residual_old) < &
         EPSILON(residual_typical)*residual_typical) THEN
+      parm=parm_best
       EXIT
     ELSE
       residual_old=residual_new
@@ -193,7 +205,8 @@ SUBROUTINE conjugate_gradient_cloud_90(ierr, iu_monitor, &
       WRITE(iu_stdout, '(/a)') &
         'Too many iterations in the conjugate gradient routine ' // &
         'without convergence.'
-      WRITE(iu_stdout, '(a)') 'Current data will be used.'
+      WRITE(iu_stdout, '(a)') 'Best data will be used.'
+      parm=parm_best
       EXIT
     ENDIF
 !

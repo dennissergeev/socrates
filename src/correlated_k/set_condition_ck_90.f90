@@ -290,12 +290,16 @@ SUBROUTINE set_condition_ck_90 &
   IF (l_fit_self_continuum .OR. l_fit_frn_continuum) &
     CALL select_cont_details_int
 !
-  IF (l_fit_line_data .OR. l_fit_cont_data) CALL select_fit_type_int
+  IF (l_fit_line_data .OR. l_fit_cont_data) THEN
+    CALL select_fit_type_int
+  ELSE
+    i_ck_fit = IP_ck_none
+  END IF
 
   l_load_map = .FALSE.
   l_load_wgt = .FALSE.
   l_save_map = .FALSE.
-  IF (l_fit_line_data .OR. l_fit_cont_data) CALL select_mapping_wgt
+  IF (i_ck_fit /= ip_ck_none) CALL select_mapping_wgt
 !
 !
   RETURN
@@ -1246,7 +1250,7 @@ CONTAINS
               ENDIF
             ENDIF
           ENDDO
-        ELSE
+        ELSE IF (i_ck_fit == IP_ck_fixed_n) THEN
 !         Set a reasonable tolerance to be used in scaling function fits
           tol=1.0e-3_RealK
           WRITE(iu_stdout, '(/a, /a)') &
@@ -1280,19 +1284,20 @@ CONTAINS
         ENDIF
       ENDIF
     ENDDO
-!  
-!   Setting of the maximum pathlength.
-    WRITE(iu_stdout, '(/a, /a)') &
-      'Enter the maximum pathlength for the absorber.'
-    DO
-      READ(iu_stdin, *, IOSTAT=ios) max_path
-      IF (ios == 0) THEN
-        EXIT
-      ELSE
-        CALL check_ios_int
-      ENDIF
-    ENDDO
-!
+
+    IF (i_ck_fit /= IP_ck_none) THEN
+!     Setting of the maximum pathlength.
+      WRITE(iu_stdout, '(/a, /a)') &
+        'Enter the maximum pathlength for the absorber.'
+      DO
+        READ(iu_stdin, *, IOSTAT=ios) max_path
+        IF (ios == 0) THEN
+          EXIT
+        ELSE
+          CALL check_ios_int
+        ENDIF
+      ENDDO
+    END IF
 !
 !
   END SUBROUTINE select_fit_type_int

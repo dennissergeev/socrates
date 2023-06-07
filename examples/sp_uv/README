@@ -65,6 +65,9 @@ Eric Hebrard 1nm meaned data (seO2MT.dat):        203.00 - 204.00 nm
 O2_JPL-2010(2011)_298K_205-245nm(rec).txt:        205.00 - 240.00 nm
 O2_Fally(2000)_287-289K_240-294nm.txt:            240.89 - 294.03 nm
 
+SO2 quantum yields: SO2_1.qy
+taken from Katagiri et al (1997) DOI:10.1016/S0022-2860(97)00199-3
+(approximate values derived from their figure 3a)
 
 Example atmospheric profiles up to 120km are taken from glatm2.dat
 (references therein). The tropical profile from this data is reformatted

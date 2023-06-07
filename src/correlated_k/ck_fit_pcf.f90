@@ -17,6 +17,8 @@ MODULE ck_fit_pcf
   IMPLICIT NONE
 
 
+  INTEGER, Parameter  ::  IP_ck_none = 0
+!   No calculation of k-terms
   INTEGER, Parameter  ::  IP_ck_tol = 1
 !   The correlated-k fits are done to a specified tolerance
 !   for each term                        

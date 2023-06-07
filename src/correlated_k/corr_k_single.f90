@@ -41,10 +41,12 @@ SUBROUTINE corr_k_single &
   USE def_hitran_record
   USE ck_parm_acf
   USE ck_fit_pcf
-  USE hitran_cnst
+  USE hitran_cnst, ONLY: atomic_mass_unit, molar_gas_constant
   USE gas_list_pcf
   USE caviar_continuum_v1_0
   USE line_prof_corr_mod, ONLY: line_prof_corr, set_line_prof_corr_cnst
+  USE errormessagelength_mod, ONLY: errormessagelength
+  USE ereport_mod, ONLY: ereport
 
   IMPLICIT NONE 
 
@@ -266,10 +268,8 @@ SUBROUTINE corr_k_single &
 !   Loop variable for excluded regions
   INTEGER :: h_gas
 !   Identifier for the gas in HITRAN
-  INTEGER :: n_isotope
-!   Number of isotopes to be read
-  INTEGER, Allocatable :: required_isotopes(:)
-!   List of required isotopes
+  INTEGER :: h_isotopes(npd_isotopes)
+!   List of isotopes to be read
   INTEGER :: num_lines_in_band
 !   Number of lines extracted from the database for the gas
   INTEGER :: num_cia_lines_in_band
@@ -443,6 +443,10 @@ SUBROUTINE corr_k_single &
   LOGICAL :: l_debug = .FALSE.
 !  LOGICAL :: l_debug = .TRUE.
   LOGICAL :: l_output_reference_weight = .FALSE.
+
+  CHARACTER (LEN=errormessagelength) :: cmessage
+  CHARACTER (LEN=*), PARAMETER  :: RoutineName = 'CORR_K_SINGLE'
+
 !
 ! Functions called:
 !
@@ -624,9 +628,10 @@ SUBROUTINE corr_k_single &
   IF (l_fit_line_data.OR.l_fit_frn_continuum.OR.l_fit_self_continuum.OR. &
       (l_fit_cont_data.AND.l_cont_line_abs_weight)) THEN
     IF (.NOT.l_lbl_exist.AND..NOT.l_access_hitran.AND..NOT.l_access_xsc) THEN
-      WRITE(*,'(a)') 'Please provide either a HITRAN or line-by-line file.'
+      WRITE(cmessage,'(a)') &
+        'Please provide either a HITRAN or line-by-line file.'
       ierr = i_err_fatal
-      RETURN
+      CALL ereport(RoutineName, ierr, cmessage)
     ELSE IF (l_lbl_exist.AND.(l_access_hitran.OR.l_access_xsc)) THEN
       WRITE(*,'(a)') 'Line-by-line file exists and HITRAN file ' // &
           'provided. Using line-by-line file.'
@@ -635,23 +640,24 @@ SUBROUTINE corr_k_single &
   IF (l_fit_cont_data) THEN
     IF (l_cont_line_abs_weight) THEN
       IF (.NOT.l_lbl_exist.AND..NOT.l_access_hitran) THEN
-        WRITE(*,'(a)') 'Please provide either a HITRAN line database , ' // &
-            'or line-by-line file.'
+        WRITE(cmessage,'(a)') &
+          'Please provide either a HITRAN line database, ' // &
+          'or line-by-line file.'
         ierr = i_err_fatal
-        RETURN
+        CALL ereport(RoutineName, ierr, cmessage)
       ELSE IF (.NOT.l_access_cia.AND. &
                .NOT.l_use_h2o_frn_param.AND..NOT.l_use_h2o_self_param) THEN
-        WRITE(*,'(a)') 'Please provide a HITRAN CIA file or use ' // &
+        WRITE(cmessage,'(a)') 'Please provide a HITRAN CIA file or use ' // &
             'built-in water vapour continuum.'
         ierr = i_err_fatal
-        RETURN
+        CALL ereport(RoutineName, ierr, cmessage)
       END IF
     ELSE IF (.NOT.l_lbl_exist.AND..NOT.l_access_cia.AND. &
              .NOT.l_use_h2o_frn_param.AND..NOT.l_use_h2o_self_param) THEN
-      WRITE(*,'(a)') 'Please provide a HITRAN CIA file use ' // &
+      WRITE(cmessage,'(a)') 'Please provide a HITRAN CIA file use ' // &
           'built-in water continuum.'
       ierr = i_err_fatal
-      RETURN
+      CALL ereport(RoutineName, ierr, cmessage)
     ELSE IF (l_lbl_exist.AND.l_access_cia) THEN
       WRITE(*,'(a)') 'Line-by-line file exists and HITRAN file ' // &
           'provided. Using line-by-line file.'
@@ -659,28 +665,31 @@ SUBROUTINE corr_k_single &
   END IF
 
 ! Check that scaling is look-up table if using generalised continuum formulation
-  IF (l_fit_cont_data .AND. i_scale_function /= ip_scale_t_lookup) THEN
-    WRITE(iu_err,'(a)') 'A look-up table must be used with the ' // &
+  IF (l_fit_cont_data .AND. i_scale_function /= ip_scale_t_lookup .AND. &
+      i_ck_fit /= ip_ck_none) THEN
+    WRITE(cmessage,'(a)') 'A look-up table must be used with the ' // &
         'generalised continuum formulation.'
     ierr = i_err_fatal
-    RETURN
+    CALL ereport(RoutineName, ierr, cmessage)
   END IF
 
 ! Check that only a single set of temperatures has been provided
   IF (l_fit_cont_data .AND. n_p > 1) THEN
-    WRITE(iu_err,'(a)') 'Only a single pressure should be specified ' // &
+    WRITE(cmessage,'(a)') 'Only a single pressure should be specified ' // &
         'with the generalised continuum formulation.'
     ierr = i_err_fatal
-    RETURN
+    CALL ereport(RoutineName, ierr, cmessage)
   END IF
 
 ! Check that the scaling is a look-up table if self-broadening is included
-  IF (l_fit_line_data.AND.l_self_broadening.AND.  &
-      i_scale_function /= IP_scale_lookup) THEN
-    WRITE(*,'(a)') 'Scaling must be a look-up table when self-broadening ' // &
+  IF (l_fit_line_data .AND. l_self_broadening .AND. &
+      i_scale_function /= IP_scale_lookup .AND. &
+      i_ck_fit /= ip_ck_none) THEN
+    WRITE(cmessage,'(a)') &
+        'Scaling must be a look-up table when self-broadening ' // &
         'is included.'
     ierr = i_err_fatal
-    RETURN
+    CALL ereport(RoutineName, ierr, cmessage)
   ENDIF
 
 ! Perform preliminary allocation of arrays.
@@ -743,7 +752,10 @@ SUBROUTINE corr_k_single &
 ! Initialise lbl file
   IF (l_lbl_exist) THEN
     CALL input_lbl_band_cdf_init
-    IF (ierr /= i_normal) RETURN
+    IF (ierr /= i_normal) THEN
+      cmessage='Error in input_lbl_band_cdf_init'
+      CALL ereport(RoutineName, ierr, cmessage)
+    END IF
     nu_band_adjust=nu_wgt_all(1)-nu_inc/2.0_RealK
   ELSE
     nu_inc=nu_inc_0
@@ -770,7 +782,8 @@ SUBROUTINE corr_k_single &
   END DO
 
 ! Calculate scaling of continuum column mass to gas column mass
-  IF (l_fit_cont_data .AND. l_cont_line_abs_weight) THEN
+  IF ((i_ck_fit /= ip_ck_none) .AND. &
+      l_fit_cont_data .AND. l_cont_line_abs_weight) THEN
     l_wgt_scale_sqrt = i_gas_1 == i_gas_2
     IF (l_wgt_scale_sqrt) THEN
       u_wgt_scale = max_path_wgt/sqrt(max_path)
@@ -798,10 +811,16 @@ SUBROUTINE corr_k_single &
 !   The output file is opened afresh for each band to enable
 !   recovery from crashes.
     IF (ibb == 1) THEN
-      OPEN(UNIT=iu_k_out, FILE=file_k, POSITION='REWIND')
+      IF ((i_ck_fit /= ip_ck_none) .OR. &
+          l_fit_self_continuum .OR. l_fit_frn_continuum) THEN
+        OPEN(UNIT=iu_k_out, FILE=file_k, POSITION='REWIND')
+      END IF
       OPEN(UNIT=iu_monitor, FILE=file_monitor, POSITION='REWIND')
     ELSE
-      OPEN(UNIT=iu_k_out, FILE=file_k, POSITION='APPEND')
+      IF ((i_ck_fit /= ip_ck_none) .OR. &
+          l_fit_self_continuum .OR. l_fit_frn_continuum) THEN
+        OPEN(UNIT=iu_k_out, FILE=file_k, POSITION='APPEND')
+      END IF
       OPEN(UNIT=iu_monitor, FILE=file_monitor, POSITION='APPEND')
     ENDIF
 !
@@ -814,7 +833,10 @@ SUBROUTINE corr_k_single &
 
 !   Set the wavenumbers of the weighting points in the band (in nu_wgt).
     CALL set_wgt_int
-    IF (ierr /= i_normal) RETURN
+    IF (ierr /= i_normal) THEN
+      cmessage='Error in set_wgt_int'
+      CALL ereport(RoutineName, ierr, cmessage)
+    END IF
 
     ! Allocate sub-band arrays
     ALLOCATE(sub_band_k(n_nu))
@@ -849,18 +871,27 @@ SUBROUTINE corr_k_single &
         END IF
       ELSE IF (l_access_hitran) THEN
         CALL access_hitran_int
-        IF (ierr /= i_normal) RETURN
+        IF (ierr /= i_normal) THEN
+          cmessage='Error in access_hitran_int'
+          CALL ereport(RoutineName, ierr, cmessage)
+        END IF
         hitran_lines(ibb)=num_lines_in_band
         l_transparent_fit=num_lines_in_band.EQ.0
       ELSE IF (l_access_xsc) THEN
         CALL access_xsc_int
-        IF (ierr /= i_normal) RETURN
+        IF (ierr /= i_normal) THEN
+          cmessage='Error in access_xsc_int'
+          CALL ereport(RoutineName, ierr, cmessage)
+        END IF
         hitran_lines(ibb)=num_lines_in_band
         l_transparent_fit=num_lines_in_band.EQ.0
       END IF
       IF (l_calc_cont .AND. l_access_cia) THEN
         CALL access_cia_int
-        IF (ierr /= i_normal) RETURN
+        IF (ierr /= i_normal) THEN
+          cmessage='Error in access_cia_int'
+          CALL ereport(RoutineName, ierr, cmessage)
+        END IF
         l_transparent_fit=num_cia_lines_in_band.EQ.0
       ENDIF
 
@@ -869,25 +900,40 @@ SUBROUTINE corr_k_single &
 !       A null transparent fit can be used.
         IF (l_fit_line_data .OR. l_fit_cont_data) CALL fit_transparent_int
         IF (.NOT.l_lbl_exist) kabs_all=0.0
-        IF (ierr /= i_normal) RETURN
+        IF (ierr /= i_normal) THEN
+          cmessage='Error in fit_transparent_int'
+          CALL ereport(RoutineName, ierr, cmessage)
+        END IF
 !
 !       Continuum absorption must be fitted anyway.
         IF (l_fit_self_continuum) THEN
           DO ipt=1, n_pt_pair
             CALL rad_weight_90(i_weight, nu_wgt, SolarSpec, t_calc(ipt), wgt)
             CALL apply_response_int
-            IF (ierr /= i_normal) RETURN
+            IF (ierr /= i_normal) THEN
+              cmessage='Error in apply_response_int'
+              CALL ereport(RoutineName, ierr, cmessage)
+            END IF
             CALL calc_self_trans_int
-            IF (ierr /= i_normal) RETURN
+            IF (ierr /= i_normal) THEN
+              cmessage='Error in calc_self_trans_int'
+              CALL ereport(RoutineName, ierr, cmessage)
+            END IF
           ENDDO
         ENDIF
         IF (l_fit_frn_continuum) THEN
           DO ipt=1, n_pt_pair
             CALL rad_weight_90(i_weight, nu_wgt, SolarSpec, t_calc(ipt), wgt)
             CALL apply_response_int
-            IF (ierr /= i_normal) RETURN
+            IF (ierr /= i_normal) THEN
+              cmessage='Error in apply_response_int'
+              CALL ereport(RoutineName, ierr, cmessage)
+            END IF
             CALL calc_frn_trans_int
-            IF (ierr /= i_normal) RETURN
+            IF (ierr /= i_normal) THEN
+              cmessage='Error in calc_frn_trans_int'
+              CALL ereport(RoutineName, ierr, cmessage)
+            END IF
           ENDDO
         ENDIF
 
@@ -958,7 +1004,10 @@ SUBROUTINE corr_k_single &
               CALL set_line_prof_corr_cnst(t_calc(ipt), i_line_prof_corr)
 
               CALL calc_line_abs_int
-              IF (ierr /= i_normal) RETURN
+              IF (ierr /= i_normal) THEN
+                cmessage='Error in calc_line_abs_int'
+                CALL ereport(RoutineName, ierr, cmessage)
+              END IF
               kabs_all(:,ipt)=kabs
               IF (l_self_broadening) &
                 kabs_all_sb(:,ipt,igf)=kabs
@@ -1026,7 +1075,7 @@ SUBROUTINE corr_k_single &
 
         END IF
 
-        IF (l_fit_line_data .OR. l_fit_cont_data) THEN
+        IF (i_ck_fit /= ip_ck_none) THEN
 !         Define the mapping for correlated-k.
 
 !         If self-broadening is included, use middle gas fraction.
@@ -1322,71 +1371,98 @@ SUBROUTINE corr_k_single &
 
         END IF
 
-
-        DO ipt=1, n_pt_pair
-!         Calculate the weighting function across the band.
-          CALL rad_weight_90(i_weight, nu_wgt, SolarSpec, t_calc(ipt), wgt)
-          CALL apply_response_int
-
-          IF (l_fit_cont_data .AND. l_cont_line_abs_weight) &
-            kabs_lines=kabs_all_lines(1:n_nu,ipt)
-
-          IF (ipt == ipt_ref) THEN
-            wgt_ref(1:n_nu) = nu_inc * wgt(1:n_nu)
-          END IF
-
-!         Perform the appropriate fits.
-          IF (l_fit_self_continuum) THEN
-             kabs=kabs_all(1:n_nu,ipt)
-             integ_wgt=nu_inc * SUM(wgt(1:n_nu))
-             CALL calc_self_trans_int
-             IF (ierr /= i_normal) RETURN
-          ELSE IF (l_fit_frn_continuum) THEN
-             kabs=kabs_all(1:n_nu,ipt)
-             integ_wgt=nu_inc * SUM(wgt(1:n_nu))
-             CALL calc_frn_trans_int
-             IF (ierr /= i_normal) RETURN
-          ELSE IF (l_fit_line_data .OR. l_fit_cont_data) THEN
-            IF (l_self_broadening) THEN
-              wgt_sv=wgt
-              DO igf=1, n_gas_frac
-                wgt=wgt_sv
-                kabs=kabs_all_sb(:,ipt,igf)
-                CALL ck_fit_k
-                kopt_all_sb(:,ipt,igf,ibb)=kopt_all(:,ipt,ibb)
-              END DO
-            ELSE
+        IF (l_fit_self_continuum .OR. l_fit_frn_continuum .OR. &
+            (i_ck_fit /= ip_ck_none)) THEN
+          DO ipt=1, n_pt_pair
+!           Calculate the weighting function across the band.
+            CALL rad_weight_90(i_weight, nu_wgt, SolarSpec, t_calc(ipt), wgt)
+            CALL apply_response_int
+          
+            IF (l_fit_cont_data .AND. l_cont_line_abs_weight) &
+              kabs_lines=kabs_all_lines(1:n_nu,ipt)
+          
+            IF (ipt == ipt_ref) THEN
+              wgt_ref(1:n_nu) = nu_inc * wgt(1:n_nu)
+            END IF
+          
+!           Perform the appropriate fits.
+            IF (l_fit_self_continuum) THEN
               kabs=kabs_all(1:n_nu,ipt)
-              CALL ck_fit_k
+              integ_wgt=nu_inc * SUM(wgt(1:n_nu))
+              CALL calc_self_trans_int
+              IF (ierr /= i_normal) THEN
+                cmessage='Error in calc_self_trans_int'
+                CALL ereport(RoutineName, ierr, cmessage)
+              END IF
+            ELSE IF (l_fit_frn_continuum) THEN
+              kabs=kabs_all(1:n_nu,ipt)
+              integ_wgt=nu_inc * SUM(wgt(1:n_nu))
+              CALL calc_frn_trans_int
+              IF (ierr /= i_normal) THEN
+                cmessage='Error in calc_frn_trans_int'
+                CALL ereport(RoutineName, ierr, cmessage)
+              END IF
+            ELSE IF (l_fit_line_data .OR. l_fit_cont_data) THEN
+              IF (l_self_broadening) THEN
+                wgt_sv=wgt
+                DO igf=1, n_gas_frac
+                  wgt=wgt_sv
+                  kabs=kabs_all_sb(:,ipt,igf)
+                  CALL ck_fit_k
+                  IF (ierr /= i_normal) THEN
+                    write(cmessage,'(a,2i3)') &
+                      'Error in ck_fit_k,: ipt, igf =', ipt, igf
+                    CALL ereport(RoutineName, ierr, cmessage)
+                  END IF
+                  kopt_all_sb(:,ipt,igf,ibb)=kopt_all(:,ipt,ibb)
+                END DO
+              ELSE
+                kabs=kabs_all(1:n_nu,ipt)
+                CALL ck_fit_k
+                IF (ierr /= i_normal) THEN
+                  write(cmessage,'(a,i3)') 'Error in ck_fit_k: ipt =', ipt
+                  CALL ereport(RoutineName, ierr, cmessage)
+                END IF
+              END IF
+            END IF
+          ENDDO
+          
+          IF (l_fit_frn_continuum) k_cont => k_opt_frn(ib)
+          IF (l_fit_self_continuum) k_cont => k_opt_self(ib)
+          
+          IF (l_scale_pT) THEN
+!         
+            IF (l_fit_line_data) THEN
+              SELECT CASE(i_scale_function)
+              CASE (IP_scale_power_law, IP_scale_power_quad,  &
+                    IP_scale_doppler_quad )
+                CALL fit_scale_line_int
+                IF (ierr /= i_normal) THEN
+                  cmessage='Error after fit_scale_line_int'
+                  CALL ereport(RoutineName, ierr, cmessage)
+                END IF
+              CASE (IP_scale_dbl_pow_law, IP_scale_dbl_pow_quad,  &
+                    IP_scale_dbl_dop_quad )
+                CALL fit_scale_line_int2
+                IF (ierr /= i_normal) THEN
+                  cmessage='Error after fit_scale_line_int2'
+                  CALL ereport(RoutineName, ierr, cmessage)
+                END IF
+              END SELECT
+            END IF
+            IF (l_fit_frn_continuum .OR. l_fit_self_continuum) THEN
+              CALL fit_scale_cont_int
+              IF (ierr /= i_normal) THEN
+                cmessage='Error in fit_scale_cont_int'
+                CALL ereport(RoutineName, ierr, cmessage)
+              END IF
             END IF
           END IF
-        ENDDO
+          
+          IF (l_fit_line_data .AND. l_scale_pT) DEALLOCATE(trans_pt_k)
+        END IF
 
-        IF (l_fit_frn_continuum) k_cont => k_opt_frn(ib)
-        IF (l_fit_self_continuum) k_cont => k_opt_self(ib)
-
-        IF (l_scale_pT) THEN
-!
-          IF (l_fit_line_data) THEN
-            SELECT CASE(i_scale_function)
-            CASE (IP_scale_power_law, IP_scale_power_quad,  &
-                  IP_scale_doppler_quad )
-              CALL fit_scale_line_int
-            CASE (IP_scale_dbl_pow_law, IP_scale_dbl_pow_quad,  &
-                  IP_scale_dbl_dop_quad )
-              CALL fit_scale_line_int2
-            END SELECT
-          END IF
-          IF (ierr /= i_normal) RETURN
-          IF (l_fit_frn_continuum .OR. l_fit_self_continuum) &
-            CALL fit_scale_cont_int
-          IF (ierr /= i_normal) RETURN
-!
-        ENDIF
-
-        IF (l_fit_line_data .AND. l_scale_pT) DEALLOCATE(trans_pt_k)
-!
-      ENDIF
+      ENDIF ! End else block for transparent fit
 !
     ENDIF
 !
@@ -1399,7 +1475,7 @@ SUBROUTINE corr_k_single &
     DEALLOCATE(kabs_lines)
 !
 !   Write out the calculated fit.
-    IF (l_fit_line_data .OR. l_fit_cont_data) THEN
+    IF (i_ck_fit /= ip_ck_none) THEN
 
       CALL write_fit_90(iu_k_out, .FALSE., l_fit_cont_data, &
         l_self_broadening, ib, i_gas, i_index, i_index_1, i_index_2, &
@@ -1511,7 +1587,10 @@ SUBROUTINE corr_k_single &
     IF (l_fit_cont_data .AND. l_cont_line_abs_weight) DEALLOCATE(kabs_all_lines)
     IF (l_self_broadening) DEALLOCATE(kabs_all_sb)
 !
-    CLOSE(iu_k_out)
+    IF ((i_ck_fit /= ip_ck_none) .OR. &
+        l_fit_self_continuum .OR. l_fit_frn_continuum) THEN
+      CLOSE(iu_k_out)
+    END IF
     CLOSE(iu_monitor)
 !
     IF (l_access_HITRAN .AND. .NOT.l_lbl_exist) THEN
@@ -1520,15 +1599,10 @@ SUBROUTINE corr_k_single &
         WRITE(*,"(a)") "Error deallocating array for HITRAN line data"
         EXIT
       ENDIF
-      DEALLOCATE(required_isotopes, STAT = alloc_status)
-      IF (alloc_status /= 0) THEN
-        WRITE(*,"(a)") "Error deallocating array for required_isotopes"
-        EXIT
-      ENDIF
     ENDIF
 
-    IF (l_fit_line_data .OR. l_fit_cont_data) DEALLOCATE(trans_ref)
-    IF (l_fit_line_data .OR. l_fit_cont_data) DEALLOCATE(trans_calc)
+    IF (i_ck_fit /= ip_ck_none) DEALLOCATE(trans_ref)
+    IF (i_ck_fit /= ip_ck_none) DEALLOCATE(trans_calc)
 
     DEALLOCATE(sub_band_nu_long)
     DEALLOCATE(sub_band_nu_short)
@@ -1536,25 +1610,23 @@ SUBROUTINE corr_k_single &
     DEALLOCATE(sub_band_k)
 
   ENDDO Bands
-!
-  IF (l_fit_line_data .OR. l_fit_cont_data) CALL output_ck_cdf
-  IF (ierr /= i_normal) RETURN
+
+  IF (i_ck_fit /= ip_ck_none) CALL output_ck_cdf
+  IF (ierr /= i_normal) THEN
+    cmessage='Error after output_ck_cdf'
+    CALL ereport(RoutineName, ierr, cmessage)
+  END IF
   IF (l_lbl_exist) DEALLOCATE(nu_wgt_all)
   DEALLOCATE(band_min)
   DEALLOCATE(band_max)
   
   CALL close_lbl_files
   CALL close_map_files
-!
-!
-  RETURN
-!
-!
-!
+
+
 CONTAINS
-!
-!
-!
+
+
   SUBROUTINE access_hitran_int
 !
 !
@@ -1567,6 +1639,7 @@ CONTAINS
 !
 !   Convert our identifier for the gas to that used by HITRAN.
     h_gas=hitran_number(i_gas)
+    h_isotopes=hitran_isotopes(:, i_gas)
     IF (h_gas <= 0) THEN
       WRITE(iu_err, "(/a)") &
         "*** Error: This gas does not exist in the database."
@@ -1597,24 +1670,16 @@ CONTAINS
 !   which will contribute.
     lower_band_limit = (band_min(ib) - line_cutoff) * 0.01_RealK
     upper_band_limit = (band_max(ib) + line_cutoff) * 0.01_RealK
-!
-!   Set the required isotope to 1. Note this is currently not used in
-!   read_hitran and all lines for all isotopes are in fact read (the
-!   strengths of lines in HITRAN are scaled by the terrestrial
-!   abundance of the isotope).
-    n_isotope=1
-    ALLOCATE(required_isotopes(n_isotope))
-    required_isotopes(1)=1
 
 !   To cover the whole range, the database must be rewound.
     REWIND(iu_lbl)
     CALL read_hitran ( &
-          iu_lbl,                   &
-          iu_monitor,               &
-          h_gas, number_lines,      &
-          n_isotope, required_isotopes(1), &
-          lower_band_limit,         &
-          upper_band_limit,         &
+          iu_lbl,            &
+          iu_monitor,        &
+          h_gas, h_isotopes, &
+          number_lines,      &
+          lower_band_limit,  &
+          upper_band_limit,  &
           num_lines_in_band, &
           hitran_data )
 !
@@ -3079,7 +3144,7 @@ CONTAINS
         band_width = band_width + &
           band_min(index_exclude(jx, ib)) - band_max(index_exclude(jx, ib))
       ENDDO
-      n_nu=NINT(band_width/nu_inc_0)
+      n_nu=NINT(band_width/nu_inc)
       n_nu_tot=n_nu_tot+n_nu
     END DO
 
@@ -3113,7 +3178,7 @@ CONTAINS
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'title', 'wavenumber'))
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'long_name', 'wavenumber'))
     CALL nf(nf90_put_att(ncidout_lbl, varid, 'units', 'm-1'))
-    CALL nf(nf90_put_att(ncidout_lbl, varid, 'step', nu_inc_0))
+    CALL nf(nf90_put_att(ncidout_lbl, varid, 'step', nu_inc))
 
     IF (l_self_broadening) THEN
       CALL nf(nf90_def_var(ncidout_lbl, 'gas_frac', NF90_FLOAT, dimid3, varid))
@@ -3200,7 +3265,7 @@ CONTAINS
         band_width = band_width + &
           band_min(index_exclude(jx, ib)) - band_max(index_exclude(jx, ib))
       ENDDO
-      n_nu(ib)=NINT(band_width/nu_inc_0)
+      n_nu(ib)=NINT(band_width/nu_inc)
     END DO
 
     INQUIRE(FILE=file_map, EXIST=l_map_exist)
@@ -3210,7 +3275,9 @@ CONTAINS
       CALL nf(nf90_open(TRIM(file_map),NF90_WRITE,ncidout_map))
 
     ELSE
-      CALL nf(nf90_create(TRIM(file_map),NF90_NOCLOBBER,ncidout_map))
+      CALL nf(nf90_create(TRIM(file_map), &
+                          OR(NF90_NOCLOBBER, NF90_64BIT_OFFSET), &
+                          ncidout_map))
 
 !     Create dimensions
       CALL nf(nf90_def_dim(ncidout_map, 'nu', MAXVAL(n_nu), dimid1))
@@ -3223,7 +3290,7 @@ CONTAINS
       CALL nf(nf90_put_att(ncidout_map, varid, 'title', 'wavenumber'))
       CALL nf(nf90_put_att(ncidout_map, varid, 'long_name', 'wavenumber'))
       CALL nf(nf90_put_att(ncidout_map, varid, 'units', 'm-1'))
-      CALL nf(nf90_put_att(ncidout_map, varid, 'step', nu_inc_0))
+      CALL nf(nf90_put_att(ncidout_map, varid, 'step', nu_inc))
 
       CALL nf(nf90_def_var(ncidout_map, 'n_k', NF90_INT, (/ dimid4 /), varid))
       CALL nf(nf90_put_att(ncidout_map, varid, 'title', 'number of k-terms'))
@@ -3416,11 +3483,18 @@ CONTAINS
 
     use netcdf
     IMPLICIT NONE
+    INTEGER :: len_base
 
 !   Close files
     IF (l_lbl_exist) THEN
       CALL nf(nf90_close(ncidin_lbl))
     ELSE
+      CALL nf(nf90_close(ncidout_lbl))
+      ! Write empty file to indicate completion
+      len_base=SCAN(file_lbl, ".", .TRUE.)-1
+      IF (len_base < 0) len_base=LEN(TRIM(file_lbl))
+      CALL nf(nf90_create(file_lbl(1:len_base)//'.done', &
+              NF90_CLOBBER, ncidout_lbl))
       CALL nf(nf90_close(ncidout_lbl))
     ENDIF
 

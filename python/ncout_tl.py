@@ -69,7 +69,11 @@ def ncout_tl(basename):
                                     left = left, right = right)
     
     if (os.path.exists(basename + '.tstar')):
-        tlev[0,:,:] = tstar
+# By default use the bottom layer temperature for the temperature
+# just above the surface:
+        tlev[0,:,:] = t[0,:,:]
+# Uncomment the following to use the surface temperature instead
+#        tlev[0,:,:] = tstar
     else:
         nc.ncout3d(basename + '.tstar', lon, lat, pstar, tlev[0,:,:],
                    longname = 'Surface Temperature', units = 'K')

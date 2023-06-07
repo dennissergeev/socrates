@@ -182,12 +182,21 @@ SUBROUTINE optimal_k &
     IF ( ((error < tol).AND.(iter > np_kopt_max_iter)) .OR. &
          (ABS(d_sq_error) < 2048.0*EPSILON(d_sq_error)) .OR. &
          (ABS(d_sq_error/d2_sq_error) < EPSILON(d_sq_error)) ) THEN
+      ierr=i_normal
       EXIT
     ELSE IF (iter > np_kopt_max_iter) THEN
-      WRITE(iu_err, '(/A)') &
-        'Failure to converge in Newton-Raphson iteration.'
-      ierr=i_abort_calculation
-      RETURN
+      IF (ierr == i_normal) THEN
+        ! Attempt convergence starting from k_mean
+        iter = 0
+        k_opt = k_mean
+        ierr = i_warning
+      ELSE
+        WRITE(iu_err, '(/A)') &
+          'Error: Failure to converge in Newton-Raphson iteration.'
+        ! If failed to converge again then abort
+        ierr = i_abort_calculation
+        RETURN
+      END IF
     ELSE IF (ABS(d2_sq_error) > EPSILON(d2_sq_error)) THEN
       iter=iter+1
       IF (d2_sq_error > 0.0_RealK) THEN
@@ -220,16 +229,22 @@ SUBROUTINE optimal_k &
         dk = -k_opt
       ENDIF
     ELSE
-      WRITE(iu_err, '(/A)') &
-        'Ill-conditioned division in Newton-Raphson iteration.'
-      k_opt = k_mean
-      error=0.0_RealK
-      RETURN
+      IF (ierr == i_normal) THEN
+        ! Attempt convergence starting from k_mean
+        iter = 0
+        k_opt = k_mean
+        ierr = i_warning
+      ELSE
+        WRITE(iu_err, '(/A,A)') 'Warning: ', &
+          'Ill-conditioned division in Newton-Raphson iteration.'
+        ! If failed to converge again then use k_mean
+        k_opt = k_mean
+        error=0.0_RealK
+        ierr=i_normal
+        EXIT
+      END IF
     ENDIF
   ENDDO
-!
-!
-!
-  RETURN
+
 END SUBROUTINE optimal_k
        

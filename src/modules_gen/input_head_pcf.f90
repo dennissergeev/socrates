@@ -33,7 +33,7 @@ MODULE input_head_pcf
 !   Maximum number of columns of data
   INTEGER, Parameter :: NPD_phys_type        = 62
 !   Maximum number of types of data
-  INTEGER, Parameter :: NPD_unit             = 18
+  INTEGER, Parameter :: NPD_unit             = 20
 !   Number of physical units
 !
 !
@@ -278,7 +278,8 @@ MODULE input_head_pcf
     'Ar        ', 'AIR       ', 'O         ', 'N         ', &
     'NO3       ', 'N2O5      ', 'HONO      ', 'HO2NO2    ', &
     'H2O2      ', 'C2H6      ', 'CH3       ', 'H2CO      ', &
-    'HO2       '/) 
+    'HO2       ', 'HDO       ', 'HCl       ', 'HF        ', &
+    'cOSSO     ', 'tOSSO     ', 'yOSOS     '/) 
 !   Headers for gaseous data
 !
 !
@@ -296,7 +297,8 @@ MODULE input_head_pcf
     'ar          ', 'air         ', 'o           ', 'n           ', &
     'no3         ', 'n2o5        ', 'hono        ', 'ho2no2      ', &
     'h2o2        ', 'c2h6        ', 'ch3         ', 'h2co        ', &
-    'ho2         '/) 
+    'ho2         ', 'hdo         ', 'hcl         ', 'hf          ', &
+    'cosso       ', 'tosso       ', 'yosos       '/) 
 !   File suffixes for gaseous data
 !
 !
@@ -326,7 +328,10 @@ MODULE input_head_pcf
     ' Nitrous acid                 ', ' Peroxynitric acid            ', &
     ' Hydrogen peroxide            ', ' Ethane                       ', &
     ' Methyl radical               ', ' Formaldehyde                 ', &
-    ' Hydroperoxy radical          '/)
+    ' Hydroperoxy radical          ', ' Semiheavy water              ', &
+    ' Hydrogen chloride            ', ' Hydrogen fluoride            ', &
+    ' cis-OSSO                     ', ' trans-OSSO                   ', &
+    ' OSO-S                        '/)
 !   Long titles for gaseous data
 !
 !
@@ -437,7 +442,7 @@ MODULE input_head_pcf
     'KM        ', 'UM        ', 'KGM-3     ', 'GM-3      ', &
     'KGM-2     ', 'GM-2      ', 'GKG-1     ', 'GG-1      ', &
     'NONE      ', 'M-3       ', 'CM-3      ', 'WM-2      ', &
-    'C         ', 'PPMV      ' /) 
+    'C         ', 'PPMV      ', 'VOL-MARS  ', 'VOL-VENUS ' /) 
 !   Names of units
 !
 !
@@ -446,14 +451,15 @@ MODULE input_head_pcf
     1.0E+03_RealK, 1.0E-06_RealK, 1.0_RealK,     1.0E-03_RealK, &
     1.0_RealK,     1.0E-03_RealK, 1.0E-03_RealK, 1.0_RealK, &
     1.0_RealK,     1.0_RealK,     1.0E+06_RealK, 1.0_RealK, &
-    1.0_RealK,     -1.0E-06_RealK/28.966_RealK /)
+    1.0_RealK,     -1.0E-06_RealK/28.966_RealK, &
+    -1.0_RealK/43.34_RealK, -1.0_RealK/43.45_RealK /)
 !   Factors for conversion to S.I. units
   REAL  (RealK), Parameter, Dimension(NPD_unit) :: offset_unit = (/ &
     0.0_RealK, 0.0_RealK, 0.0_RealK, 0.0_RealK, &
     0.0_RealK, 0.0_RealK, 0.0_RealK, 0.0_RealK, &
     0.0_RealK, 0.0_RealK, 0.0_RealK, 0.0_RealK, &
     0.0_RealK, 0.0_RealK, 0.0_RealK, 0.0_RealK, &
-    2.7315E+02_RealK, 0.0_RealK /)
+    2.7315E+02_RealK, 0.0_RealK, 0.0_RealK, 0.0_RealK /)
 !   Offsets for conversion to S.I. units
 !
 !

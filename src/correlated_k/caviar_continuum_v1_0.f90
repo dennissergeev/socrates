@@ -36,10 +36,10 @@ CONTAINS
     ! Note: Uses ALLOCATE  on pointers!!!
     ! but DEALLOCATEs all variables before exiting.
 
-    USE realtype_rd
+    USE realtype_rd,     ONLY: RealK
     USE rad_ccf,         ONLY: r_gas
     USE gas_list_pcf,    ONLY: ip_h2o, molar_weight
-    USE hitran_cnst
+    USE hitran_cnst,     ONLY: avogadro_number, c2
     USE ckd_extern_data   ! c_self_h2o_260, c_self_h2o_296,
                           ! and c_foreign_h2o_296 are set in here
 
@@ -214,10 +214,10 @@ CONTAINS
     ! absorption per mass density of water vapour evaluated at the
     ! total pressure p and water vapour partial pressure partial_p.
 
-    USE realtype_rd
-    USE hitran_cnst
+    USE realtype_rd,     ONLY: RealK
     USE rad_ccf,         ONLY: r_gas
     USE gas_list_pcf,    ONLY: ip_h2o, ip_air, molar_weight
+    USE hitran_cnst,     ONLY: avogadro_number, c2
     USE ckd_extern_data
 
     IMPLICIT NONE

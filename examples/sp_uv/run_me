@@ -26,7 +26,7 @@ Cl_run_cdf -B tropical -s $RAD_DATA/spectra/ga7/sp_lw_ga7 -I -R 1 9 -g 4 -C 5 -c
 fmove tropical trop_lw_ga7_nlte
 
 #sbatch -n 24 -o ./sbatch_output -t 360 ./mk_sp_xsw
-#sacct --format=jobname%50,jobid%9,submit,start,timelimit,elapsed,totalcpu,ncpus%5,reqmem,maxrss,nodelist%15,exitcode,state
+#sacct --format=jobname%10,jobid%9,timelimit,elapsed,ncpus%5,exitcode,state | grep mk_sp_xsw
 
 rm -f cdl_trop_*
 Ccdf2cdl -o cdl_trop_xsw_photol_ch.ph_rate_2 trop_xsw_photol_ch.ph_rate_2 > /dev/null

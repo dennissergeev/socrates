@@ -16,7 +16,8 @@
 !
 !     Modules to set types of variables:
       USE realtype_rd
-      USE rad_ccf, ONLY: r_gas_dry, ratio_molar_weight
+      USE gas_list_pcf
+      USE rad_ccf, ONLY: r_gas_dry, mol_weight_air
 !
 !
       IMPLICIT NONE
@@ -34,8 +35,12 @@
       REAL  (RealK) ::
      &    fnc_density
 !           Calculated density
+     &  , ratio_molar_weight
+!           Molecular weight of dry air/ molecular weight of water
 !
 !
+      ratio_molar_weight
+     &  = mol_weight_air/(molar_weight(ip_h2o)*1.0E-03_RealK)
       fnc_density=p/(r_gas_dry*t
      &  *(1+(ratio_molar_weight-1.0_RealK)*q))
 !

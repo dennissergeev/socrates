@@ -495,8 +495,12 @@ CONTAINS
           weight_coeff(k) * ss_data%scat(i_begin + k) * &
           ss_data%phf(j, i_begin + k)
       ENDDO
-      phase_fnc_band(i_band, j, n_block) = &
-        mean_scattering_phase_fnc(j) / mean_scattering
+      IF (mean_scattering > 0.0_RealK) THEN
+        phase_fnc_band(i_band, j, n_block) = &
+          mean_scattering_phase_fnc(j) / mean_scattering
+      ELSE
+        phase_fnc_band(i_band, j, n_block) = 0.0_RealK
+      END IF
     ENDDO
 !
 !   The absorption may be weighted in different ways for

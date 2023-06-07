@@ -29,11 +29,13 @@ set -- $ARG
 CTN_ADJUST=n
 FRN_INCLUDE=n
 GAS=0
+FIT_TYPE=$IP_CK_NONE
 #
 while [ $# -gt 0 ]
 do case $1 in
       -C) CTN_NUM_PATH=$2 ; CTN_MIN_PATH=$3 ; CTN_MAX_PATH=$4 ; shift 4 ;;
       -D) DATABASE=$2 ; shift 2 ;;
+      -BD) BDATABASE=$2 ; shift 2 ;;
       -X) XDATABASE=$2 ; shift 2 ;;
       -UVX) UVXDATABASE=$2 ; shift 2 ;;
       -CIA) CIADATABASE=$2 ; shift 2 ;;
@@ -49,6 +51,7 @@ do case $1 in
       -i) LINE_INC=$2 ; shift 2 ;;
       -k) CTN_ADJUST=y ; shift ;;
       -l) LINE_DATA=y ; GAS=$2 ; LINE_MAX_PATH=$3 ; shift 3 ;;
+      -lo) LINE_DATA=y ; GAS=$2 ; shift 2 ;;
       -ct) CONT_DATA=y ; GAS_1=$2 ; GAS_2=$3 CONT_MAX_PATH=$4 ; shift 4 ;;
       -cw) CONT_LINE_WGT=y ; GAS=$2 ; LINE_MAX_PATH=$3 ; shift 3 ;;
       -s) SPECTRUM=$2 ; shift 2 ;;
@@ -97,6 +100,10 @@ if [ "$DATABASE" ]
   then echo l >> /tmp/ck.$$
   echo $DATABASE >> /tmp/ck.$$
   echo $RAD_DATA/gases/parsum.dat >> /tmp/ck.$$
+else if [ "$BDATABASE" ]
+  then echo b >> /tmp/ck.$$
+  echo $BDATABASE >> /tmp/ck.$$
+  echo $RAD_DATA/gases/parsum.dat >> /tmp/ck.$$
 else if [ "$XDATABASE" ]
   then echo x >> /tmp/ck.$$
   echo $XDATABASE >> /tmp/ck.$$
@@ -105,6 +112,7 @@ else if [ "$UVXDATABASE" ]
   echo $UVXDATABASE >> /tmp/ck.$$
 else
   echo n >> /tmp/ck.$$
+      fi
     fi
   fi
 fi
@@ -218,7 +226,7 @@ fi
 #
 # Details of line integration.
 #
-if [ "$DATABASE" ]
+if [ "$DATABASE" ] || [ "$BDATABASE" ]
   then if [ $GAS -eq $IP_H2O ]
           then echo $CTN_ADJUST >> /tmp/ck.$$
                echo $FRN_INCLUDE >> /tmp/ck.$$
@@ -260,40 +268,45 @@ if [ "$LINE_DATA" ] || [ "$CONT_DATA" ]
          $IP_CK_BIN) echo $TOL >> /tmp/ck.$$ ;;
        esac
 fi
-if [ "$LINE_DATA" ]
-  then echo $LINE_MAX_PATH >> /tmp/ck.$$
-else
-  if [ "$CONT_DATA" ]
-    then echo $CONT_MAX_PATH >> /tmp/ck.$$
-  fi
-fi
-if [ "$LINE_DATA" ] || [ "$CONT_DATA" ]
-  then if [ "$LOAD_MAP" ]
-    then echo y >> /tmp/ck.$$
+if [ $FIT_TYPE -ne $IP_CK_NONE ] ; then
+  if [ "$LINE_DATA" ]
+    then echo $LINE_MAX_PATH >> /tmp/ck.$$
   else
-    echo n >> /tmp/ck.$$
-    if [ "$LOAD_WEIGHT" ]
+    if [ "$CONT_DATA" ]
+      then echo $CONT_MAX_PATH >> /tmp/ck.$$
+    fi
+  fi
+  if [ "$LINE_DATA" ] || [ "$CONT_DATA" ]
+    then if [ "$LOAD_MAP" ]
       then echo y >> /tmp/ck.$$
     else
       echo n >> /tmp/ck.$$
+      if [ "$LOAD_WEIGHT" ]
+        then echo y >> /tmp/ck.$$
+      else
+        echo n >> /tmp/ck.$$
+      fi
     fi
-  fi
-  if [ -z "$LOAD_MAP" ] && [ -z "$LOAD_WEIGHT" ]
-    then if [ "$SAVE_MAP" ]
-      then echo y >> /tmp/ck.$$
-    else
-      echo n >> /tmp/ck.$$
+    if [ -z "$LOAD_MAP" ] && [ -z "$LOAD_WEIGHT" ]
+      then if [ "$SAVE_MAP" ]
+        then echo y >> /tmp/ck.$$
+      else
+        echo n >> /tmp/ck.$$
+      fi
     fi
-  fi
-  if [ "$LOAD_MAP" ] || [ "$LOAD_WEIGHT" ] || [ "$SAVE_MAP" ]
-    then echo $MAP_FILE >> /tmp/ck.$$
+    if [ "$LOAD_MAP" ] || [ "$LOAD_WEIGHT" ] || [ "$SAVE_MAP" ]
+      then echo $MAP_FILE >> /tmp/ck.$$
+    fi
   fi
 fi
-echo $WEIGHT >> /tmp/ck.$$
-if [ $WEIGHT -eq $IP_WEIGHT_SOLAR ]
-then echo $SOLAR_FILE >> /tmp/ck.$$
-fi  
-echo $OUT_FILE >> /tmp/ck.$$
+if [ $FIT_TYPE -ne $IP_CK_NONE ] || \
+   ([ -z "$CONT_DATA" ] && ([ "$SELF_CF" ] || [ "$FRN_CF" ]))
+  then echo $WEIGHT >> /tmp/ck.$$
+  if [ $WEIGHT -eq $IP_WEIGHT_SOLAR ]
+  then echo $SOLAR_FILE >> /tmp/ck.$$
+  fi  
+  echo $OUT_FILE >> /tmp/ck.$$
+fi
 echo $MON_FILE >> /tmp/ck.$$
 if [ "$N_OMP_THREADS" ]
   then echo $N_OMP_THREADS >> /tmp/ck.$$

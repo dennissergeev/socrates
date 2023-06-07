@@ -6,6 +6,8 @@ host=`uname -n`
 
 if [ ${host:0:4} == "dali" ]; then
   host="dali"
+elif [ "${host:7:4}" == "arc4" ]; then
+  host="arc4"
 fi
 
 SRC_LIST="general modules_gen aux scatter correlated_k"

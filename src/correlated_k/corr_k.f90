@@ -8,8 +8,9 @@
 !
 PROGRAM corr_k
 
-  USE realtype_rd
+  USE realtype_rd, ONLY: RealK
   USE rad_pcf
+  USE ck_fit_pcf, ONLY: ip_ck_none
   USE dimensions_pp_ucf
   USE dimensions_spec_ucf
   USE def_spectrum
@@ -17,7 +18,7 @@ PROGRAM corr_k
   USE def_inst_flt
   USE def_std_io_icf
   USE def_hitran_record
-  USE hitran_cnst
+  USE hitran_cnst, ONLY: read_parsum_dat
 
   IMPLICIT NONE
 !
@@ -333,10 +334,12 @@ PROGRAM corr_k
   INQUIRE(FILE=file_lbl, EXIST=l_lbl_exist)
 !
 ! Acquire the line data-base.
-  WRITE(iu_stdout, "(/a,/a,/a,/a)") &
+  WRITE(iu_stdout, "(/a,/a,/a,/a,/a,/a)") &
     "Will a HITRAN database be provided? Type:", &
     "  L for line database (.par)", &
+    "  B for bespoke line database (.bpar)", &
     "  X for cross-section database (.xsc)", &
+    "  U for bespoke UV cross-section database (.uvxsc)", &
     "  N for none."
   DO
 !
@@ -352,6 +355,23 @@ PROGRAM corr_k
       CALL open_file_in(ierr, iu_lbl, &
         "Give the name of the HITRAN .par database.")
       IF (ierr /= i_normal) STOP
+      CALL read_parsum_dat
+      EXIT
+!
+    ELSE IF ( (char_if == 'B') .OR. (char_if == 'b') ) THEN
+!
+      l_access_HITRAN=.TRUE.
+      l_access_xsc=.FALSE.
+      ! A bespoke input format for data selected from hitran.org
+      hitran_record_format = hitran_bespoke_frmt
+      CALL get_free_unit(ierr, iu_lbl)
+      IF (ierr /= i_normal) STOP
+      CALL open_file_in(ierr, iu_lbl, &
+        "Give the name of the bespoke HITRAN .bpar database.")
+      IF (ierr /= i_normal) THEN
+        WRITE(iu_err, '(A, i5)') 'Error in open_file_in: ', ierr        
+        STOP
+      END IF
       CALL read_parsum_dat
       EXIT
 !
@@ -520,18 +540,21 @@ PROGRAM corr_k
   ALLOCATE(k_opt_frn(Spectrum%Dim%nd_band))
   ALLOCATE(scale_cont(MAX(n_scale_variable(i_scale_fnc), 1), 1, &
     Spectrum%Dim%nd_band))
-!
-! Select the weighting to be applied.
-  CALL select_weight_ck_90(i_weight, SolarSpec, l_interactive, ierr)
-!
-! Set the output file.
-  CALL get_free_unit(ierr, iu_k_out)
-  IF (ierr /= i_normal) STOP
-  CALL open_file_out_90(iu_k_out, l_interactive, &
-    "Give the name of the output file.", &
-    file_k, ierr)
-  IF (ierr /= i_normal) STOP
 
+  IF ((i_ck_fit /= ip_ck_none) .OR. &
+      l_fit_self_continuum .OR. l_fit_frn_continuum) THEN
+!   Select the weighting to be applied.
+    CALL select_weight_ck_90(i_weight, SolarSpec, l_interactive, ierr)
+!   
+!   Set the output file.
+    CALL get_free_unit(ierr, iu_k_out)
+    IF (ierr /= i_normal) STOP
+    CALL open_file_out_90(iu_k_out, l_interactive, &
+      "Give the name of the output file.", &
+      file_k, ierr)
+    IF (ierr /= i_normal) STOP
+  END IF
+    
 ! Define the output file of detailed monitoring information.
   CALL get_free_unit(ierr, iu_monitor)
   IF (ierr /= i_normal) STOP
@@ -543,9 +566,12 @@ PROGRAM corr_k
 ! The opening routine opens the file generically; however, it is more
 ! useful here to open the file afresh for each band, so it is closed
 ! first. (But the call was required to get the name of the file.)
-  CLOSE(iu_k_out)
+  IF ((i_ck_fit /= ip_ck_none) .OR. &
+      l_fit_self_continuum .OR. l_fit_frn_continuum) THEN
+    CLOSE(iu_k_out)
+  END IF
   CLOSE(iu_monitor)
-!
+
 ! Aquire number of OpenMP threads to use
   WRITE(iu_stdout, "(/A)") &
     "Specify the number of OpenMP threads to use."

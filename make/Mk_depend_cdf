@@ -23,6 +23,9 @@ make_block_17.o: make_block_17.f90
 calc_horizon_angles.o: calc_horizon_angles.f90
 	$(FORTCOMP) -I$(INCCDF_PATH) calc_horizon_angles.f90
 
+lblcat.o: lblcat.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) lblcat.f90 
+
 #
 # Object dependencies for programs that use netCDF
 #

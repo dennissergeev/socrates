@@ -63,10 +63,10 @@
 !           Header words
      &  , type(npd_data_column)*10
 !           Type of data
-     &  , unit(npd_data_column)*6
-!           Unit of data
      &  , tab*1
 !           Tab character
+      CHARACTER(LEN=len_col_header) :: unit(npd_data_column)
+!           Unit of data
       LOGICAL
      &    l_discard
 !           Flag to discard line

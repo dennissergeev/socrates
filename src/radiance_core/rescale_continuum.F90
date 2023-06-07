@@ -23,10 +23,9 @@ SUBROUTINE rescale_continuum(control, n_profile, n_layer, i_continuum   &
 
 
   USE realtype_rd, ONLY: RealK
-  USE rad_pcf, ONLy: ip_frn_continuum, ip_n2_continuum,                 &
-                     ip_scale_power_law, ip_scale_power_quad,           &
-                     ip_self_continuum
-  USE rad_ccf, ONLY: n2_mass_frac, mol_weight_air, repsilon
+  USE rad_pcf, ONLy: ip_frn_continuum, ip_self_continuum,               &
+                     ip_scale_power_law, ip_scale_power_quad
+  USE rad_ccf, ONLY: mol_weight_air, repsilon
   USE def_control, ONLY: StrCtrl
   USE vectlib_mod, ONLY : rtor_v
   USE yomhook, ONLY: lhook, dr_hook
@@ -173,13 +172,6 @@ SUBROUTINE rescale_continuum(control, n_profile, n_layer, i_continuum   &
         END DO
       END DO
     END IF
-  ELSE IF (i_continuum == ip_n2_continuum) THEN
-    DO i=1, n_layer
-      DO l=1, n_profile
-        amount_continuum(l, i)=amount_continuum(l, i)                   &
-          *n2_mass_frac*density(l, i)
-      END DO
-    END DO
   END IF
 
 

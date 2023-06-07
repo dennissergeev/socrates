@@ -36,17 +36,22 @@ PROGRAM l_run_cdf
   USE rad_pcf
   USE gas_list_pcf
   USE input_head_pcf
-  USE rad_ccf, ONLY: seconds_per_day, grav_acc, cp_air_dry, r, c_virtual, &
-    earth_radius, pi
+  USE rad_ccf, ONLY: set_socrates_constants, &
+    seconds_per_day, grav_acc, cp_air_dry, r_gas_dry, mol_weight_air, &
+    planet_radius, pi
   USE socrates_set_spectrum, only: set_spectrum
   USE socrates_set_cld_mcica, only: set_cld_mcica
   USE sw_nlte_heating_mod, only: nlte_heating_sw, &
     hartley_wavelength_min, hartley_wavelength_max, &
     euv_wavelength_max, lte_wavelength_max
   USE nlte_heating_mod, only: nlte_heating_lw
+  USE file_manager, ONLY: assign_file_unit, release_file_unit
+  USE ereport_mod, ONLY: ereport
+  USE errormessagelength_mod, ONLY: errormessagelength
 
   IMPLICIT NONE
 
+  CHARACTER (LEN=*), PARAMETER :: RoutineName = 'L_RUN_CDF'
 
 ! Declaration of variables.
 
@@ -55,6 +60,9 @@ PROGRAM l_run_cdf
 !       Error flag
   INTEGER :: ios
 !       I/O error flag
+  CHARACTER (LEN=errormessagelength) :: iomessage
+!       I/O error message
+  CHARACTER (LEN=errormessagelength) :: cmessage
   LOGICAL :: l_interactive
 !       Switch for interactive use
 
@@ -86,6 +94,9 @@ PROGRAM l_run_cdf
   TYPE(StrOut) :: radout
 
 ! Input files:
+  INTEGER :: iu_nml
+  CHARACTER  (LEN=256) :: nml_file = ""
+!       Name of namelist file
   CHARACTER  (LEN=80) :: base_name
 !       Base name of input files
   CHARACTER  (LEN=80) :: file_name
@@ -226,6 +237,25 @@ PROGRAM l_run_cdf
   control%i_cloud_representation = IP_cloud_type_homogen
   atm%n_profile = 0
   cld%n_condensed = 0
+
+! ------------------------------------------------------------------
+! Read namelist file
+! ------------------------------------------------------------------
+  WRITE(iu_stdout, "(a)") "Enter the name of the namelist file."
+  READ(iu_stdin, "(a)") nml_file
+  IF (nml_file /= " ") THEN
+    CALL assign_file_unit(nml_file, iu_nml, handler="fortran")
+    OPEN(UNIT=iu_nml, FILE=nml_file, IOSTAT=ios, &
+     STATUS='OLD', ACTION='READ', IOMSG=iomessage)
+    IF (ios /= 0) THEN
+      cmessage = 'Namelist file could not be opened: ' // TRIM(iomessage)
+      ierr=i_err_fatal
+      CALL ereport(RoutineName, ierr, cmessage)
+    END IF
+    CALL set_socrates_constants(iu_nml)
+    CLOSE(iu_nml)
+    CALL release_file_unit(iu_nml, handler="fortran")
+  END IF
 
 ! ------------------------------------------------------------------
 ! Spectral Data:
@@ -1191,14 +1221,15 @@ PROGRAM l_run_cdf
   IF (Spectrum%Cont%index_water > 0) THEN
     DO i=1, atm%n_layer
       DO l=1, atm%n_profile
-        atm%density(l, i)=atm%p(l, i)/(r*atm%t(l, i)*(1.0e+00_RealK     &
-          + c_virtual*atm%gas_mix_ratio(l, i, Spectrum%Cont%index_water)))
+        atm%density(l, i)=atm%p(l, i)/(r_gas_dry*atm%t(l, i)*(1.0e+00_RealK &
+          + (mol_weight_air/(molar_weight(ip_h2o)*1.0E-03_RealK) - 1.0_RealK) &
+          * atm%gas_mix_ratio(l, i, Spectrum%Cont%index_water)))
       END DO
     END DO
   ELSE
     DO i=1, atm%n_layer
       DO l=1, atm%n_profile
-        atm%density(l, i)=atm%p(l, i)/(r*atm%t(l, i))
+        atm%density(l, i)=atm%p(l, i)/(r_gas_dry*atm%t(l, i))
       END DO
     END DO   
   END IF
@@ -1210,14 +1241,14 @@ PROGRAM l_run_cdf
   IF (control%l_spherical_solar) THEN
     ALLOCATE (r_layer(atm%n_profile,0:atm%n_layer+1))
     DO l=1, atm%n_profile
-      atm%r_level(l, atm%n_layer) = earth_radius
-      r_layer(l, atm%n_layer+1) = earth_radius
+      atm%r_level(l, atm%n_layer) = planet_radius
+      r_layer(l, atm%n_layer+1) = planet_radius
     END DO
     DO i=atm%n_layer, 1, -1
       DO l=1, atm%n_profile
         atm%r_level(l, i-1) = atm%r_level(l, i) + &
           (LOG(atm%p_level(l, i)) - LOG(atm%p_level(l, i-1))) &
-          * r * atm%t(l, i) / grav_acc
+          * r_gas_dry * atm%t(l, i) / grav_acc
         atm%r_layer(l, i) = &
           (atm%r_level(l, i-1) + atm%r_level(l, i)) / 2.0_RealK
         r_layer(l, i) = atm%r_layer(l, i)

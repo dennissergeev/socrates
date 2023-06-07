@@ -140,6 +140,8 @@ PROGRAM tidy_90
       '8.   Set overlap treatment for generalised continua.'
     WRITE(iu_stdout, '(6x, a)') &
       '9.   Scale extinction for ice-crystals.'
+    WRITE(iu_stdout, '(5x, a)') &
+      '10.   Ensure a single null absorber is present in each band.'
     WRITE(iu_stdout, '(/5x, a//)') &
       '-1.  to finish.'
 !
@@ -262,6 +264,8 @@ PROGRAM tidy_90
             'The file contains no ice cloud data: the process ' &
             //'cannot be carried out.'
         ENDIF
+      CASE(10)
+        CALL set_null_absorber
       CASE DEFAULT
         WRITE(iu_err, '(a)') '+++ Invalid type of process:'
         IF (l_interactive) THEN
@@ -853,5 +857,29 @@ CONTAINS
     END IF
 
   END SUBROUTINE scale_ice
+
+!+ ---------------------------------------------------------------------
+! Subrouine to set at least one null absorber in each band
+!- ---------------------------------------------------------------------
+  SUBROUTINE set_null_absorber
+
+    USE rad_pcf, ONLY: ip_scale_null, ip_scale_fnc_null
+    IMPLICIT NONE
+
+    DO i=1, Spectrum%Basic%n_band
+      IF (Spectrum%Gas%n_band_absorb(i) == 0) THEN
+        Spectrum%Gas%n_band_absorb(i) = 1
+        Spectrum%Gas%index_absorb(1, i) = 1
+        Spectrum%Gas%i_band_k(i, 1) = 1
+        Spectrum%Gas%i_scale_k(i, 1)=ip_scale_null
+        Spectrum%Gas%i_scale_fnc(i, 1)=ip_scale_fnc_null
+        Spectrum%Gas%k(1, i, 1)=0.0_RealK
+        Spectrum%Gas%w(1, i, 1)=1.0_RealK
+        Spectrum%Gas%p_ref(1, i)=1.0_RealK
+        Spectrum%Gas%t_ref(1, i)=200.0_RealK
+      END IF
+    END DO
+
+  END SUBROUTINE set_null_absorber
 
 END PROGRAM tidy_90

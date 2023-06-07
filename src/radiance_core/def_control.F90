@@ -169,6 +169,23 @@ TYPE StrCtrl
 !   Flag for absorption by formaldehyde
   LOGICAL :: l_ho2                                                = .FALSE.
 !   Flag for absorption by hydroperoxy radical
+  LOGICAL :: l_hdo                                                = .FALSE.
+!   Flag for absorption by semiheavy water
+  LOGICAL :: l_hcl                                                = .FALSE.
+!   Flag for absorption by hydrogen chloride
+  LOGICAL :: l_hf                                                 = .FALSE.
+!   Flag for absorption by hrdrogen peroxide
+  LOGICAL :: l_cosso                                              = .FALSE.
+!   Flag for absorption by cis-OSSO
+  LOGICAL :: l_tosso                                              = .FALSE.
+!   Flag for absorption by trans-OSSO
+  LOGICAL :: l_yosos                                              = .FALSE.
+!   Flag for absorption by OSO-S
+  LOGICAL :: l_h2s	                                          = .FALSE.
+!   Flag for absorption by Hydrogen sulphide
+  LOGICAL :: l_cocs                                               = .FALSE.
+!   Flag for absorption by Carbonyl sulphide
+
 
 ! Properties of clouds:
   INTEGER :: i_cloud                                              = imdi
