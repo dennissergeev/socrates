@@ -78,6 +78,12 @@ cd rfmip
 cd ../
 
 echo ---
+echo "Testing COSP:"
+cd cosp
+./run_me || err=1
+cd ../
+
+echo ---
 if [ $err -gt 0 ] ; then
   echo "Some tests failed."
   exit 1

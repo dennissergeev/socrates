@@ -385,7 +385,11 @@ if (control%i_cloud_representation /= ip_cloud_off) then
         select case (cld%i_condensed_param(ip_clcmp_st_ice))
         case (ip_ice_adt, ip_ice_agg_de, ip_ice_agg_de_sun, ip_ice_baran)
           ! Here the effective dimension represents the diameter
-          diag%ice_re = 0.5_RealExt * diag%ice_re
+          if (l_last) then
+            diag%ice_re(:, list) = 0.5_RealExt * diag%ice_re(:, list)
+          else
+            diag%ice_re(list, :) = 0.5_RealExt * diag%ice_re(list, :)
+          end if
         end select
       end if
     case (ip_clcmp_cnv_water)
@@ -419,7 +423,11 @@ if (control%i_cloud_representation /= ip_cloud_off) then
         select case (cld%i_condensed_param(ip_clcmp_cnv_ice))
         case (ip_ice_adt, ip_ice_agg_de, ip_ice_agg_de_sun, ip_ice_baran)
           ! Here the effective dimension represents the diameter
-          diag%ice_conv_re = 0.5_RealExt * diag%ice_conv_re
+          if (l_last) then
+            diag%ice_conv_re(:, list) = 0.5_RealExt * diag%ice_conv_re(:, list)
+          else
+            diag%ice_conv_re(list, :) = 0.5_RealExt * diag%ice_conv_re(list, :)
+          end if
         end select
       end if
     end select
@@ -460,6 +468,7 @@ if (associated(diag%cloud_solar_extinction)) &
 
 if (associated(diag%cloud_thermal_absorptivity)) &
   call cloud_abs_diag(diag%cloud_thermal_absorptivity, &
+                      diag%cloud_absorptivity_wavelength, &
                       control, dimen, spectrum, atm, cld, &
                       list, layer_offset, l_last)
 

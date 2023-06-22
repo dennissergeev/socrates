@@ -6,7 +6,7 @@
 
 
 # Default target:
-all: TARGET_GEN TARGET_CK TARGET_SCAT TARGET_AUX
+all: TARGET_GEN TARGET_CK TARGET_SCAT TARGET_AUX TARGET_COSP
 cdl: TARGET_SCAT AUX_CDL
 cdf: TARGET_GEN AUX_CDF TARGET_CK
 
@@ -20,6 +20,7 @@ include Mk_pattern
 # Source code for each sub-package of the suite.
 include Mk_mod_gen
 include Mk_mod_gencore
+include Mk_mod_cosp
 include Mk_src_gencore
 include Mk_src_gen
 include Mk_src_aux
@@ -27,6 +28,7 @@ include Mk_src_ck
 include Mk_src_radcore
 include Mk_src_scat
 include Mk_src_nlte
+include Mk_src_cosp
 
 #-----------------------------------------------------------------------
 # Special Targets
@@ -79,9 +81,17 @@ scatlib.$(LIBSUFFIX): \
 	   $(SOURCE90_GEN:.f90=.o) $(SOURCE77_GEN:.f=.o) \
 	   $(SOURCE90_SCAT:.f90=.o) $(SOURCE77_SCAT:.f=.o)
 
+cosplib.$(LIBSUFFIX): \
+	   $(MODULES_COSP:.f90=.o) \
+	   $(SOURCE_COSP:.f90=.o)
+	$(LIBLINK) cosplib.$(LIBSUFFIX) \
+	   $(MODULES_COSP:.f90=.o) \
+	   $(SOURCE_COSP:.f90=.o)
+
 #-----------------------------------------------------------------------
 # Construction of main programs.
 include Mk_target_gen
 include Mk_target_ck
 include Mk_target_scat
 include Mk_target_aux
+include Mk_target_cosp

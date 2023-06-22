@@ -1,5 +1,5 @@
 #
-# Full list of scatterig programs
+# Full list of scattering programs
 #
 TARGET_SCAT: icedb2bin ice_scatter scatter_90 scatter_average_90 \
 		reduce_casim_ice

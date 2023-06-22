@@ -26,8 +26,16 @@ calc_horizon_angles.o: calc_horizon_angles.f90
 lblcat.o: lblcat.f90
 	$(FORTCOMP) -I$(INCCDF_PATH) lblcat.f90 
 
+cosp2_io.o: cosp2_io.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) cosp2_io.f90
+
+cosp_driver.o: cosp_driver.f90
+	$(FORTCOMP) -I$(INCCDF_PATH) cosp_driver.f90
+
 #
 # Object dependencies for programs that use netCDF
 #
 
 CDF_OBJ = $(MODULES_CDF:.f90=.o) $(SOURCE90_CDF:.f90=.o) $(SOURCE77_CDF:.f=.o)
+
+COSP_CDF_OBJ = $(MODULES_COSP_CDF:.f90=.o)

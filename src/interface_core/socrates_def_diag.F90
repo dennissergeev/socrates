@@ -207,7 +207,9 @@ real(RealExt), pointer :: cloud_weight_extinction(:, :) => null()
 
 real(RealExt), pointer :: cloud_thermal_absorptivity(:, :) => null()
 ! Absorptivity of cloud averaged using the Planckian flux
-! in each band for the local temperature
+! in each band for the local temperature, or at a particular
+! wavelength if a value > 0 is specified:
+real(RealExt) :: cloud_absorptivity_wavelength = -1.0_RealExt
 
 real(RealExt), pointer :: cloud_solar_extinction(:, :) => null()
 ! Cloud extinction averaged using solar spectrum in each band

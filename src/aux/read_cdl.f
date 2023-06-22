@@ -266,10 +266,10 @@
         DO WHILE (l_non_comment.AND.(j <= len(text)))
           IF (text(j:j) == ';') THEN
             i_end=j
-          ELSE IF (text(j:min(len(text), j+4)) == 'float') THEN
-            l_declaration=.true.
+          ELSE IF (text(j:min(len(text), j+5)) == 'float ') THEN
+            IF (.NOT.l_attribution) l_declaration=.true.
             i_start=j+5
-          ELSE IF (text(j:min(len(text), j+2)) == 'int') THEN
+          ELSE IF (text(j:min(len(text), j+3)) == 'int ') THEN
 !           If the string "int" appears in an attribution we could
 !           have confusion.
             IF (.NOT.l_attribution) l_declaration=.true.

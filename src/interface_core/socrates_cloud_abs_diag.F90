@@ -4,7 +4,8 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-! Calculate cloud absorptivity averaged using the local temperature
+! Calculate cloud absorptivity averaged using the local temperature,
+! or for a specified wavelength
 !
 !------------------------------------------------------------------------------
 module socrates_cloud_abs_diag
@@ -13,6 +14,7 @@ character(len=*), parameter, private :: ModuleName = 'SOCRATES_CLOUD_ABS_DIAG'
 contains
 
 subroutine cloud_abs_diag(cloud_thermal_absorptivity, &
+  cloud_absorptivity_wavelength, &
   control, dimen, spectrum, atm, cld, &
   list, layer_offset, l_last)
 
@@ -36,8 +38,10 @@ use opt_prop_baran_mod, only: opt_prop_baran
 
 implicit none
 
-! Cloud absorptivity averaged using the local Planckian in each band
+! Cloud absorptivity averaged using the local Planckian in each band, or
+! for the band containing a particular wavelength if a value > 0 is specified:
 real(RealExt), intent(inout), pointer :: cloud_thermal_absorptivity(:, :)
+real(RealExt), intent(in) :: cloud_absorptivity_wavelength
 
 ! Control options:
 type(StrCtrl), intent(in) :: control
@@ -61,7 +65,7 @@ integer, intent(in) :: layer_offset
 logical, intent(in) :: l_last
 !   Flag to loop over profiles last in diagnostics
 
-integer :: i_band, k, i, ii, l, ll
+integer :: i_band, i_band_exclude, index_exclude, k, i, ii, l, ll
 !   Loop variables
 integer :: n_cloud_top
 !   Topmost cloudy layer
@@ -85,47 +89,82 @@ real(RealK) :: k_ext_scat_cloud_comp(dimen%nd_profile, &
 
 real(RealK), parameter :: notzero = tiny(1.0_RealK)
 
+logical :: l_found_band
+
 integer :: ierr = i_normal
 character (len=errormessagelength) :: cmessage
 character (len=*), parameter :: RoutineName = 'CLOUD_ABS_DIAG'
 
 
-! Only run if cloud is on and the Planck flux is parametrised
-if (control%i_cloud_representation /= ip_cloud_off .and. &
-    spectrum%basic%l_present(6)) then
+! Only run if cloud is on and either the Planck flux is parametrised
+! or a wavelength has been specified
+if ( control%i_cloud_representation /= ip_cloud_off .and. &
+     ( spectrum%basic%l_present(6) .or. &
+       cloud_absorptivity_wavelength > 0.0_RealExt ) ) then
 
   call set_cloud_geometry(atm%n_profile, atm%n_layer, &
     .false., cld%w_cloud, &
     n_cloud_top, n_cloud_profile, i_cloud_profile, &
     dimen%nd_profile, dimen%nd_layer, dimen%id_cloud_top)
 
-  do i=n_cloud_top, atm%n_layer
-    do ll=1, n_cloud_profile(i)
-      l=i_cloud_profile(ll, i)
-      planck_fraction(l, i, control%first_band) &
-        = planck_flux_band(spectrum, control%first_band, atm%t(l, i))
-      planck_sum(l, i) = planck_fraction(l, i, control%first_band)
-    end do
-  end do
-  do i_band=control%first_band+1, control%last_band
+  if ( cloud_absorptivity_wavelength > 0.0_RealExt ) then
+    l_found_band = .false.
+  else
     do i=n_cloud_top, atm%n_layer
       do ll=1, n_cloud_profile(i)
         l=i_cloud_profile(ll, i)
-        planck_fraction(l, i, i_band) &
-          = planck_flux_band(spectrum, i_band, atm%t(l, i))
-        planck_sum(l, i) = planck_sum(l, i) &
-          + planck_fraction(l, i, i_band)
+        planck_fraction(l, i, control%first_band) &
+          = planck_flux_band(spectrum, control%first_band, atm%t(l, i))
+        planck_sum(l, i) = planck_fraction(l, i, control%first_band)
       end do
     end do
-  end do
-  do i_band=control%first_band, control%last_band
-    do i=n_cloud_top, atm%n_layer
-      do ll=1, n_cloud_profile(i)
-        l=i_cloud_profile(ll, i)
-        planck_fraction(l, i, i_band) &
-          = planck_fraction(l, i, i_band) / max(planck_sum(l, i), notzero)
+    do i_band=control%first_band+1, control%last_band
+      do i=n_cloud_top, atm%n_layer
+        do ll=1, n_cloud_profile(i)
+          l=i_cloud_profile(ll, i)
+          planck_fraction(l, i, i_band) &
+            = planck_flux_band(spectrum, i_band, atm%t(l, i))
+          planck_sum(l, i) = planck_sum(l, i) &
+            + planck_fraction(l, i, i_band)
+        end do
       end do
     end do
+  end if
+  outer : do i_band=control%first_band, control%last_band
+    if ( cloud_absorptivity_wavelength > 0.0_RealExt ) then
+      if ( spectrum%basic%wavelength_short(i_band) > &
+           cloud_absorptivity_wavelength ) cycle outer
+      if ( spectrum%basic%wavelength_long(i_band) <= &
+           cloud_absorptivity_wavelength ) cycle outer
+      inner : do i_band_exclude = 1, spectrum%basic%n_band_exclude(i_band)
+        index_exclude = spectrum%basic%index_exclude(i_band_exclude, i_band)
+        if ( spectrum%basic%wavelength_short(index_exclude) <= &
+             cloud_absorptivity_wavelength .and. &
+             spectrum%basic%wavelength_long(index_exclude) > &
+             cloud_absorptivity_wavelength ) cycle outer
+      end do inner
+      if (l_found_band) then
+        cmessage = ' Error locating band'//&
+                   ' for cloud_thermal_absorptivity diagnostic.'
+        ierr=i_err_fatal
+        call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+      end if
+      l_found_band = .true.
+      do i=n_cloud_top, atm%n_layer
+        do ll=1, n_cloud_profile(i)
+          l=i_cloud_profile(ll, i)
+          planck_fraction(l, i, i_band) = 1.0_RealK
+        end do
+      end do
+    else
+      do i=n_cloud_top, atm%n_layer
+        do ll=1, n_cloud_profile(i)
+          l=i_cloud_profile(ll, i)
+          planck_fraction(l, i, i_band) &
+            = planck_fraction(l, i, i_band) / max(planck_sum(l, i), notzero)
+        end do
+      end do
+    end if
     do k=1, cld%n_condensed
       select case (cld%type_condensed(k))
       case (ip_clcmp_st_water, ip_clcmp_cnv_water)
@@ -201,7 +240,15 @@ if (control%i_cloud_representation /= ip_cloud_off .and. &
         end do
       end if
     end do
-  end do
+  end do outer
+
+  if ( cloud_absorptivity_wavelength > 0.0_RealExt .and. &
+       .not. l_found_band ) then
+    cmessage = ' Wavelength outside spectral file range'//&
+                 ' for cloud_thermal_absorptivity diagnostic.'
+    ierr=i_err_fatal
+    call ereport(ModuleName//':'//RoutineName, ierr, cmessage)
+  end if
 
 end if
 
