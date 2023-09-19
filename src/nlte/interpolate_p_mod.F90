@@ -52,6 +52,8 @@ SUBROUTINE interpolate_p(n, p, a, x, y, y2, pp, aa, i_mode, l_splined)
   USE realtype_rd, ONLY: RealK
   USE rad_pcf, ONLY: i_normal, i_err_fatal, i_err_range
   USE ereport_mod, ONLY: ereport
+  USE spline_evaluate_mod, ONLY: spline_evaluate
+  USE spline_fit_mod, ONLY: spline_fit
 
   IMPLICIT NONE
 
@@ -89,9 +91,6 @@ SUBROUTINE interpolate_p(n, p, a, x, y, y2, pp, aa, i_mode, l_splined)
   CHARACTER (LEN = 80)          :: cmessage
   CHARACTER (LEN=*), PARAMETER  :: RoutineName = 'INTERPOLATE_P'
 
-! Subroutines called:
-! DEPENDS ON: spline_fit
-! DEPENDS ON: spline_evaluate
 
 ! Perform the initial spline fit on the first call.
   IF (.NOT. l_splined) THEN

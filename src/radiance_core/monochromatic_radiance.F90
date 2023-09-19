@@ -13,6 +13,10 @@
 !   cloudiness.
 !
 !- ---------------------------------------------------------------------
+MODULE monochromatic_radiance_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'MONOCHROMATIC_RADIANCE_MOD'
+CONTAINS
 SUBROUTINE monochromatic_radiance(ierr                                  &
     , control, atm, cld, bound                                          &
 !                 Atmospheric Propertries
@@ -95,8 +99,15 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
                      ip_surf_alb_diff
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
-  
+  USE calc_contrib_func_mod, ONLY: calc_contrib_func 
   USE spherical_trans_coeff_mod, ONLY: spherical_trans_coeff
+  USE gauss_angle_mod, ONLY: gauss_angle
+  USE monochromatic_radiance_sph_mod, ONLY: monochromatic_radiance_sph
+  USE monochromatic_radiance_tseq_mod, ONLY: monochromatic_radiance_tseq
+  USE rescale_tau_csr_mod, ONLY: rescale_tau_csr
+  USE rescale_tau_omega_mod, ONLY: rescale_tau_omega
+  USE single_scattering_all_mod, ONLY: single_scattering_all
+  USE single_scattering_mod, ONLY: single_scattering
 
   IMPLICIT NONE
 
@@ -406,7 +417,7 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='MONOCHROMATIC_RADIANCE'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
 
 ! Calculate the optical depths and albedos of single scattering.
@@ -415,7 +426,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
 ! absorption.
 
 
-! DEPENDS ON: single_scattering_all
   CALL single_scattering_all(i_scatter_method                           &
 !                 Atmospheric properties
     , n_profile, n_layer, d_mass                                        &
@@ -444,7 +454,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
       !-----------------------------------------------------------------
       IF (control%i_direct_tau == ip_direct_csr_scaling) THEN
         ! Rescale tau by CSR forward fraction  
-! DEPENDS ON: rescale_tau_csr
         ! Above cloud top.
         CALL rescale_tau_csr(n_profile                                  &
            , 1, n_cloud_top-1                                           &
@@ -474,7 +483,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
         END DO
       END IF
 
-! DEPENDS ON: rescale_tau_omega
       CALL rescale_tau_omega(n_profile, 1, n_cloud_top-1                &
         , ss_prop%tau_clr, ss_prop%omega_clr                            &
         , ss_prop%forward_scatter_clr                                   &
@@ -535,7 +543,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
   IF (i_angular_integration == ip_two_stream) THEN
 
 !   The standard two-stream approximations.
-! DEPENDS ON: monochromatic_radiance_tseq
     CALL monochromatic_radiance_tseq(ierr                               &
       , control, cld, bound                                             &
 !                   Atmospheric Propertries
@@ -581,7 +588,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
   ELSE IF (i_angular_integration == ip_spherical_harmonic) THEN
 
 !   The spherical harmonic option:
-! DEPENDS ON: monochromatic_radiance_sph
     CALL monochromatic_radiance_sph(ierr                                &
 !                   Atmospheric Propertries
       , control, n_profile, n_layer                                     &
@@ -646,7 +652,6 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
       END DO
     END DO
 
-! DEPENDS ON: gauss_angle
     CALL gauss_angle(n_profile, n_layer                                 &
       , n_order_gauss                                                   &
       , tau_clr_f                                                       &
@@ -662,13 +667,13 @@ SUBROUTINE monochromatic_radiance(ierr                                  &
   END IF
 
 ! Calculate the contribution function
-! DEPENDS ON: calc_contrib_func
   IF (control%l_contrib_func .OR. control%l_contrib_func_band) THEN
     CALL calc_contrib_func(n_profile, n_layer, n_cloud_top              &
       , atm%p_level, planck%flux, ss_prop, contrib_funci_part           &
       , contrib_funcf_part, nd_profile, nd_layer)
   END IF
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE monochromatic_radiance
+END MODULE monochromatic_radiance_mod

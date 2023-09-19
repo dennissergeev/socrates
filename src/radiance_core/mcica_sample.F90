@@ -13,6 +13,10 @@
 !   meaned making use of the fraction of cloudy sub-columns.
 !
 !- ---------------------------------------------------------------------
+MODULE mcica_sample_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'MCICA_SAMPLE_MOD'
+CONTAINS
 SUBROUTINE mcica_sample(ierr                                            &
     , control, dimen, atm, cld, bound                                   &
 !                 Atmospheric Propertries
@@ -98,6 +102,8 @@ SUBROUTINE mcica_sample(ierr                                            &
   USE parkind1, ONLY: jprb, jpim
   USE ereport_mod, ONLY: ereport
   USE errormessagelength_mod, ONLY: errormessagelength
+  USE circumsolar_fraction_mod, ONLY: circumsolar_fraction
+  USE monochromatic_radiance_mod, ONLY: monochromatic_radiance
 
   IMPLICIT NONE
 
@@ -436,7 +442,7 @@ SUBROUTINE mcica_sample(ierr                                            &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='MCICA_SAMPLE'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
   DO m=cld%first_subcol_k(i_band,iex), cld%first_subcol_k(i_band,iex+1)-1
 
@@ -689,7 +695,6 @@ SUBROUTINE mcica_sample(ierr                                            &
               IF (control%i_direct_tau == ip_direct_csr_scaling ) THEN
 ! Calculate forward scattering fraction of direct flux within 
 ! the instrument FOV 
-! DEPENDS ON: circumsolar_fraction
                  CALL circumsolar_fraction(n_cloud_profile(i)           &
                   , i_cloud_profile(:, i), control%half_angle           &
                   , ss_prop%phase_fnc(:, i, 1, k)                       &
@@ -725,7 +730,6 @@ SUBROUTINE mcica_sample(ierr                                            &
     END SELECT
 
 
-! DEPENDS ON: monochromatic_radiance
     CALL monochromatic_radiance(ierr                                    &
       , control, atm, cld, bound                                        &
 !             atmospheric properties
@@ -919,6 +923,7 @@ SUBROUTINE mcica_sample(ierr                                            &
     END DO
   END IF
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE mcica_sample
+END MODULE mcica_sample_mod

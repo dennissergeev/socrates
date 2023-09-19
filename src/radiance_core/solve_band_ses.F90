@@ -11,6 +11,10 @@
 !   and the results are summed.
 !
 !- ---------------------------------------------------------------------
+MODULE solve_band_ses_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'SOLVE_BAND_SES_MOD'
+CONTAINS
 SUBROUTINE solve_band_ses(ierr                                          &
     , control, dimen, spectrum, atm, cld, bound, radout                 &
 !                 Atmospheric Column
@@ -98,6 +102,10 @@ SUBROUTINE solve_band_ses(ierr                                          &
                      ip_cloud_mcica, ip_two_stream, ip_ir_gauss
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE augment_radiance_mod, ONLY: augment_radiance
+  USE augment_tiled_radiance_mod, ONLY: augment_tiled_radiance
+  USE mcica_sample_mod, ONLY: mcica_sample
+  USE monochromatic_radiance_mod, ONLY: monochromatic_radiance
 
   IMPLICIT NONE
 
@@ -506,7 +514,7 @@ SUBROUTINE solve_band_ses(ierr                                          &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='SOLVE_BAND_SES'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
 ! Set the appropriate boundary terms for the total
 ! upward and downward fluxes.
@@ -593,7 +601,6 @@ SUBROUTINE solve_band_ses(ierr                                          &
 
     IF (i_cloud == ip_cloud_mcica) THEN
 
-! DEPENDS ON: mcica_sample
       CALL mcica_sample(ierr                                            &
         , control, dimen, atm, cld, bound                               &
 !                   Atmospheric properties
@@ -666,7 +673,6 @@ SUBROUTINE solve_band_ses(ierr                                          &
 
     ELSE
 
-! DEPENDS ON: monochromatic_radiance
       CALL monochromatic_radiance(ierr                                  &
         , control, atm, cld, bound                                      &
 !                   Atmospheric properties
@@ -751,7 +757,6 @@ SUBROUTINE solve_band_ses(ierr                                          &
     IF (control%l_blue_flux_surf)                                       &
       weight_blue_incr = spectrum%solar%weight_blue(i_band)             &
                        * w_esft(iex, i_band)
-! DEPENDS ON: augment_radiance
     CALL augment_radiance(control, spectrum, atm, bound, radout         &
       , i_band, iex, iex_minor                                          &
       , n_profile, n_layer, n_viewing_level, n_direction                &
@@ -786,7 +791,6 @@ SUBROUTINE solve_band_ses(ierr                                          &
           END DO          
         END IF
       END IF
-! DEPENDS ON: augment_tiled_radiance
       CALL augment_tiled_radiance(control, spectrum, radout             &
         , i_band, iex, iex_minor                                        &
         , n_point_tile, n_tile, list_tile                               &
@@ -807,6 +811,7 @@ SUBROUTINE solve_band_ses(ierr                                          &
   END DO
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE solve_band_ses
+END MODULE solve_band_ses_mod

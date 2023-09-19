@@ -4,9 +4,8 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to calculate the fluxes assuming random overlap using
-!  resorting and rebinning of the k-terms to reduce computational
-!  cost.
+! Subroutine to calculate the fluxes assuming random overlap using
+! resorting and rebinning of the k-terms to reduce computational cost.
 !
 ! Method:
 !   Combinations of k-terms for two gases are calculated, reordered
@@ -15,6 +14,10 @@
 !   results are summed.
 !
 !- ---------------------------------------------------------------------
+MODULE solve_band_random_overlap_resort_rebin_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'SOLVE_BAND_RANDOM_OVERLAP_RESORT_REBIN_MOD'
+CONTAINS
 SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     , control, dimen, spectrum, atm, cld, bound, radout, i_band                &
 !                 Atmospheric Column
@@ -95,6 +98,12 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
                      ip_two_stream, ip_ir_gauss
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE augment_radiance_mod, ONLY: augment_radiance
+  USE augment_tiled_radiance_mod, ONLY: augment_tiled_radiance
+  USE calc_gauss_weight_90_mod, ONLY: calc_gauss_weight_90
+  USE monochromatic_radiance_mod, ONLY: monochromatic_radiance
+  USE quicksort_mod, ONLY: quicksort
+  USE rebin_esft_terms_mod, ONLY: rebin_esft_terms
 
   IMPLICIT NONE
 
@@ -521,7 +530,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     = 'SOLVE_BAND_RANDOM_OVERLAP_RESORT_REBIN'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
   
 ! Set target weights using Gaussian quadrature
   n_esft_red = n_esft_red_in
@@ -529,10 +538,9 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     IF (control%l_map_sub_bands) THEN
       ! Not compatible with sub-band mapping
       ierr = 1
-      IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+      IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
       RETURN
     END IF
-! DEPENDS ON: calc_gauss_weight_90
     CALL calc_gauss_weight_90(ierr, n_esft_red,                                &
       gpnt_gauleg(1:n_esft_red), w_esft_gauleg(1:n_esft_red))
     IF (gpnt_split < 1.0_RealK .AND. gpnt_split > 0.0_RealK) THEN
@@ -607,13 +615,11 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
           w_esft_mix_unsort(1:i_band_esft_mix)
 
 !       Reorder ESFT terms and weights
-! DEPENDS ON: quicksort
         CALL quicksort(i_band_esft_mix,                                        &
           k_esft_layer_mix(i_profile,i_layer,1:i_band_esft_mix),               &
           w_esft_mix(1:i_band_esft_mix))
 
 !       Rebin the ESFT terms
-! DEPENDS ON: rebin_esft_terms
         CALL rebin_esft_terms(i_band_esft_mix, n_esft_red,                     &
           i_profile, i_layer,                                                  &
           w_esft_target, glim_target,                                          &
@@ -693,7 +699,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     k_gas_abs(1:n_profile,1:n_layer) =                                         &
       k_esft_layer_mix_red(1:n_profile,1:n_layer,iex)
   
-! DEPENDS ON: monochromatic_radiance
     CALL monochromatic_radiance(ierr                                           &
       , control, atm, cld, bound                                               &
 !                 Atmospheric properties
@@ -771,7 +776,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     IF (control%l_blue_flux_surf)                                              &
       weight_blue_incr=spectrum%solar%weight_blue(i_band)*w_esft_target(iex)
     
-! DEPENDS ON: augment_radiance
     CALL augment_radiance(control, spectrum, atm, bound, radout                &
       , i_band, iex, iex_minor                                                 &
       , n_profile, n_layer, n_viewing_level, n_direction                       &
@@ -806,7 +810,6 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
           END DO          
         END IF
       END IF
-! DEPENDS ON: augment_tiled_radiance
       CALL augment_tiled_radiance(control, spectrum, radout                    &
         , i_band, iex, iex_minor                                               &
         , n_point_tile, n_tile, list_tile                                      &
@@ -826,6 +829,7 @@ SUBROUTINE solve_band_random_overlap_resort_rebin(ierr                         &
     
   END DO
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE solve_band_random_overlap_resort_rebin
+END MODULE solve_band_random_overlap_resort_rebin_mod

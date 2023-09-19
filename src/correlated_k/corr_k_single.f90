@@ -1956,6 +1956,7 @@ CONTAINS
 !
 !
   SUBROUTINE apply_response_int
+    USE spline_evaluate_mod, ONLY: spline_evaluate
 !
 !
     IMPLICIT NONE 

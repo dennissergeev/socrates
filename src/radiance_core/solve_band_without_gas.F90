@@ -11,6 +11,10 @@
 !   calculation is performed.
 !
 !- ---------------------------------------------------------------------
+MODULE solve_band_without_gas_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'SOLVE_BAND_WITHOUT_GAS_MOD'
+CONTAINS
 SUBROUTINE solve_band_without_gas(ierr                                  &
     , control, dimen, spectrum, atm, cld, bound, radout, i_band         &
 !                 Atmospheric column
@@ -85,6 +89,9 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
                      ip_spherical_harmonic
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE augment_radiance_mod, ONLY: augment_radiance
+  USE augment_tiled_radiance_mod, ONLY: augment_tiled_radiance
+  USE monochromatic_radiance_mod, ONLY: monochromatic_radiance
 
   IMPLICIT NONE
 
@@ -431,7 +438,7 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='SOLVE_BAND_WITHOUT_GAS'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
 ! Set the appropriate total upward and downward fluxes
 ! at the boundaries.
@@ -493,7 +500,6 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
   END DO
 
 
-! DEPENDS ON: monochromatic_radiance
   CALL monochromatic_radiance(ierr                                      &
     , control, atm, cld, bound                                          &
 !                 Atmospheric properties
@@ -572,7 +578,6 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
   iex = 0
   iex_minor = 0
 
-! DEPENDS ON: augment_radiance
   CALL augment_radiance(control, spectrum, atm, bound, radout           &
     , i_band, iex, iex_minor                                            &
     , n_profile, n_layer, n_viewing_level, n_direction                  &
@@ -606,7 +611,6 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
         END DO          
       END IF
     END IF
-! DEPENDS ON: augment_tiled_radiance
     CALL augment_tiled_radiance(control, spectrum, radout               &
       , i_band, iex, iex_minor                                          &
       , n_point_tile, n_tile, list_tile                                 &
@@ -624,6 +628,7 @@ SUBROUTINE solve_band_without_gas(ierr                                  &
       )
   END IF
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE solve_band_without_gas
+END MODULE solve_band_without_gas_mod

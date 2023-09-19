@@ -23,6 +23,7 @@ Subroutine particle_size_90 &
   USE measure_particle_pcf
   USE distribution_pcf
   USE def_std_io_icf
+  USE spline_fit_mod, ONLY: spline_fit
 !
 !
   IMPLICIT NONE
@@ -72,7 +73,7 @@ Subroutine particle_size_90 &
 !       size distribution
 !
 ! Subroutines called:
-  EXTERNAL open_file_in, spline_fit
+  EXTERNAL open_file_in
 !
 ! Functions called:
   REAL  (RealK) :: gamma_fnc

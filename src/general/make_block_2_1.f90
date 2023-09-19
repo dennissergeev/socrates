@@ -26,6 +26,7 @@ SUBROUTINE make_block_2_1(Sp, Sol, filter, l_filter, l_enhance, l_verbose, ierr)
   USE def_spectrum, ONLY: StrSpecData
   USE def_solarspec, ONLY: StrSolarSpec
   USE def_inst_flt, ONLY: StrFiltResp
+  USE spline_evaluate_mod, ONLY: spline_evaluate
 
   IMPLICIT NONE
 

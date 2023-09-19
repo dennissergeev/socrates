@@ -4,15 +4,16 @@
 ! which you should have received as part of this distribution.
 ! *****************************COPYRIGHT*******************************
 !
-!  Subroutine to calculate the absorptive extinctions of gases.
+! Subroutine to calculate the absorptive extinctions of gases.
 !
 ! Method:
 !   Straightforward.
 !
-! Code Owner: Please refer to the UM file CodeOwners.txt
-! This file belongs in section: Radiance Core
-!
 !- ---------------------------------------------------------------------
+MODULE gas_optical_properties_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'GAS_OPTICAL_PROPERTIES_MOD'
+CONTAINS
 SUBROUTINE gas_optical_properties(n_profile, n_layer                    &
      , n_abs, i_abs_pointer, k_layer                                    &
      , k_gas_abs                                                        &
@@ -70,7 +71,7 @@ SUBROUTINE gas_optical_properties(n_profile, n_layer                    &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='GAS_OPTICAL_PROPERTIES'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
 ! Calculate the absorption for the first gas and add on the rest.
   i_abs=i_abs_pointer(1)
@@ -91,6 +92,7 @@ SUBROUTINE gas_optical_properties(n_profile, n_layer                    &
   END DO
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE gas_optical_properties
+END MODULE gas_optical_properties_mod

@@ -11,6 +11,10 @@
 !   combination of ESFT terms and the results are summed.
 !
 !- ---------------------------------------------------------------------
+MODULE solve_band_random_overlap_mod
+IMPLICIT NONE
+CHARACTER(LEN=*), PARAMETER, PRIVATE :: ModuleName = 'SOLVE_BAND_RANDOM_OVERLAP_MOD'
+CONTAINS
 SUBROUTINE solve_band_random_overlap(ierr                               &
     , control, dimen, spectrum, atm, cld, bound, radout, i_band         &
 !                 Atmospheric Column
@@ -94,6 +98,11 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
                      ip_cloud_mcica
   USE yomhook, ONLY: lhook, dr_hook
   USE parkind1, ONLY: jprb, jpim
+  USE augment_radiance_mod, ONLY: augment_radiance
+  USE augment_tiled_radiance_mod, ONLY: augment_tiled_radiance
+  USE gas_optical_properties_mod, ONLY: gas_optical_properties
+  USE mcica_sample_mod, ONLY: mcica_sample
+  USE monochromatic_radiance_mod, ONLY: monochromatic_radiance
 
   IMPLICIT NONE
 
@@ -392,7 +401,7 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 !       Initialise rather than increment channel diagnostics
     , l_initial_channel_tile(dimen%nd_channel)
 !       Initialise rather than increment channel diagnostics on tiles
-    
+
 !                   Flags for flux calculations
   LOGICAL, INTENT(IN) ::                                                &
       l_actinic
@@ -477,7 +486,7 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 !       k-term for the major gas (first gas in band)
     , iex_minor(nd_abs)
 !       k-term for the minor gases
-  
+
   REAL (RealK) ::                                                       &
       contrib_funci_part(nd_flux_profile, nd_layer)
 !       Contribution (or weighting) function
@@ -492,7 +501,7 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
   CHARACTER(LEN=*), PARAMETER :: RoutineName='SOLVE_BAND_RANDOM_OVERLAP'
 
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_in,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
 
   ! Loop through all combinations of terms for all absorbers
   n_term = PRODUCT(n_abs_esft(index_abs(1:n_abs)))
@@ -587,7 +596,6 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 
     END IF
 
-! DEPENDS ON: gas_optical_properties
     CALL gas_optical_properties(n_profile, n_layer                      &
       , n_abs, index_abs, k_esft                                        &
       , k_gas_abs                                                       &
@@ -597,7 +605,6 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 
     IF (i_cloud == ip_cloud_mcica) THEN
 
-! DEPENDS ON: mcica_sample
       CALL mcica_sample(ierr                                            &
         , control, dimen, atm, cld, bound                               &
 !                   Atmospheric properties
@@ -670,7 +677,6 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 
     ELSE
 
-! DEPENDS ON: monochromatic_radiance
       CALL monochromatic_radiance(ierr                                  &
         , control, atm, cld, bound                                      &
 !                   Atmospheric properties
@@ -759,7 +765,6 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
     IF (control%l_blue_flux_surf) &
       weight_blue_incr = spectrum%solar%weight_blue(i_band)*product_weight
 
-! DEPENDS ON: augment_radiance
     CALL augment_radiance(control, spectrum, atm, bound, radout         &
       , i_band, iex_major, iex_minor                                    &
       , n_profile, n_layer, n_viewing_level, n_direction                &
@@ -794,7 +799,6 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
           END DO          
         END IF
       END IF
-! DEPENDS ON: augment_tiled_radiance
       CALL augment_tiled_radiance(control, spectrum, radout             &
         , i_band, iex_major, iex_minor                                  &
         , n_point_tile, n_tile, list_tile                               &
@@ -814,6 +818,7 @@ SUBROUTINE solve_band_random_overlap(ierr                               &
 
   END DO
 
-  IF (lhook) CALL dr_hook(RoutineName,zhook_out,zhook_handle)
+  IF (lhook) CALL dr_hook(ModuleName//':'//RoutineName,zhook_out,zhook_handle)
 
 END SUBROUTINE solve_band_random_overlap
+END MODULE solve_band_random_overlap_mod
