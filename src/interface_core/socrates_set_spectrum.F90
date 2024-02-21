@@ -65,7 +65,7 @@ logical, intent(in), optional :: &
 real(RealExt), intent(in), optional :: wavelength_blue
 
 ! Local variables
-type(StrSpecData), pointer :: spec => null()
+type(StrSpecData), pointer :: spec
 integer, parameter :: nd_instances = 2
 integer :: id_spec
 integer :: ierr = i_normal
@@ -78,6 +78,8 @@ real(kind=jprb)               :: zhook_handle
 
 
 if (lhook) call dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
+
+nullify(spec)
 
 if (.not.allocated(spectrum_array)) then
   if (present(n_instances)) then
@@ -252,7 +254,7 @@ contains
     implicit none
     integer, intent(in) :: ip_absorber
     logical, intent(in), optional :: l_absorber
-  
+
     if (present(l_absorber)) then
       retain_absorber = (spec%gas%type_absorb(i) == ip_absorber) &
         .and. l_absorber
@@ -339,12 +341,13 @@ real(RealExt), allocatable, optional, intent(out) :: wavelength_long(:)
 real(RealExt), allocatable, optional, intent(out) :: weight_blue(:)
 
 ! Local variables
-type(StrSpecData), pointer :: spec => null()
+type(StrSpecData), pointer :: spec
 integer :: id_spec
 integer :: ierr = i_normal
 character(len=errormessagelength) :: cmessage
 character(len=*), parameter :: RoutineName='GET_SPECTRUM'
 
+nullify(spec)
 
 do id_spec=1, size(spectrum_array)
   if (spectrum_array_name(id_spec) == spectrum_name) exit
@@ -404,9 +407,9 @@ character(len=*), intent(in) :: mcica_data_file
 character(len=*), intent(in), optional :: sw_spectrum_name, lw_spectrum_name
 
 ! Local variables
-type(StrSpecData), pointer :: sw_spec => null()
-type(StrSpecData), pointer :: lw_spec => null()
-type(StrMcica), pointer :: mcica => null()
+type(StrSpecData), pointer :: sw_spec
+type(StrSpecData), pointer :: lw_spec
+type(StrMcica), pointer :: mcica
 logical :: l_sw, l_lw
 integer :: id_spec, id_mcica
 integer :: ierr = i_normal
@@ -419,6 +422,8 @@ real(kind=jprb)               :: zhook_handle
 
 
 if (lhook) call dr_hook(ModuleName//':'//RoutineName,zhook_in,zhook_handle)
+
+nullify(sw_spec, lw_spec, mcica)
 
 if (allocated(spectrum_array)) then
   if (.not.allocated(mcica_data_array)) then

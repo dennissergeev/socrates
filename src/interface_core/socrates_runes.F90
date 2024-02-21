@@ -609,10 +609,10 @@ integer, intent(in), optional :: i_profile_debug
 
 
 ! Spectral data:
-type(StrSpecData), pointer :: spec => null()
+type(StrSpecData), pointer :: spec
 
 ! Mcica data:
-type(StrMcica), pointer :: mcica => null()
+type(StrMcica), pointer :: mcica
 type(StrMcica), target :: mcica_dummy
 
 ! Controlling options:
@@ -643,6 +643,7 @@ integer :: ierr = i_normal
 character (len=errormessagelength) :: cmessage
 character (len=*), parameter :: RoutineName = 'RUNES'
 
+nullify(spec, mcica)
 
 if (present(spectrum_name)) then
   do id_spec=1, size(spectrum_array)

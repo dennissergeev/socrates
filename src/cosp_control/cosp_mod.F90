@@ -175,7 +175,7 @@ subroutine cosp( nlevels, &
   type(cosp_column_inputs) :: cosp_column_in
 
   type(cosp_outputs), target :: cosp_out_int
-  type(cosp_outputs), pointer :: cosp_out => null()
+  type(cosp_outputs), pointer :: cosp_out
 
   character(len=256) :: cosp_status(100)
 
