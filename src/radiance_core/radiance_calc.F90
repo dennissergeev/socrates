@@ -73,11 +73,10 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
   USE set_rad_layer_mod, ONLY: set_rad_layer
   USE set_truncation_mod, ONLY: set_truncation
   USE sol_scat_cos_mod, ONLY: sol_scat_cos
-  USE solve_band_k_eqv_mod, ONLY: solve_band_k_eqv
   USE solve_band_k_eqv_scl_mod, ONLY: solve_band_k_eqv_scl
-  USE solve_band_one_gas_mod, ONLY: solve_band_one_gas
   USE solve_band_random_overlap_mod, ONLY: solve_band_random_overlap
-  USE solve_band_random_overlap_resort_rebin_mod, ONLY: solve_band_random_overlap_resort_rebin
+  USE solve_band_random_overlap_resort_rebin_mod, ONLY: &
+      solve_band_random_overlap_resort_rebin
   USE solve_band_ses_mod, ONLY: solve_band_ses
   USE solve_band_without_gas_mod, ONLY: solve_band_without_gas
   USE sum_k_mod, ONLY: sum_k
@@ -1213,36 +1212,8 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
 !   Determine whether gaseous absorption is included in this band.
     IF ((control%l_gas).AND.(spectrum%gas%n_band_absorb(i_band) > 0)) THEN
-
-!     Note: I_GAS_BAND is used extensively below since nested
-!     array elements in a subroutine call (see later) can
-!     confuse some compilers.
-
-!     Normally the number of gases in the calculation will be
-!     as in the spectral file, but particular options may result
-!     in the omission of some gases.
-
       n_gas=spectrum%gas%n_band_absorb(i_band)
-
-      IF (i_gas_overlap == ip_overlap_single) THEN
-
-!       There will be no gaseous absorption in this band
-!       unless the selected gas appears.
-        n_gas=0
-
-        DO i=1, spectrum%gas%n_band_absorb(i_band)
-          IF (spectrum%gas%index_absorb(i, i_band) == control%i_gas) n_gas=1
-        END DO
-
-      END IF
-
-      IF (n_gas > 0) THEN
-!       Set the flag for gaseous absorption in the band.
-        l_gas_band=.TRUE.
-      ELSE
-        l_gas_band=.FALSE.
-      END IF
-
+      l_gas_band=.TRUE.
     ELSE
       n_gas=0
       l_gas_band=.FALSE.
@@ -1258,9 +1229,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 
 !       Generalised continuum absorption requires the complete scaling of
 !       ESFT terms to be performed here.
-        IF (i_gas_overlap == ip_overlap_k_eqv     .OR.                         &
-            i_gas_overlap == ip_overlap_k_eqv_mod .OR.                         &
-            i_gas_overlap == ip_overlap_mix_ses2) THEN
+        IF (i_gas_overlap == ip_overlap_mix_ses2) THEN
           cmessage =                                                           &
             '*** Error: The selected gaseous overlap method is invalid.'
           ierr=i_err_fatal
@@ -1284,11 +1253,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
     IF (l_cont_band) THEN
       DO j=1, n_gas
         i_gas_band=spectrum%gas%index_absorb(j, i_band)
-!       Reset the pointer if there is just one gas.
-        IF (i_gas_overlap == ip_overlap_single) THEN
-!         Only the selected gas is active in the band.
-          i_gas_band=control%i_gas
-        END IF
         DO j_cont=1, n_cont
           i_cont_band=spectrum%contgen%index_cont(j_cont, i_band)
           IF (spectrum%contgen%i_cont_overlap_band(i_band, i_cont_band) ==     &
@@ -1300,14 +1264,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
     END IF
     nd_abs=n_abs
     nd_k_term=MAX(spectrum%dim%nd_k_term, spectrum%dim%nd_k_term_cont)
-
-!   Check that that the selected overlap method is compatible with the
-!   generalised continuum implementation.
-    IF (i_gas_overlap == ip_overlap_single .AND. n_abs > 1) THEN
-      cmessage = '*** Error: The selected gaseous overlap method is invalid.'
-      ierr=i_err_fatal
-      GO TO 9999
-    END IF
 
 !   Allocate absorber arrays
     ALLOCATE(k_abs_layer(dimen%nd_profile, dimen%nd_layer, nd_k_term, nd_abs))
@@ -1325,12 +1281,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
       DO j=1, n_gas
 
         i_gas_band=spectrum%gas%index_absorb(j, i_band)
-
-!       Reset the pointer if there is just one gas.
-        IF (i_gas_overlap == ip_overlap_single) THEN
-!         Only the selected gas is active in the band.
-          i_gas_band=control%i_gas
-        END IF
 
         index_abs(j)=j
         n_abs_esft(j)=spectrum%gas%i_band_k(i_band, i_gas_band)
@@ -1369,26 +1319,18 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
         ELSE IF (spectrum%gas%i_scale_k(i_band, i_gas_band)                    &
             == ip_scale_null) THEN
 !         Copy across the unscaled array.
-          DO i=1, atm%n_layer
-            DO l=1, atm%n_profile
-              gas_frac_rescaled(l, i, i_gas_band)                              &
-                = atm%gas_mix_ratio(l, i, i_gas_band)
-            END DO
-          END DO
           DO k=1, n_abs_esft(j)
             DO i=1, atm%n_layer
               DO l=1, atm%n_profile
                 k_abs_layer(l, i, k, j)                                        &
                   = spectrum%gas%k(k, i_band, i_gas_band)                      &
-                  * gas_frac_rescaled(l, i, i_gas_band)
+                  * atm%gas_mix_ratio(l, i, i_gas_band)
               END DO
             END DO
           END DO
 
         ELSE IF (spectrum%gas%i_scale_k(i_band, i_gas_band)                    &
             == ip_scale_term) THEN
-          IF ((i_gas_overlap /= ip_overlap_k_eqv) .AND.                        &
-              (i_gas_overlap /= ip_overlap_k_eqv_mod)) THEN
             DO k=1, n_abs_esft(j)
               CALL scale_absorb(ierr, atm%n_profile, atm%n_layer               &
                 , atm%gas_mix_ratio(1, 1, i_gas_band), atm%p, atm%t            &
@@ -1421,7 +1363,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
                 END DO
               END IF
             END DO
-          END IF
         END IF
 
 !       Add k-distribution of continua that are perfectly correlated with the
@@ -1495,6 +1436,23 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
           END IF
         END IF
       END DO
+    END IF
+
+    IF (i_gas_overlap == ip_overlap_single) THEN
+      ! Only the selected gas is active in the band.
+      n_gas=0
+      DO i_abs=1, n_abs
+        i = index_abs(i_abs)
+        IF (i <= spectrum%gas%n_band_absorb(i_band)) THEN
+          IF (spectrum%gas%index_absorb(i, i_band) == control%i_gas) THEN
+            n_gas=1
+            index_abs(1)=i
+            EXIT
+          END IF
+        END IF
+      END DO
+      n_abs=n_gas
+      l_abs_band=(n_abs > 0)
     END IF
 
 !   Allocate space for the Planckian emission fields
@@ -1585,75 +1543,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
 !     Treat the gaseous overlaps as directed by the overlap switch.
       SELECT CASE (i_gas_overlap)
 
-      CASE (ip_overlap_single)
-        CALL solve_band_one_gas(ierr                                           &
-          , control, dimen, spectrum, atm, cld, bound, radout, i_band          &
-!                 Atmospheric properties
-          , atm%n_profile, atm%n_layer, atm%mass                               &
-!                 Angular integration
-          , control%i_angular_integration, control%i_2stream                   &
-          , n_order_phase, control%l_rescale, control%n_order_gauss            &
-          , control%ms_min, control%ms_max, control%i_truncation               &
-          , ls_local_trunc                                                     &
-          , control%accuracy_adaptive, control%euler_factor                    &
-          , control%i_sph_algorithm, control%i_sph_mode                        &
-!                 Precalculated angular arrays
-          , ia_sph_mm, cg_coeff, uplm_zero, uplm_sol                           &
-!                 Treatment of scattering
-          , control%i_scatter_method_band(i_band)                              &
-!                 Options for solver
-          , control%i_solver                                                   &
-!                 Gaseous properties
-          , index_abs, n_abs_esft                                              &
-          , k_abs_layer, w_abs_esft                                            &
-!                 Spectral region
-          , control%isolir                                                     &
-!                 Solar properties
-          , bound%zen_0, solar_irrad_band, sph                                 &
-!                 Infra-red properties
-          , planck                                                             &
-!                 Surface properties
-          , control%ls_brdf_trunc, bound%n_brdf_basis_fnc                      &
-          , bound%rho_alb(1, 1, i_band)                                        &
-          , bound%f_brdf, brdf_sol, brdf_hemi                                  &
-!                 Tiling of the surface
-          , control%l_tile, bound%n_point_tile, bound%n_tile, bound%list_tile  &
-          , bound%rho_alb_tile(1, 1, 1, i_band)                                &
-!                 Optical Properties
-          , ss_prop, photol                                                    &
-!                 Cloudy properties
-          , control%l_cloud, control%i_cloud                                   &
-!                 Cloud geometry
-          , n_cloud_top                                                        &
-          , n_region, k_clr, i_region_cloud, frac_region                       &
-          , w_free, cloud_overlap                                              &
-          , n_column_slv, list_column_slv                                      &
-          , i_clm_lyr_chn, i_clm_cld_typ, area_column                          &
-!                 Levels for calculating radiances
-          , atm%n_viewing_level, i_rad_layer, frac_rad_layer                   &
-!                 Viewing Geometry
-          , atm%n_direction, atm%direction                                     &
-!                 Radiances
-          , i_direct                                                           &
-!                 Flags for initialising diagnostics
-          , l_initial, l_initial_band                                          &
-          , l_initial_channel, l_initial_channel_tile                          &
-!                 Flags for flux calculations
-          , l_actinic, l_clear_band, control%i_solver_clear                    &
-!                 Dimensions of arrays
-          , dimen%nd_profile, dimen%nd_layer, dimen%nd_layer_clr               &
-          , dimen%id_cloud_top, dimen%nd_column                                &
-          , dimen%nd_flux_profile, dimen%nd_radiance_profile                   &
-          , dimen%nd_j_profile                                                 &
-          , nd_abs, nd_k_term                                                  &
-          , dimen%nd_cloud_type, dimen%nd_region, dimen%nd_overlap_coeff       &
-          , dimen%nd_max_order, dimen%nd_sph_coeff                             &
-          , dimen%nd_brdf_basis_fnc, dimen%nd_brdf_trunc                       &
-          , dimen%nd_viewing_level, dimen%nd_direction                         &
-          , dimen%nd_source_coeff, dimen%nd_point_tile, dimen%nd_tile          &
-          )
-
-      CASE (ip_overlap_random, ip_overlap_exact_major)
+      CASE (ip_overlap_random, ip_overlap_exact_major, ip_overlap_single)
         CALL solve_band_random_overlap(ierr                                    &
           , control, dimen, spectrum, atm, cld, bound, radout, i_band          &
 !                 Atmospheric properties
@@ -1796,7 +1686,7 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
           , dimen%nd_source_coeff, dimen%nd_point_tile, dimen%nd_tile          &
           )
 
-      CASE (ip_overlap_k_eqv_scl)
+      CASE (ip_overlap_k_eqv_scl, ip_overlap_k_eqv, ip_overlap_k_eqv_mod)
         CALL solve_band_k_eqv_scl(ierr                                         &
           , control, dimen, spectrum, atm, cld, bound, radout                  &
 !                 Atmospheric properties
@@ -1861,86 +1751,6 @@ SUBROUTINE radiance_calc(control, dimen, spectrum, atm, cld, aer, bound, radout)
           , dimen%nd_flux_profile, dimen%nd_radiance_profile                   &
           , dimen%nd_j_profile                                                 &
           , nd_abs, nd_k_term                                                  &
-          , dimen%nd_cloud_type, dimen%nd_region, dimen%nd_overlap_coeff       &
-          , dimen%nd_max_order, dimen%nd_sph_coeff                             &
-          , dimen%nd_brdf_basis_fnc, dimen%nd_brdf_trunc                       &
-          , dimen%nd_viewing_level, dimen%nd_direction                         &
-          , dimen%nd_source_coeff, dimen%nd_point_tile, dimen%nd_tile          &
-          )
-
-      CASE (ip_overlap_k_eqv, ip_overlap_k_eqv_mod)
-        CALL solve_band_k_eqv(ierr                                             &
-          , control, dimen, spectrum, atm, cld, bound, radout                  &
-!                 Atmospheric properties
-          , atm%n_profile, atm%n_layer, i_top, atm%p, atm%t, atm%mass          &
-!                 Angular integration
-          , control%i_angular_integration, control%i_2stream                   &
-          , n_order_phase, control%l_rescale, control%n_order_gauss            &
-          , control%ms_min, control%ms_max, control%i_truncation               &
-          , ls_local_trunc                                                     &
-          , control%accuracy_adaptive, control%euler_factor                    &
-          , control%i_sph_algorithm, control%i_sph_mode                        &
-!                 Precalculated angular arrays
-          , ia_sph_mm, cg_coeff, uplm_zero, uplm_sol                           &
-!                 Treatment of scattering
-          , control%i_scatter_method_band(i_band), spectrum%gas%i_scat         &
-!                 Options for solver
-          , control%i_solver, i_gas_overlap                                    &
-!                 Gaseous properties
-          , i_band, n_gas                                                      &
-          , spectrum%gas%index_absorb, spectrum%gas%i_band_k                   &
-          , spectrum%gas%i_scale_k, spectrum%gas%i_scale_fnc                   &
-          , spectrum%gas%k, k_esft_layer, spectrum%gas%w                       &
-          , spectrum%gas%scale                                                 &
-          , spectrum%gas%p_ref, spectrum%gas%t_ref                             &
-          , atm%gas_mix_ratio, gas_frac_rescaled                               &
-          , spectrum%gas%l_doppler, spectrum%gas%doppler_cor                   &
-!                 Spectral region
-          , control%isolir                                                     &
-!                 Solar properties
-          , bound%zen_0, solar_irrad_band, sph                                 &
-!                 Infra-red properties
-          , planck                                                             &
-!                 Surface properties
-          , control%ls_brdf_trunc, bound%n_brdf_basis_fnc                      &
-          , bound%rho_alb(1, 1, i_band)                                        &
-          , bound%f_brdf, brdf_sol, brdf_hemi                                  &
-          , diffuse_alb_basis                                                  &
-!                 Tiling of the surface
-          , control%l_tile, bound%n_point_tile, bound%n_tile, bound%list_tile  &
-          , bound%rho_alb_tile(1, 1, 1, i_band)                                &
-!                 Optical Properties
-          , ss_prop, photol                                                    &
-!                 Cloudy properties
-          , control%l_cloud, control%i_cloud                                   &
-!                 Cloud geometry
-          , n_cloud_top                                                        &
-          , n_region, k_clr, i_region_cloud, frac_region                       &
-          , w_free, cloud_overlap                                              &
-          , n_column_slv, list_column_slv                                      &
-          , i_clm_lyr_chn, i_clm_cld_typ, area_column                          &
-!                 Additional variables required for mcica
-          , l_cloud_cmp, n_cloud_profile, i_cloud_profile                      &
-          , i_cloud_type, dimen%nd_cloud_component                             &
-          , control%i_cloud_representation                                     &
-!                 Levels for calculating radiances
-          , atm%n_viewing_level, i_rad_layer, frac_rad_layer                   &
-!                 Viewing Geometry
-          , atm%n_direction, atm%direction                                     &
-!                 Radiances
-          , i_direct                                                           &
-!                 Flags for initialising diagnostics
-          , l_initial, l_initial_band                                          &
-          , l_initial_channel, l_initial_channel_tile                          &
-!                 Flags for flux calculations
-          , l_actinic, l_clear_band, control%i_solver_clear                    &
-!                 Dimensions of arrays
-          , dimen%nd_profile, dimen%nd_layer, dimen%nd_layer_clr               &
-          , dimen%id_cloud_top, dimen%nd_column                                &
-          , dimen%nd_flux_profile, dimen%nd_radiance_profile                   &
-          , dimen%nd_j_profile                                                 &
-          , spectrum%dim%nd_band, spectrum%dim%nd_species                      &
-          , spectrum%dim%nd_k_term, spectrum%dim%nd_scale_variable             &
           , dimen%nd_cloud_type, dimen%nd_region, dimen%nd_overlap_coeff       &
           , dimen%nd_max_order, dimen%nd_sph_coeff                             &
           , dimen%nd_brdf_basis_fnc, dimen%nd_brdf_trunc                       &
