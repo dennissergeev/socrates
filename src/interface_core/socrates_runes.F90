@@ -23,6 +23,8 @@ use rad_pcf, only: &
   ip_inhom_mcica                            => ip_mcica, &
   ip_inhom_cairns                           => ip_cairns, &
   ip_inhom_tripleclouds_2019                => ip_tripleclouds_2019, &
+  ip_cloud_entrapment_zero                  => ip_zero_entrapment, &
+  ip_cloud_entrapment_max                   => ip_max_entrapment, &
   ip_droplet_re_external                    => ip_re_external, &
   ip_droplet_re_constant                    => ip_re_constant, &
   ip_droplet_re_liu                         => ip_re_liu, &
@@ -120,7 +122,8 @@ subroutine runes(n_profile, n_layer, diag, &
   liq_dim_aparam, liq_dim_bparam, &
   layer_heat_capacity, layer_heat_capacity_1d, &
   i_source, i_scatter_method, i_cloud_representation, i_overlap, i_inhom, &
-  i_mcica_sampling, i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re, &
+  i_cloud_entrapment, i_mcica_sampling, &
+  i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re, &
   rand_seed, &
   l_rayleigh, l_mixing_ratio, l_aerosol_mode, &
   aer_mix_ratio, aer_absorption, aer_scattering, aer_asymmetry, &
@@ -581,7 +584,7 @@ integer, intent(in), optional :: i_source
 integer, intent(in), optional :: i_scatter_method
 !   Select scattering parametrisation
 integer, intent(in), optional :: &
-  i_cloud_representation, i_overlap, i_inhom, &
+  i_cloud_representation, i_overlap, i_inhom, i_cloud_entrapment, &
   i_mcica_sampling, i_st_water, i_st_ice, i_cnv_water, i_cnv_ice, i_drop_re
 !   Select treatment of cloud
 integer, intent(in), optional :: rand_seed(:)
@@ -777,6 +780,7 @@ call set_control(control, diag, spec, &
   i_cloud_representation = i_cloud_representation, &
   i_overlap              = i_overlap, &
   i_inhom                = i_inhom, &
+  i_cloud_entrapment     = i_cloud_entrapment, &
   i_mcica_sampling       = i_mcica_sampling, &
   i_st_water             = i_st_water, &
   i_cnv_water            = i_cnv_water, &

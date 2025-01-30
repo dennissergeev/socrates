@@ -18,7 +18,8 @@ subroutine set_control(control, diag, spectrum, l_set_defaults, &
   l_aerosol, l_aerosol_mode, l_aerosol_ccn, &
   l_tile, l_flux_ground, l_flux_tile, n_tile, n_cloud_layer, n_aer_mode, &
   isolir, i_scatter_method, &
-  i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
+  i_cloud_representation, i_overlap, i_inhom, &
+  i_cloud_entrapment, i_mcica_sampling, &
   i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re )
 
 use def_control, only: StrCtrl, allocate_control
@@ -36,10 +37,12 @@ use rad_pcf, only: &
   ip_cloud_split_homogen, ip_cloud_split_ice_water, &
   ip_max_rand, ip_rand, ip_exponential_rand, ip_homogeneous, &
   ip_scaling, ip_mcica, ip_cairns, ip_cloud_ice_water, ip_cloud_mcica, &
+  ip_zero_entrapment, ip_max_entrapment, &
   ip_no_scatter_abs, ip_no_scatter_ext, ip_solver_no_scat, &
   ip_solver_homogen_direct, ip_scatter_approx, ip_solver_mix_app_scat, &
-  ip_solver_homogen_direct, ip_solver_mix_direct_hogan, ip_cloud_mix_max, &
-  ip_cloud_part_corr, ip_cloud_mix_random, ip_solver_triple_app_scat, &
+  ip_solver_homogen_direct, ip_solver_mix_direct, ip_solver_mix_direct_hogan, &
+  ip_cloud_mix_max, ip_cloud_part_corr, ip_cloud_mix_random, &
+  ip_solver_triple_app_scat, ip_solver_triple, &
   ip_solver_triple_hogan, ip_cloud_triple, ip_cloud_part_corr_cnv, &
   ip_cloud_clear, ip_scale_ses2, ip_overlap_mix_ses2, ip_re_external, &
   i_normal, i_err_fatal
@@ -65,7 +68,8 @@ logical, intent(in), optional :: l_set_defaults, &
 integer, intent(in), optional :: n_tile, n_cloud_layer, n_aer_mode
 
 integer, intent(in), optional :: isolir, i_scatter_method, &
-  i_cloud_representation, i_overlap, i_inhom, i_mcica_sampling, &
+  i_cloud_representation, i_overlap, i_inhom, &
+  i_cloud_entrapment, i_mcica_sampling, &
   i_st_water, i_cnv_water, i_st_ice, i_cnv_ice, i_drop_re
 
 ! Local variables
@@ -106,6 +110,8 @@ if (present(i_cloud_representation)) &
   control%i_cloud_representation = i_cloud_representation
 if (present(i_overlap)) control%i_overlap = i_overlap
 if (present(i_inhom)) control%i_inhom = i_inhom
+if (present(i_cloud_entrapment)) &
+  control%i_cloud_entrapment = i_cloud_entrapment
 if (present(i_mcica_sampling)) control%i_mcica_sampling = i_mcica_sampling
 if (present(i_st_water)) control%i_st_water = i_st_water
 if (present(i_cnv_water)) control%i_cnv_water = i_cnv_water
@@ -212,6 +218,7 @@ if (present(l_set_defaults)) then
       call set_int_default(control%i_cloud_representation, ip_cloud_off)
       call set_int_default(control%i_overlap, ip_max_rand)
       call set_int_default(control%i_inhom, ip_homogeneous)
+      call set_int_default(control%i_cloud_entrapment, ip_zero_entrapment)
       call set_int_default(control%i_mcica_sampling, ip_mcica_optimal_sampling)
       call set_int_default(control%i_drop_re, ip_re_external)
       if (present(n_cloud_layer)) then
@@ -239,11 +246,12 @@ if (present(l_set_defaults)) then
         else
           if (control%i_scatter_method == ip_scatter_approx) then
             control%i_solver       = ip_solver_mix_app_scat
-            control%i_solver_clear = ip_solver_homogen_direct
+          else if (control%i_cloud_entrapment == ip_max_entrapment) then
+            control%i_solver       = ip_solver_mix_direct
           else
             control%i_solver       = ip_solver_mix_direct_hogan
-            control%i_solver_clear = ip_solver_homogen_direct
           end if
+          control%i_solver_clear = ip_solver_homogen_direct
           if (control%i_overlap == ip_max_rand) then
             control%i_cloud = ip_cloud_mix_max
           else if (control%i_overlap == ip_exponential_rand) then
@@ -263,11 +271,12 @@ if (present(l_set_defaults)) then
         end if
         if (control%i_scatter_method == ip_scatter_approx) then
           control%i_solver       = ip_solver_triple_app_scat
-          control%i_solver_clear = ip_solver_homogen_direct
+        else if (control%i_cloud_entrapment == ip_max_entrapment) then
+          control%i_solver       = ip_solver_triple
         else
           control%i_solver       = ip_solver_triple_hogan
-          control%i_solver_clear = ip_solver_homogen_direct
         end if
+        control%i_solver_clear = ip_solver_homogen_direct
         if (control%i_overlap == ip_max_rand) then
           control%i_cloud = ip_cloud_triple
         else if (control%i_overlap == ip_exponential_rand) then
