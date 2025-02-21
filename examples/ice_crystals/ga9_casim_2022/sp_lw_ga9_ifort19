@@ -3370,6 +3370,40 @@ Band =     9     Fitting parameters:
      1.42981E+09    -5.32757E+04     3.04940E+09     9.04155E-01
     -2.19371E+04     1.51492E+09    -2.23348E+04     1.55878E+09
 *END
+*BLOCK: TYPE =   12: SUBTYPE =    0: VERSION =    2
+Parametrized scattering data for ice crystals.
+ Type number of ice crystals =    14
+Index of parametrization scheme =    19:   number of parameters =     5
+Number of moments of the phase function =     1
+Range of validity of parametrization =  4.40000E-05 --  1.56631E-04
+Band =     1     Fitting parameters:
+     1.50000E+11     6.30000E-01    -2.49979E-01     7.12900E-01
+     6.56830E-01
+Band =     2     Fitting parameters:
+     1.75000E+11     7.70000E-01    -2.86620E-01     8.35600E-01
+     3.08470E-01
+Band =     3     Fitting parameters:
+     1.73000E+11     5.48010E-01     1.07886E-02     8.84300E-01
+     1.83270E-01
+Band =     4     Fitting parameters:
+     1.74000E+11     5.46942E-01     1.45462E-02     8.84500E-01
+     1.72890E-01
+Band =     5     Fitting parameters:
+     1.44000E+11     5.34591E-01     1.05982E-02     9.33800E-01
+     1.01260E-01
+Band =     6     Fitting parameters:
+     1.54000E+11     6.50000E-01    -1.41994E-01     9.40100E-01
+     1.14400E-01
+Band =     7     Fitting parameters:
+     1.70000E+11     6.00000E-01    -1.78085E-01     9.26400E-01
+     1.51300E-01
+Band =     8     Fitting parameters:
+     1.72000E+11     6.00000E-01    -1.78085E-01     9.33100E-01
+     1.28650E-01
+Band =     9     Fitting parameters:
+     1.71000E+11     6.00851E-01    -1.30361E-01     9.08000E-01
+     1.76150E-01
+*END
 *BLOCK: TYPE =   14: SUBTYPE =    0: VERSION =    0
 Regions excluded from specific bands
 A zero indicates that no bands have been excluded from the particular band.
