@@ -369,6 +369,8 @@ EOF
  echo 'Matched ifx2025 SW GA9 output') || \
 (diff -q ga9_casim_${ver}/sp_sw_ga9_gfortran12 sp_sw_ga9_casim_${ver} && \
  echo 'Matched gfortran12 SW GA9 output') || \
+(diff -q ga9_casim_${ver}/sp_sw_ga9_gfortran5 sp_sw_ga9_casim_${ver} && \
+ echo 'Matched gfortran5 SW GA9 output') || \
 (diff -q ga9_casim_${ver}/sp_sw_ga9_gfortran14 sp_sw_ga9_casim_${ver} && \
  echo 'Matched gfortran14 SW GA9 output') || \
 ierr=1

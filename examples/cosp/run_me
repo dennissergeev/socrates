@@ -19,6 +19,8 @@ ierr=0
  echo 'Matched ifort 19.0.0 output') || \
 (diff -q output.txt gfortran_12_2_0.txt && \
  echo 'Matched gfortran 12.2.0 output') || \
+(diff -q output.txt gfortran_5_4_0.txt && \
+ echo 'Matched gfortran 5.4.0 output') || \
 (diff -q output.txt ifx_2025_0_4.txt && \
  echo 'Matched ifx 2025.0.4 output') || ierr=1
 

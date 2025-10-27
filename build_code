@@ -32,6 +32,8 @@ SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/optics/quickbeam_
 SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/subcol"
 SRC_LIST=${SRC_LIST}" cosp_github/subsample_and_optics_example/subcol/rng"
 SRC_LIST=${SRC_LIST}" cosp_github/driver/src/"
+SRC_LIST=${SRC_LIST}" flexchem"
+SRC_LIST=${SRC_LIST}" odepack"
 
 echo 'Building the radiation code in bin/ and utilities in sbin/'
 date

@@ -86,6 +86,12 @@ cd corr_k
 cd ../
 
 echo ---
+echo "Testing flexchem chemistry:"
+cd flexchem
+./run_me || err=1
+cd ../
+
+echo ---
 echo "Testing CDL scripts:"
 cd cdl
 ./run_me || err=1
