@@ -1,0 +1,4 @@
+# export PATH="/home/av24762/socrates/.pixi/envs/default/bin:$PATH"
+module load anaconda
+conda activate soc
+export NETCDFF_ROOT=$(nf-config --prefix)
