@@ -1,0 +1,31 @@
+&socrates_constants
+  planet_radius = 2.4764e+07,
+  mol_weight_air = 2.30e-03,
+  grav_acc = 8.87,
+  r_gas_dry = 3615.0,
+  cp_air_dry = 13010.0
+/
+
+&RADIANCE_CONTROL
+  ! iszen = 3 tells SOCRATES to read the SZA from the .szen file
+  iszen = 3,
+  
+  ! isolar = 1 tells it to read the Solar Irradiance from the .stoa file
+  isolar = 1,
+  
+  ! Surface treatment
+  i_surface = 1,
+  
+  ! Use 2-stream approximation (standard for climate runs)
+  i_2_stream = 2,
+  
+  ! These ensure the code doesn't use hardcoded Earth values
+  l_read_szen = .true.,
+  l_read_stoa = .true.
+/
+
+&PL_CONTROL
+  ! Controls for the layering and physics
+  i_cloud_presentation = 0,
+  l_rayleigh = .true.
+/

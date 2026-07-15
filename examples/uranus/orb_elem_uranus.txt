@@ -1,0 +1,23 @@
+ Uranus:
+ ---Readable units (degrees etc)---
+ planet_epoch =    2451545.0000000000     
+ planet_a, planet_da =    19.189164640000001       -5.3710061601642710E-008
+ planet_e, planet_de =    4.7257439999999998E-002  -1.2038329911019850E-009
+ planet_oblq, planet_doblq =    97.769997317253342       -1.9666957687847368E-008
+ planet_lph, planet_dlph =   -176.58751157135154        1.1162843897665983E-005
+ planet_M, planet_dM =    142.28382821000005        1.1720026695140315E-002
+ planet_ha, planet_dha =    0.0000000000000000        501.14836161046105     
+ omega =    1.0123719558981861E-004
+ Length of day =          17  hours          14  minutes   25.4528332      secs
+ 
+ ---Units for UM (radians etc)-----
+ planet_epoch =    2451545.0000000000     
+ planet_a, planet_da =    19.189164640000001       -5.3710061601642710E-008
+ planet_e, planet_de =    4.7257439999999998E-002  -1.2038329911019850E-009
+ planet_oblq, planet_doblq =    1.7064083628520939       -3.4325316550334774E-010
+ planet_lph, planet_dlph =   -3.0820334948236701        1.9482837990042837E-007
+ planet_M, planet_dM =    2.4833212746064905        2.0455305425182819E-004
+ planet_ha, planet_dha =    0.0000000000000000        8.7466889510776973     
+ omega =    1.0123719558981861E-004
+
+ stellar_constant at 1 au: 1361

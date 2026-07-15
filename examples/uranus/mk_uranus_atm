@@ -1,0 +1,57 @@
+#!/bin/bash
+
+INPUT_FILE="${1:-uranus_atm.raw}"
+SZA_VAL="${2:-30.0}"
+SOLAR_FLUX="${3:-3.71}" 
+
+rm -f uranus_1*
+rm -f uranus_2*
+rm -f uranus_3*
+
+raw_input <<EOF > /dev/null
+$INPUT_FILE
+uranus
+n
+EOF
+
+
+Cgen_horiz_cdl -o uranus_1.szen -n szen \
+                 -L "Solar zenith angle" -u "Degrees" \
+                 -F $SZA_VAL -N 0.0 -T 0.0  # CHECK
+Cgen_horiz_cdl -o uranus_1.stoa -n stoa \
+                 -L "Solar Irradiance" -u "W.m-2" \
+                 -F $SOLAR_FLUX -N 0.0 -T 0.0
+Cgen_surf_cdl -o uranus_1.surfsw -n alb \
+                 -L "Surface Albedo" -u "None" \
+                 -b 0.25 -N 0.0 -T 0.0  # CHECK
+
+
+rm -f uranus.*
+
+# Ccdl2cdf -o uranus.q uranus_1.q
+Ccdl2cdf -o uranus.h2 uranus_1.h2
+Ccdl2cdf -o uranus.he uranus_1.he
+Ccdl2cdf -o uranus.ch4 uranus_1.ch4
+Ccdl2cdf -o uranus.c2h6 uranus_1.c2h6
+Ccdl2cdf -o uranus.c2h2 uranus_1.c2h2
+# Ccdl2cdf -o uranus.co uranus_1.co
+# Ccdl2cdf -o uranus.co2 uranus_2.co2
+# Ccdl2cdf -o uranus.c2h4 uranus_2.c2h4
+# Ccdl2cdf -o uranus.nh3 uranus_2.nh3
+# Ccdl2cdf -o uranus.h2s uranus_2.h2s
+# Ccdl2cdf -o uranus.ph3 uranus_2.ph3
+Ccdl2cdf -o uranus.t uranus_1.t
+Ccdl2cdf -o uranus.tstar uranus_3.tstar
+Ccdl2cdf -o uranus.szen uranus_1.szen
+Ccdl2cdf -o uranus.stoa uranus_1.stoa
+Ccdl2cdf -o uranus.surf uranus_1.surfsw
+
+rm -f uranus_1*
+rm -f uranus_2*
+rm -f uranus_3*
+
+
+export MPLBACKEND=tkagg  # Qt backend isn't available on solva?
+python3 $RAD_DIR/python/ncout_tl.py uranus
+
+exit 0

@@ -1,0 +1,18 @@
+Table of absorbers and there annual global mmr values
+H2    7.4045e-01
+HE    2.5944e-01
+CH4    4.7166e-02
+H2O    4.8954e-02
+NH3    4.4429e-04
+H2S    1.3410e-04
+C2H6    8.5163e-07
+C2H2    1.4166e-06
+C2H4    1.0532e-11
+C4H2    3.2222e-12
+CO    3.7179e-08
+CO2    7.6562e-10
+PH3    9.4600e-06
+
+Table of annual and global averaged CIA path for H2-H2 and H2-He
+H2-H2 CIA Path (kg^2/m^5)    2.2659e+10
+H2-He CIA Path (kg^2/m^5)    7.9399e+09
