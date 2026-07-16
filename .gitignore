@@ -7,5 +7,3 @@ bin/
 set_rad_env
 examples/uranus/*_log
 examples/uranus/*/*_log
-examples/uranus/*_skel
-examples/uranus/*/*_skel
