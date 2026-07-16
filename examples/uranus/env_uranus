@@ -6,39 +6,38 @@
 # UoB solva
 ARCHIVE_DATA="/home/av24762/socrates_data"
 
-# SW_DATA and LW_DATA must be writable if generating lbl cross-section files
-SW_DATA="${ARCHIVE_DATA}/hitran/uranus"
-LW_DATA="${ARCHIVE_DATA}/hitran/uranus"
+# HITRAN data
+HITRAN_DATA="${ARCHIVE_DATA}/hitran/uranus"
 
-SOLFILE="sun"
-SOLSPEC="${RAD_DATA}/solar/${SOLFILE}"
+# Must be writable if generating lbl cross-section files
+SW_DATA_LBL="${HITRAN_DATA}/lbl_sw"
+LW_DATA_LBL="${HITRAN_DATA}/lbl_lw"
 
-# Checkpoint 2026-07-15
+SOLSPEC="${RAD_DATA}/solar/sun"
 
-COL_MASS_K_CO2="1.0e+05"
-COL_MASS_K_H2O="1.0e+03"
-COL_MASS_K_SO2="3.0e-2"
+COL_MASS_K_CH4="1.0e+05"
+COL_MASS_K_C2H2="1.0e+03"
+COL_MASS_K_C2H6="3.0e-2"
 
-COL_H2OC="1.0e+03"
-COL_CO2C="1.0e6"
+COL_H2H2_C="2.2659e+10"
+COL_H2HE_C="7.9399e+09"
 
-GAS_DATA_DIR="${RAD_DATA}/gases"
+HITRAN_CH4="${HITRAN_DATA}/ch4_2026-07-09.bpar"
+HITRAN_C2H2="${HITRAN_DATA}/c2h2_2026-07-09.bpar"
+HITRAN_C2H6="${HITRAN_DATA}/c2h6_2026-07-09.bpar"
+CONT_H2_H2="${HITRAN_DATA}/H2-H2_2011.cia"
+CONT_H2_He="${HITRAN_DATA}/H2-He_2011.cia"
 
-CONT_H2O_S260="${RAD_DATA}/continua/elsey_shine_s260"
-CONT_H2O_S296="${RAD_DATA}/continua/elsey_shine_s296"
-CONT_CO2_CO2="${RAD_DATA}/continua/CO2-CO2_2018.cia"
-HITRAN_UV_SO2="${GAS_DATA_DIR}/SO2_UV08.xsc"
+PT_DIR="${PWD}"
+PT_FILE="pt_uranus"
+REF_PT_FILE="ref_pt_uranus"
+CONT_PT_FILE="pt_cont_uranus"
 
-PT_FILE="pt793"
-SO2_PT_FILE="$RAD_DATA/gases/pt_so2_uv"
-REF_PT_FILE="$RAD_DATA/gases/ref_pt_mars"
-CONT_PT_FILE="$RAD_DATA/continua/pt_cont_100_400"
+CH4_LBL_SW="$SW_DATA_LBL/ch4_lbl_sw_${PT_FILE}.nc"
+CH4_LBL_LW="$LW_DATA_LBL/ch4_lbl_lw_${PT_FILE}.nc"
 
-CO2_LBL_SW="$SW_DATA/co2_sblbl_sw_${PT_FILE}_gf0.9-1.0.nc"
-SO2_LBL_SW="$SW_DATA/so2_lbl_sw_${PT_FILE}.nc"
-H2O_LBL_VIS="$SW_DATA/h2o_lbl_vis_${PT_FILE}.nc"
-H2O_LBL_SWF="$SW_DATA/h2o_lbl_swf_${PT_FILE}.nc"
+C2H2_LBL_SW="$SW_DATA_LBL/c2h2_lbl_sw_${PT_FILE}.nc"
+C2H2_LBL_LW="$LW_DATA_LBL/c2h2_lbl_lw_${PT_FILE}.nc"
 
-CO2_LBL_LW="$LW_DATA/co2_sblbl_lw_${PT_FILE}_gf0.9-1.0.nc"
-SO2_LBL_LW="$LW_DATA/so2_lbl_lw_${PT_FILE}.nc"
-H2O_LBL_LWF="$LW_DATA/h2o_lbl_lwf_${PT_FILE}.nc"
+C2H6_LBL_SW="$SW_DATA_LBL/c2h6_lbl_sw_${PT_FILE}.nc"
+C2H6_LBL_LW="$LW_DATA_LBL/c2h6_lbl_lw_${PT_FILE}.nc"
