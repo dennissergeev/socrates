@@ -11,16 +11,16 @@ fi
 procs=24
 . ./env_uranus
 
-mkdir -p ${LW_DATA_LBL}
+mkdir -p ${SW_DATA_LBL}
 
-if [ ! -s ${C2H6_LBL_LW} ] ; then
-  skelfile="${LW_DATA_LBL}/sp_lw_500_ec_uranus_skel"
-  ./mk_sp_lw_500_ec_uranus_skel $skelfile > /dev/null
+if [ ! -s ${C2H6_LBL_SW} ] ; then
+  skelfile="${SW_DATA_LBL}/sp_sw_500_ds_uranus_skel"
+  ./mk_sp_sw_500_ds_uranus_skel $skelfile > /dev/null
   
   echo "Generating C2H6 line absorption data"
   for ((i = 1; i < 501; i++))
   do
-    lbl_base="${LW_DATA_LBL}/c2h6_blbl_l${i}_${PT_FILE}"
+    lbl_base="${SW_DATA_LBL}/c2h6_blbl_s${i}_${PT_FILE}"
     if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
       rm -f ${lbl_base}*
       ck_args="Ccorr_k -F ${PT_DIR}/${PT_FILE} -BD ${HITRAN_C2H6} \
@@ -30,16 +30,16 @@ if [ ! -s ${C2H6_LBL_LW} ] ; then
       if command -v sbatch &> /dev/null ; then
         sbatch -W -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
       else
-        ${ck_args} > ${lbl_base}_log &
+        ${ck_args} > ${lbl_base}_log
       fi
     fi 
   done
 
   wait
   echo "Concatenating band data into a single file"
-  lblcat ${LW_DATA_LBL}/c2h6_blbl_l*_${PT_FILE}.nc ${C2H6_LBL_LW}
+  lblcat ${SW_DATA_LBL}/c2h6_blbl_s*_${PT_FILE}.nc ${C2H6_LBL_SW}
 else
-  echo "File exists:" ${C2H6_LBL_LW}
+  echo "File exists:" ${C2H6_LBL_SW}
 fi
 
 # Check job progress using:

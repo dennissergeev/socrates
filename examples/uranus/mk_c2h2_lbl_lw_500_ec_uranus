@@ -8,7 +8,7 @@ else
 fi
 
 # Set environment variables
-procs=1
+procs=24
 . ./env_uranus
 
 mkdir -p ${LW_DATA_LBL}
@@ -18,7 +18,7 @@ if [ ! -s ${C2H2_LBL_LW} ] ; then
   ./mk_sp_lw_500_ec_uranus_skel $skelfile > /dev/null
   
   echo "Generating C2H2 line absorption data"
-  for ((i = 1; i < 5; i++))
+  for ((i = 1; i < 501; i++))
   do
     lbl_base="${LW_DATA_LBL}/c2h2_blbl_l${i}_${PT_FILE}"
     if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
