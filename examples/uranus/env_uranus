@@ -4,7 +4,8 @@
 # ARCHIVE_DATA=${SOCRATES_DATA_DIR}
 
 # UoB solva
-ARCHIVE_DATA="/home/av24762/socrates_data"
+# ARCHIVE_DATA="${HOME}/socrates_data"
+ARCHIVE_DATA="/data/cluster4/av24762/socrates_data"
 
 # HITRAN data
 HITRAN_DATA="${ARCHIVE_DATA}/hitran/uranus"
@@ -26,7 +27,7 @@ HITRAN_CH4="${HITRAN_DATA}/ch4_2026-07-09.bpar"
 HITRAN_C2H2="${HITRAN_DATA}/c2h2_2026-07-09.bpar"
 HITRAN_C2H6="${HITRAN_DATA}/c2h6_2026-07-09.bpar"
 CONT_H2_H2="${HITRAN_DATA}/H2-H2_2011.cia"
-CONT_H2_He="${HITRAN_DATA}/H2-He_2011.cia"
+CONT_H2_HE="${HITRAN_DATA}/H2-He_2011.cia"
 
 PT_DIR="${PWD}"
 PT_FILE="pt_uranus"
