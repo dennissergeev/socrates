@@ -8,14 +8,15 @@ else
 fi
 
 # Set environment variables
-procs=24
+procs=8          # OMP threads per Ccorr_k job
+max_jobs=8       # concurrent jobs; procs * max_jobs should be <= number of cores
 . ./env_uranus
 
 mkdir -p ${SW_DATA_LBL}
 
 if [ ! -s ${CH4_LBL_SW} ] ; then
-  skelfile="${SW_DATA_LBL}/sp_sw_500_ds_uranus_skel"
-  ./mk_sp_sw_500_ds_uranus_skel $skelfile > /dev/null
+  skelfile="${SW_DATA_LBL}/sp_sw_500_ec_uranus_skel"
+  ./mk_sp_sw_500_ec_uranus_skel $skelfile > /dev/null
   
   echo "Generating CH4 line absorption data"
   for ((i = 1; i < 501; i++))
@@ -30,9 +31,13 @@ if [ ! -s ${CH4_LBL_SW} ] ; then
       if command -v sbatch &> /dev/null ; then
         sbatch -W -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
       else
-        ${ck_args} > ${lbl_base}_log
+        ${ck_args} > ${lbl_base}_log &
+        # cap the number of concurrent local jobs so we don't oversubscribe the cores
+        while [ "$(jobs -r -p | wc -l)" -ge "$max_jobs" ] ; do
+          wait -n
+        done
       fi
-    fi 
+    fi
   done
 
   wait

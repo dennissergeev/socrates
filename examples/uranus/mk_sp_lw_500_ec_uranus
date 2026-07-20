@@ -2,7 +2,7 @@
 
 # WORK IN PROGRESS!!!
 
-echo -n 'Started mk_sp_sw_500_ds_uranus: '; date
+echo -n 'Started mk_sp_lw_500_ec_uranus: '; date
 
 if [ $RAD_BIN ] ; then
   echo "Using code compiled in "$RAD_BIN
@@ -11,14 +11,14 @@ else
   exit 1
 fi
 
-sp_dir="ds_uranus_hr"
+sp_dir="work_uranus_hr"
 mkdir -p ${sp_dir}
 
 # Create skeleton spectral file
 # -----------------------------
-specfile=${sp_dir}/sp_sw_500_ds_uranus
-skelfile=${sp_dir}/sp_sw_500_ds_uranus_skel
-./mk_sp_sw_500_ds_uranus_skel $skelfile > /dev/null
+specfile=${sp_dir}/sp_lw_500_ec_uranus
+skelfile=${sp_dir}/sp_lw_500_ec_uranus_skel
+./mk_sp_lw_500_ec_uranus_skel $skelfile > /dev/null
 
 # Set environment variables
 # -------------------------
@@ -27,28 +27,28 @@ procs=8
 
 # Continua
 # --------
-if [ ! -s $sp_dir/h2-h2_sw_c ] ; then
+if [ ! -s $sp_dir/h2-h2_lw_c ] ; then
   echo "H2-H2 CIA"
-  rm -f $sp_dir/h2-h2_sw_c*
+  rm -f $sp_dir/h2-h2_lw_c*
   Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_H2 \
     -R 1 500 -i 1.0 -ct 23 23 ${COL_H2H2_C} -t 5.0e-4 \
-    -s $skelfile +S $SOLSPEC +p -lk \
-    -o $sp_dir/h2-h2_sw_c -m $sp_dir/h2-h2_sw_cm \
-    -L $sp_dir/h2-h2_sw_clbl.nc \
-    -np $procs > $sp_dir/h2-h2_sw_clog
+    -s $skelfile +p -lk \
+    -o $sp_dir/h2-h2_lw_c -m $sp_dir/h2-h2_lw_cm \
+    -L $sp_dir/h2-h2_lw_clbl.nc \
+    -np $procs > $sp_dir/h2-h2_lw_clog
 fi
 
 echo "done"
 
-if [ ! -s $sp_dir/h2-he_sw_c ] ; then
+if [ ! -s $sp_dir/h2-he_lw_c ] ; then
   echo "H2-He CIA"
-  rm -f $sp_dir/h2-he_sw_c*
+  rm -f $sp_dir/h2-he_lw_c*
   Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_HE \
     -R 1 500 -i 1.0 -ct 23 24 ${COL_H2HE_C} -t 5.0e-4 \
-    -k -s $skelfile +S $SOLSPEC -lk \
-    -o $sp_dir/h2-he_sw_c -m $sp_dir/h2-he_sw_cm \
-    -L $sp_dir/h2-he_sw_clbl.nc \
-    -np $procs > $sp_dir/h2-he_sw_clog
+    -k -s $skelfile -lk \
+    -o $sp_dir/h2-he_lw_c -m $sp_dir/h2-he_lw_cm \
+    -L $sp_dir/h2-he_lw_clbl.nc \
+    -np $procs > $sp_dir/h2-he_lw_clog
 fi
 
 echo "done"
@@ -58,52 +58,52 @@ exit 0  # TODO: remove
 # Gas absorption coefficients
 # ---------------------------
 echo -n 'CH4 '
-if [ ! -s $sp_dir/ch4_sw_l ] ; then
+if [ ! -s $sp_dir/ch4_lw_l ] ; then
   if [ ! -s $CH4_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_sw_500_ds_uranus"
+    echo ": No LBL file: please run ./mk_ch4_lbl_lw_500_ec_uranus"
     exit 1
   else
-    rm -f $sp_dir/ch4_sw_l*
+    rm -f $sp_dir/ch4_lw_l*
     Ccorr_k -F ${PT_DIR}/${PT_FILE} \
       -R 1 500 -l 6 ${COL_MASS_K_CH4} -b 5.0e-4 \
-      -s $skelfile +S $SOLSPEC -lk \
-      -o $sp_dir/ch4_sw_l -m $sp_dir/ch4_sw_lm \
+      -s $skelfile -lk \
+      -o $sp_dir/ch4_lw_l -m $sp_dir/ch4_lw_lm \
       -L $CH4_LBL_SW \
-       > $sp_dir/ch4_sw_log
+       > $sp_dir/ch4_lw_log
   fi
 fi
 echo 'done'
 
 echo -n 'C2H2 '
-if [ ! -s $sp_dir/c2h2_sw_l ] ; then
+if [ ! -s $sp_dir/c2h2_lw_l ] ; then
   if [ ! -s $C2H2_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_sw_500_ds_uranus"
+    echo ": No LBL file: please run ./mk_ch4_lbl_lw_500_ec_uranus"
     exit 1
   else
-    rm -f $sp_dir/c2h2_sw_l*
+    rm -f $sp_dir/c2h2_lw_l*
     Ccorr_k -F ${PT_DIR}/${PT_FILE} \
       -R 1 500 -l 34 ${COL_MASS_K_C2H2} -b 5.0e-4 \
-      -s $skelfile +S $SOLSPEC -lk \
-      -o $sp_dir/c2h2_sw_l -m $sp_dir/c2h2_sw_lm \
+      -s $skelfile -lk \
+      -o $sp_dir/c2h2_lw_l -m $sp_dir/c2h2_lw_lm \
       -L $C2H2_LBL_SW \
-       > $sp_dir/c2h2_sw_log
+       > $sp_dir/c2h2_lw_log
   fi
 fi
 echo 'done'
 
 echo -n 'C2H6 '
-if [ ! -s $sp_dir/c2h6_sw_l ] ; then
+if [ ! -s $sp_dir/c2h6_lw_l ] ; then
   if [ ! -s $C2H6_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_sw_500_ds_uranus"
+    echo ": No LBL file: please run ./mk_ch4_lbl_lw_500_ec_uranus"
     exit 1
   else
-    rm -f $sp_dir/c2h6_sw_l*
+    rm -f $sp_dir/c2h6_lw_l*
     Ccorr_k -F ${PT_DIR}/${PT_FILE} \
       -R 1 500 -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
-      -s $skelfile +S $SOLSPEC -lk \
-      -o $sp_dir/c2h6_sw_l -m $sp_dir/c2h6_sw_lm \
+      -s $skelfile -lk \
+      -o $sp_dir/c2h6_lw_l -m $sp_dir/c2h6_lw_lm \
       -L $C2H6_LBL_SW \
-       > $sp_dir/c2h6_sw_log
+       > $sp_dir/c2h6_lw_log
   fi
 fi
 echo 'done'
@@ -137,27 +137,27 @@ y
 $sp_dir/h2o_swf_l
 5
 y
-$sp_dir/co2_sw_l
+$sp_dir/co2_lw_l
 5
 y
-$sp_dir/so2_sw_l
+$sp_dir/so2_lw_l
 5
 y
 $sp_dir/so2_uv_l
 19
-$sp_dir/h2o-h2o_sw_c
+$sp_dir/h2o-h2o_lw_c
 19
 y
-$sp_dir/co2-co2_sw_c
+$sp_dir/co2-co2_lw_c
 10
 5
-$sp_dir/fit_sw_drop5
+$sp_dir/fit_lw_drop5
 1.50000E-06 5.00000E-05
 11
 $sp_dir/sulphuric_sw.avg
 12
 8
-$sp_dir/fit_sw_ice8
+$sp_dir/fit_lw_ice8
 -1
 EOF
 
@@ -192,5 +192,5 @@ n
 -1
 EOF
 
-echo -n 'Finished mk_sp_sw_276_jm_mars: '; date
+echo -n 'Finished mk_sp_lw_500_ec_uranus: '; date
 exit 0
