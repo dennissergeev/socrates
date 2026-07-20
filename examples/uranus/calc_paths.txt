@@ -1,0 +1,72 @@
+Results:
+Table of absorbers with computed annual global mmr values and total column paths
+
+Gas    Mean MMR     Total column path (kg/m2)
+H2     7.4042e-01   4.1737e+05
+He     2.5947e-01   1.4626e+05
+CH4    1.8531e-01   1.0446e+05
+H2O    9.2701e-02   5.2255e+04
+NH3    4.3683e-04   2.4624e+02
+H2S    8.5206e-04   4.8030e+02
+C2H6   2.3059e-09   1.2998e-03
+C2H2   1.1778e-09   6.6390e-04
+C2H4   2.0768e-11   1.1707e-05
+CO     1.2139e-09   6.8428e-04
+CO2    1.7082e-13   9.6291e-08
+PH3    9.4565e-06   5.3306e+00
+
+--- Globally average Continuum Absorbers (Total Column Paths) ---
+Global Average H2-H2 Path: 9.4950e+05 kg^2/m^5
+Global Average H2-He Path: 3.3274e+05 kg^2/m^5
+
+
+Code:
+
+import pandas as pd
+
+#read data from file
+file_path = "/home/lv24520/summer_research_2026/freya_code/Code/k218b_run5/uranus_atm_full.raw"
+df = pd.read_csv(file_path, sep=r"\s+", comment="*", nrows=29)
+
+#define constants
+g = 8.87     
+R = 3615.0
+
+df['delta_p'] = df['PRESS(PA)'].diff()
+df['delta_p'] = df['delta_p'].fillna(df['PRESS(PA)'])
+
+#perform the calculation for the whole column at once
+df['LAYER_MASS'] = df['delta_p'] / g
+
+#calculate densitys
+df['DENSITY'] = df['PRESS(PA)'] / (R * df['TEMP(K)'])
+
+#calculate continuum paths 
+df['CONT_H2_H2'] = df['H2(NONE)'] * df['H2(NONE)'] * df['LAYER_MASS'] * df['DENSITY']
+df['CONT_H2_He'] = df['He(NONE)'] * df['H2(NONE)'] * df['LAYER_MASS'] * df['DENSITY']
+
+glob_avg_h2h2 = df['CONT_H2_H2'].sum()
+glob_avg_h2he = df['CONT_H2_He'].sum()
+
+total_atmosphere_mass = df['LAYER_MASS'].sum()
+
+#list of absorbers
+gases = ['H2', 'He', 'CH4', 'H2O', 'NH3', 'H2S', 'C2H6', 'C2H2', 'C2H4', 'CO', 'CO2', 'PH3']
+
+#calculate total column paths for normal absorbers (kg/m2) and mean mmr
+total_atmosphere_mass = df['LAYER_MASS'].sum()
+
+print("\nTable of absorbers with computed annual global mmr values and total column paths")
+print("\nGas    Mean MMR     Total column path (kg/m2)")
+for gas in gases:
+    column = f"{gas}(NONE)"
+    if column in df.columns:
+        total_path = (df[column] * df['LAYER_MASS']).sum()
+        mean_mmr = total_path / total_atmosphere_mass
+        print(f"{gas:6} {mean_mmr:10.4e}   {total_path:10.4e}")
+
+
+
+print("\n--- Globally average Continuum Absorbers (Total Column Paths) ---")
+print(f"Global Average H2-H2 Path: {glob_avg_h2h2:.4e} kg^2/m^5")
+print(f"Global Average H2-He Path: {glob_avg_h2he:.4e} kg^2/m^5")
