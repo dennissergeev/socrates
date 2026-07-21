@@ -14,8 +14,8 @@ procs=24
 mkdir -p ${SW_DATA_LBL}
 
 if [ ! -s ${C2H2_LBL_SW} ] ; then
-  skelfile="${SW_DATA_LBL}/sp_sw_500_ec_uranus_skel"
-  ./mk_sp_sw_500_ec_uranus_skel $skelfile > /dev/null
+  skelfile="${SW_DATA_LBL}/sp_sw_highres_ec_uranus_skel"
+  ./mk_sp_sw_highres_ec_uranus_skel $skelfile > /dev/null
   
   echo "Generating C2H2 line absorption data"
   for ((i = 1; i < 501; i++))

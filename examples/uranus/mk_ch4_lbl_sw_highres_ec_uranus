@@ -15,8 +15,8 @@ max_jobs=8       # concurrent jobs; procs * max_jobs should be <= number of core
 mkdir -p ${SW_DATA_LBL}
 
 if [ ! -s ${CH4_LBL_SW} ] ; then
-  skelfile="${SW_DATA_LBL}/sp_sw_500_ec_uranus_skel"
-  ./mk_sp_sw_500_ec_uranus_skel $skelfile > /dev/null
+  skelfile="${SW_DATA_LBL}/sp_sw_highres_ec_uranus_skel"
+  ./mk_sp_sw_highres_ec_uranus_skel $skelfile > /dev/null
   
   echo "Generating CH4 line absorption data"
   for ((i = 1; i < 501; i++))
