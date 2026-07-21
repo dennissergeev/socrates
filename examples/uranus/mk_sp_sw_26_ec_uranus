@@ -1,0 +1,170 @@
+#!/bin/bash
+
+# Need to remove exit 0 on line 54 when happy
+
+echo -n 'Started mk_sp_sw_26_ec_uranus: '; date
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+sp_dir="work_uranus_hr"
+mkdir -p ${sp_dir}
+
+# Create skeleton spectral file
+# -----------------------------
+specfile=${sp_dir}/sp_sw_26_ec_uranus
+skelfile=${sp_dir}/sp_sw_26_ec_uranus_skel
+./mk_sp_sw_26_ec_uranus_skel $skelfile > /dev/null
+
+# Set environment variables
+# -------------------------
+procs=8
+. ./env_uranus
+
+# Continua
+# --------
+if [ ! -s $sp_dir/h2-h2_sw_c ] ; then
+  echo "H2-H2 CIA"
+  rm -f $sp_dir/h2-h2_sw_c*
+  Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_H2 \
+    -R 1 26-i 1.0 -ct 23 23 ${COL_H2H2_C} -t 5.0e-4 \
+    -s $skelfile +S $SOLSPEC +p -lk \
+    -o $sp_dir/h2-h2_sw_c -m $sp_dir/h2-h2_sw_cm \
+    -L $sp_dir/h2-h2_sw_clbl.nc \
+    -np $procs > $sp_dir/h2-h2_sw_clog
+fi
+
+echo "done"
+
+if [ ! -s $sp_dir/h2-he_sw_c ] ; then
+  echo "H2-He CIA"
+  rm -f $sp_dir/h2-he_sw_c*
+  Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_HE \
+    -R 1 26 -i 1.0 -ct 23 24 ${COL_H2HE_C} -t 5.0e-4 \
+    -k -s $skelfile +S $SOLSPEC -lk \
+    -o $sp_dir/h2-he_sw_c -m $sp_dir/h2-he_sw_cm \
+    -L $sp_dir/h2-he_sw_clbl.nc \
+    -np $procs > $sp_dir/h2-he_sw_clog
+fi
+
+echo "done"
+
+exit 0  # TODO: remove
+
+# Gas absorption coefficients
+# ---------------------------
+echo -n 'CH4 '
+if [ ! -s $sp_dir/ch4_sw_l ] ; then
+  if [ ! -s $CH4_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_ch4_lbl_sw_26_ec_uranus"
+    exit 1
+  else
+    rm -f $sp_dir/ch4_sw_l*
+    Ccorr_k -F ${PT_DIR}/${PT_FILE} \
+      -R 1 26 -l 6 ${COL_MASS_K_CH4} -b 5.0e-4 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/ch4_sw_l -m $sp_dir/ch4_sw_lm \
+      -L $CH4_LBL_SW \
+       > $sp_dir/ch4_sw_log
+  fi
+fi
+echo 'done'
+
+echo -n 'C2H2 '
+if [ ! -s $sp_dir/c2h2_sw_l ] ; then
+  if [ ! -s $C2H2_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_c2h2_lbl_sw_26_ec_uranus"
+    exit 1
+  else
+    rm -f $sp_dir/c2h2_sw_l*
+    Ccorr_k -F ${PT_DIR}/${PT_FILE} \
+      -R 1 26 -l 34 ${COL_MASS_K_C2H2} -b 5.0e-4 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/c2h2_sw_l -m $sp_dir/c2h2_sw_lm \
+      -L $C2H2_LBL_SW \
+       > $sp_dir/c2h2_sw_log
+  fi
+fi
+echo 'done'
+
+echo -n 'C2H6 '
+if [ ! -s $sp_dir/c2h6_sw_l ] ; then
+  if [ ! -s $C2H6_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_c2h6_lbl_sw_26_ec_uranus"
+    exit 1
+  else
+    rm -f $sp_dir/c2h6_sw_l*
+    Ccorr_k -F ${PT_DIR}/${PT_FILE} \
+      -R 1 26 -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/c2h6_sw_l -m $sp_dir/c2h6_sw_lm \
+      -L $C2H6_LBL_SW \
+       > $sp_dir/c2h6_sw_log
+  fi
+fi
+echo 'done'
+
+
+# Create the spectral file from the data calculated above
+# -------------------------------------------------------
+echo 'Constructing spectral file'
+mv ${specfile} ${specfile}_old 2> /dev/null
+mv ${specfile}_k ${specfile}_old_k 2> /dev/null
+prep_spec << EOF > ${specfile}_log 2>&1
+$skelfile
+n
+$specfile
+2
+n
+$SOLSPEC
+n
+4 
+3
+6
+34
+46
+5
+$sp_dir/c2h2_sw_l
+5
+y
+$sp_dir/c2h6_sw_l
+5
+y
+$sp_dir/ch4_sw_l
+19
+$sp_dir/h2-h2_sw_c
+19
+y
+$sp_dir/h2-he_sw_c
+-1
+EOF
+
+# Rearrange so the major gas is listed first for each band and
+# gases are removed from bands where absorption is very weak.
+echo 'Tidying spectral file'
+tidy_90 << EOF > ${specfile}_tidy_log
+$specfile
+o
+8
+1
+0
+1
+$COL_MASS_K_CH4
+$COL_MASS_K_C2H2
+$COL_MASS_K_C2H6
+0.999990
+6
+$COL_MASS_K_CH4
+$COL_MASS_K_C2H2
+$COL_MASS_K_C2H6
+1.0e+6
+n
+-1
+EOF
+
+echo -n 'Finished mk_sp_sw_26_ec_uranus: '; date
+exit 0
