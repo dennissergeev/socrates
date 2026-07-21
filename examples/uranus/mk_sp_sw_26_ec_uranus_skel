@@ -1,0 +1,41 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+skelfile=$1
+if [ ! -s ${skelfile} ] ; then
+
+# Create skeleton spectral file:
+# 500 bands
+# 5 gases: CH4 (6), H2 (23), He (24), C2H2 (34), C2H6 (46)
+# 2 CIA: H2-H2, H2-He
+# No aerosols
+# Bands specified in microns (u)
+prep_spec << EOF > ${skelfile}_log
+${skelfile}
+26
+5
+6
+23
+24
+34
+46
+2
+23 23
+23 24
+0
+r
+u 0.3 6.8 0.25
+0*26
+0*26
+n
+-1
+EOF
+
+fi
+exit 0
