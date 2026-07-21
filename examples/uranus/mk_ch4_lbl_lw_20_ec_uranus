@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [ $RAD_BIN ] ; then
+  echo "Using code compiled in "$RAD_BIN
+else
+  echo "Path to code not set."
+  exit 1
+fi
+
+# Set environment variables
+procs=8          # OMP threads per Ccorr_k job
+max_jobs=8       # concurrent jobs; procs * max_jobs should be <= number of cores
+. ./env_uranus
+
+mkdir -p ${LW_DATA_LBL}
+
+if [ ! -s ${CH4_LBL_LW} ] ; then
+  skelfile="${LW_DATA_LBL}/sp_lw_20_ec_uranus_skel"
+  ./mk_sp_lw_20_ec_uranus_skel $skelfile > /dev/null
+  
+  echo "Generating CH4 line absorption data"
+  for ((i = 1; i < 21; i++))
+  do
+    lbl_base="${LW_DATA_LBL}/ch4_blbl_l${i}_${PT_FILE}"
+    if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
+      rm -f ${lbl_base}*
+      ck_args="Ccorr_k -F ${PT_DIR}/${PT_FILE} -BD ${HITRAN_CH4} \
+        -lo 6 -R ${i} ${i} -c 2500.0 -i 0.1 \
+        -s $skelfile -m ${lbl_base}_lm -L ${lbl_base}.nc \
+        -np $procs"
+      if command -v sbatch &> /dev/null ; then
+        sbatch -W -n $procs -o ${lbl_base}_log -t 360 ${ck_args} &
+      else
+        ${ck_args} > ${lbl_base}_log 
+      fi
+    fi 
+  done
+
+  wait
+  echo "Concatenating band data into a single file"
+  lblcat ${LW_DATA_LBL}/ch4_blbl_l*_${PT_FILE}.nc ${CH4_LBL_LW} 
+else
+  echo "File exists:" ${CH4_LBL_LW}
+fi
+
+# Check job progress using:
+# sacct --format=jobname%30,jobid%9,elapsed,totalcpu,ncpus%5,reqmem,exitcode,state
+# Use scancel to kill
+
+exit 0
