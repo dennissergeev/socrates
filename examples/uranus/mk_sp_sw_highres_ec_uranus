@@ -147,17 +147,14 @@ echo 'Tidying spectral file'
 tidy_90 << EOF > ${specfile}_tidy_log
 $specfile
 o
-8
-23
-24
 1
 ${COL_MASS_K_CH4}
 ${COL_MASS_K_H2}
 ${COL_MASS_K_HE}
 ${COL_MASS_K_C2H2}
 ${COL_MASS_K_C2H6}
-${COL_H2OC}
-${COL_CO2C}
+${COL_H2H2_C}
+${COL_H2HE_C}
 0.999990
 6
 ${COL_MASS_K_CH4}
@@ -165,8 +162,8 @@ ${COL_MASS_K_H2}
 ${COL_MASS_K_HE}
 ${COL_MASS_K_C2H2}
 ${COL_MASS_K_C2H6}
-${COL_H2OC}
-${COL_CO2C}
+${COL_H2H2_C}
+${COL_H2HE_C}
 5.0e+6
 n
 -1
