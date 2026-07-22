@@ -10,15 +10,18 @@ fi
 skelfile=$1
 if [ ! -s ${skelfile} ] ; then
 
+. ./env_uranus
+nbands=${NBANDS_HR_LW}
+
 # Create skeleton spectral file:
-# 500 bands
-# 5 gases: C2H2, C2H6, CH4, H2, He
+# 319 bands from 3.125 to 1000 microns
+# 5 gases: CH4 (6), H2 (23), He (24), C2H2 (34), C2H6 (46)
 # 2 CIA: H2-H2, H2-He
 # No aerosols
-# Bands specified in microns (u)
+# Bands specified in wavenumbers (c)
 prep_spec << EOF > ${skelfile}_log
 ${skelfile}
-500
+${nbands}
 5
 6
 23
@@ -30,13 +33,12 @@ ${skelfile}
 23 24
 0
 r
-u 3.3 1003.3 2.0
-0*500
-0*500
+c 3200 10 -10
+0*${nbands}
+0*${nbands}
 n
 -1
 EOF
 
 fi
 exit 0
-
