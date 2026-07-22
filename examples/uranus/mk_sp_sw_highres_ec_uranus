@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# WORK IN PROGRESS!!!
+# Authors: Denis Sergeev & Evie Cushing (University of Bristol)
 
 echo -n 'Started mk_sp_sw_highres_ec_uranus: '; date
 
@@ -24,6 +24,7 @@ mkdir -p ${sp_dir}
 specfile=${sp_dir}/sp_sw_highres_ec_uranus
 skelfile=${sp_dir}/sp_sw_highres_ec_uranus_skel
 ./mk_sp_sw_highres_ec_uranus_skel $skelfile > /dev/null
+
 
 # Gas absorption coefficients
 # ---------------------------
@@ -81,8 +82,8 @@ echo 'done'
 
 # Continua
 # --------
+echo -n "H2-H2 CIA "
 if [ ! -s $sp_dir/h2-h2_sw_c ] ; then
-  echo "H2-H2 CIA"
   rm -f $sp_dir/h2-h2_sw_c*
   Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_H2 \
     -R 1 ${NBANDS_HR_SW} -i 1.0 -ct 23 23 ${COL_H2H2_C} -t 5.0e-4 \
@@ -91,11 +92,10 @@ if [ ! -s $sp_dir/h2-h2_sw_c ] ; then
     -L $sp_dir/h2-h2_sw_clbl.nc \
     -np $procs > $sp_dir/h2-h2_sw_clog
 fi
-
 echo "done"
 
+echo -n "H2-He CIA "
 if [ ! -s $sp_dir/h2-he_sw_c ] ; then
-  echo "H2-He CIA"
   rm -f $sp_dir/h2-he_sw_c*
   Ccorr_k -F $PT_DIR/${CONT_PT_FILE} -CIA $CONT_H2_HE \
     -R 1 ${NBANDS_HR_SW} -i 1.0 -ct 23 24 ${COL_H2HE_C} -t 5.0e-4 \
@@ -104,12 +104,8 @@ if [ ! -s $sp_dir/h2-he_sw_c ] ; then
     -L $sp_dir/h2-he_sw_clbl.nc \
     -np $procs > $sp_dir/h2-he_sw_clog
 fi
-
 echo "done"
 
-exit 0  # TODO: remove
-
-# CHECKPOINT 22 Jul
 
 # Create the spectral file from the data calculated above
 # -------------------------------------------------------
@@ -125,70 +121,53 @@ n
 $SOLSPEC
 n
 3
-c
-4
-1
-2
-13
-37
+h
+$REFRACT_H2
 5
-$sp_dir/h2o_vis_l
+$sp_dir/ch4_sw_l
 5
 y
-$sp_dir/h2o_swf_l
+$sp_dir/c2h2_sw_l
 5
 y
-$sp_dir/co2_sw_l
-5
-y
-$sp_dir/so2_sw_l
-5
-y
-$sp_dir/so2_uv_l
+$sp_dir/c2h6_sw_l
 19
-$sp_dir/h2o-h2o_sw_c
+$sp_dir/h2-h2_sw_c
 19
 y
-$sp_dir/co2-co2_sw_c
-10
-5
-$sp_dir/fit_sw_drop5
-1.50000E-06 5.00000E-05
-11
-$sp_dir/sulphuric_sw.avg
-12
-8
-$sp_dir/fit_sw_ice8
+$sp_dir/h2-he_sw_c
 -1
 EOF
 
+
 # Rearrange so the major gas is listed first for each band and
 # gases are removed from bands where absorption is very weak.
+# ------------------------------------------------------------
 echo 'Tidying spectral file'
 tidy_90 << EOF > ${specfile}_tidy_log
 $specfile
 o
 8
+23
+24
 1
-0
-1
-$COL_MASS_K_H2O
-$COL_MASS_K_CO2
-$COL_MASS_K_SO2
-0.0
-0.0
+${COL_MASS_K_CH4}
+${COL_MASS_K_H2}
+${COL_MASS_K_HE}
+${COL_MASS_K_C2H2}
+${COL_MASS_K_C2H6}
 ${COL_H2OC}
 ${COL_CO2C}
 0.999990
 6
-$COL_MASS_K_H2O
-$COL_MASS_K_CO2
-$COL_MASS_K_SO2
-0.0
-0.0
+${COL_MASS_K_CH4}
+${COL_MASS_K_H2}
+${COL_MASS_K_HE}
+${COL_MASS_K_C2H2}
+${COL_MASS_K_C2H6}
 ${COL_H2OC}
 ${COL_CO2C}
-1.0e+6
+5.0e+6
 n
 -1
 EOF
