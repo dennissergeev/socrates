@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Authors: Denis Sergeev & Evie Cushing (University of Bristol)
-
 echo -n 'Started mk_sp_lw_lowres_ec_uranus: '; date
 
 # Set environment variables
@@ -116,13 +114,11 @@ prep_spec << EOF > ${specfile}_log 2>&1
 $skelfile
 n
 $specfile
-2
+6
 n
-$SOLSPEC
-n
-3
-h
-$REFRACT_H2
+t
+60 540
+500
 5
 $sp_dir/ch4_lw_l
 5

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Authors: Denis Sergeev & Evie Cushing (University of Bristol)
-
 echo -n 'Started mk_sp_lw_highres_ec_uranus: '; date
 
 # Set environment variables
@@ -79,6 +77,7 @@ if [ ! -s $sp_dir/c2h6_lw_l ] ; then
   fi
 fi
 echo 'done'
+
 
 # Continua
 # --------

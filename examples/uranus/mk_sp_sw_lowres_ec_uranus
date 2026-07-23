@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Authors: Denis Sergeev & Evie Cushing (University of Bristol)
-
 echo -n 'Started mk_sp_sw_lowres_ec_uranus: '; date
 
 # Set environment variables

@@ -14,7 +14,7 @@ if [ ! -s ${skelfile} ] ; then
 nbands=${NBANDS_HR_SW}
 
 # Create skeleton spectral file:
-# 283 bands from 0.3 to 15 microns
+# 293 bands from 0.3 to 15 microns
 # 5 gases: CH4 (6), H2 (23), He (24), C2H2 (34), C2H6 (46)
 # 2 CIA: H2-H2, H2-He
 # No aerosols
