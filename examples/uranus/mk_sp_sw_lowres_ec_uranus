@@ -26,6 +26,23 @@ skelfile=${sp_dir}/sp_sw_lowres_ec_uranus_skel
 
 # Gas absorption coefficients
 # ---------------------------
+echo -n 'C2H6 '
+if [ ! -s $sp_dir/c2h6_sw_l ] ; then
+  if [ ! -s $C2H6_LBL_SW ] ; then
+    echo ": No LBL file: please run ./mk_c2h6_lbl_sw_highres_ec_uranus"
+    exit 1
+  else
+    rm -f $sp_dir/c2h6_sw_l*
+    Ccorr_k -F ${PT_DIR}/${PT_FILE} \
+      -R 25 26 -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
+      -s $skelfile +S $SOLSPEC -lk \
+      -o $sp_dir/c2h6_sw_l -m $sp_dir/c2h6_sw_lm \
+      -L $C2H6_LBL_SW \
+       > $sp_dir/c2h6_sw_log
+  fi
+fi
+echo 'done'
+
 echo -n 'CH4 '
 if [ ! -s $sp_dir/ch4_sw_l ] ; then
   if [ ! -s $CH4_LBL_SW ] ; then
@@ -56,23 +73,6 @@ if [ ! -s $sp_dir/c2h2_sw_l ] ; then
       -o $sp_dir/c2h2_sw_l -m $sp_dir/c2h2_sw_lm \
       -L $C2H2_LBL_SW \
        > $sp_dir/c2h2_sw_log
-  fi
-fi
-echo 'done'
-
-echo -n 'C2H6 '
-if [ ! -s $sp_dir/c2h6_sw_l ] ; then
-  if [ ! -s $C2H6_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_c2h6_lbl_sw_highres_ec_uranus"
-    exit 1
-  else
-    rm -f $sp_dir/c2h6_sw_l*
-    Ccorr_k -F ${PT_DIR}/${PT_FILE} \
-      -R 25 26 -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
-      -s $skelfile +S $SOLSPEC -lk \
-      -o $sp_dir/c2h6_sw_l -m $sp_dir/c2h6_sw_lm \
-      -L $C2H6_LBL_SW \
-       > $sp_dir/c2h6_sw_log
   fi
 fi
 echo 'done'
