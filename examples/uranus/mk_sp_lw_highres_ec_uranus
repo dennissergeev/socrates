@@ -116,13 +116,11 @@ prep_spec << EOF > ${specfile}_log 2>&1
 $skelfile
 n
 $specfile
-2
+6
 n
-$SOLSPEC
-n
-3
-h
-$REFRACT_H2
+t
+60 540
+500
 5
 $sp_dir/ch4_lw_l
 5
