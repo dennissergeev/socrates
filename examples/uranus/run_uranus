@@ -1,0 +1,44 @@
+#!/bin/bash
+source env_uranus
+
+
+# Make the uranus spectral file
+# ---------------------------
+#
+# This directory contains scripts that are in development and should be
+# considered more as a guide to generating spectral files rather than
+# finished products.
+# 
+# The following scripts require input data files downloaded from hitran.org.
+# Modify the sbatch commands in the following files if required and run them
+# sequentially to generate the line-by-line cross-section netcdf files:
+# ./mk_c2h2_lbl_lw_highres_ec_uranus
+# ./mk_ch4_lbl_lw_highres_ec_uranus
+# ./mk_c2h6_lbl_lw_highres_ec_uranus
+# ./mk_ch4_lbl_sw_highres_ec_uranus
+# ./mk_c2h6_lbl_sw_highres_ec_uranus
+# ./mk_c2h2_lbl_sw_highres_ec_uranus
+
+# Run the following scripts to generate the spectral files using the
+# pre-calculated line-by-line cross-section files:
+# ./mk_sp_sw_highres_ec_uranus
+# ./mk_sp_lw_highres_ec_uranus
+
+# Make the atmospheric profile input files
+# ----------------------------------------
+rm -f uranus.*
+./mk_uranus_atm
+
+# Calculate the SW high-res (hr) fluxes
+# --------------------------------
+echo "Running Shortwave..."
+Cl_run_cdf -N planet.nml -B uranus -s ${SP_SW_HR} -R 1 ${NBANDS_HR_SW} -ch ${NBANDS_HR_SW} -S -g 2 -C 5 -v 13
+fmove uranus uranus_sw_hr
+
+# Calculate the LW high-res (hr) fluxes
+# --------------------------------
+echo "Running Longwave..."
+Cl_run_cdf -N planet.nml -B uranus -s ${SP_LW_HR} -R 1 ${NBANDS_HR_LW} -ch ${NBANDS_HR_LW} -I -g 2 -C 5 -v 13
+fmove uranus uranus_lw_hr
+
+exit 0

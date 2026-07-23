@@ -10,6 +10,10 @@ ARCHIVE_DATA="/data/cluster4/av24762/socrates_data"
 # HITRAN data
 HITRAN_DATA="${ARCHIVE_DATA}/hitran/uranus"
 
+# Spectral files
+SP_LW_HR="/data/cluster4/av24762/backup_work_uranus_hr/sp_lw_highres_ec_uranus"
+SP_SW_HR="/data/cluster4/av24762/backup_work_uranus_hr/sp_sw_highres_ec_uranus"
+
 # Must be writable if generating lbl cross-section files
 SW_DATA_LBL="${HITRAN_DATA}/lbl_sw"
 LW_DATA_LBL="${HITRAN_DATA}/lbl_lw"
