@@ -8,17 +8,18 @@ else
 fi
 
 # Set environment variables
-procs=24
+procs=8          # OMP threads per Ccorr_k job
+max_jobs=4       # concurrent jobs; procs * max_jobs should be <= number of cores
 . ./env_uranus
 
 mkdir -p ${LW_DATA_LBL}
 
 if [ ! -s ${C2H2_LBL_LW} ] ; then
-  skelfile="${LW_DATA_LBL}/sp_lw_500_ec_uranus_skel"
-  ./mk_sp_lw_500_ec_uranus_skel $skelfile > /dev/null
+  skelfile="${LW_DATA_LBL}/sp_lw_highres_ec_uranus_skel"
+  ./mk_sp_lw_highres_ec_uranus_skel $skelfile > /dev/null
   
   echo "Generating C2H2 line absorption data"
-  for ((i = 1; i < 501; i++))
+  for ((i = 1; i < ${NBANDS_HR_LW} + 1; i++))
   do
     lbl_base="${LW_DATA_LBL}/c2h2_blbl_l${i}_${PT_FILE}"
     if [ ! -s ${lbl_base}.nc ] || [ ! -f ${lbl_base}.done ] ; then
@@ -32,7 +33,11 @@ if [ ! -s ${C2H2_LBL_LW} ] ; then
       else
         ${ck_args} > ${lbl_base}_log
       fi
-    fi 
+      # cap the number of concurrent jobs so we don't oversubscribe the cores/queue
+      while [ "$(jobs -r -p | wc -l)" -ge "$max_jobs" ] ; do
+        wait -n
+      done
+    fi
   done
 
   wait

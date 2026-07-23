@@ -48,7 +48,7 @@ echo 'done'
 echo -n 'C2H2 '
 if [ ! -s $sp_dir/c2h2_sw_l ] ; then
   if [ ! -s $C2H2_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_sw_highres_ec_uranus"
+    echo ": No LBL file: please run ./mk_c2h2_lbl_sw_highres_ec_uranus"
     exit 1
   else
     rm -f $sp_dir/c2h2_sw_l*
@@ -65,7 +65,7 @@ echo 'done'
 echo -n 'C2H6 '
 if [ ! -s $sp_dir/c2h6_sw_l ] ; then
   if [ ! -s $C2H6_LBL_SW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_sw_highres_ec_uranus"
+    echo ": No LBL file: please run ./mk_c2h6_lbl_sw_highres_ec_uranus"
     exit 1
   else
     rm -f $sp_dir/c2h6_sw_l*
