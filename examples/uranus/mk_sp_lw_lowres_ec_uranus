@@ -4,7 +4,7 @@ echo -n 'Started mk_sp_lw_lowres_ec_uranus: '; date
 
 # Set environment variables
 # -------------------------
-procs=8
+procs=16
 . ./env_uranus
 
 if [ $RAD_BIN ] ; then
@@ -29,7 +29,7 @@ skelfile=${sp_dir}/sp_lw_lowres_ec_uranus_skel
 echo -n 'CH4 '
 if [ ! -s $sp_dir/ch4_lw_l ] ; then
   if [ ! -s $CH4_LBL_LW ] ; then
-    echo ": No LBL file: please run ./mk_ch4_lbl_lw_lowres_ec_uranus"
+    echo ": No LBL file: please run ./mk_ch4_lbl_lw_highres_ec_uranus"
     exit 1
   else
     rm -f $sp_dir/ch4_lw_l*
@@ -46,7 +46,7 @@ echo 'done'
 echo -n 'C2H2 '
 if [ ! -s $sp_dir/c2h2_lw_l ] ; then
   if [ ! -s $C2H2_LBL_LW ] ; then
-    echo ": No LBL file: please run ./mk_c2h2_lbl_lw_lowres_ec_uranus"
+    echo ": No LBL file: please run ./mk_c2h2_lbl_lw_highres_ec_uranus"
     exit 1
   else
     rm -f $sp_dir/c2h2_lw_l*
@@ -63,12 +63,13 @@ echo 'done'
 echo -n 'C2H6 '
 if [ ! -s $sp_dir/c2h6_lw_l ] ; then
   if [ ! -s $C2H6_LBL_LW ] ; then
-    echo ": No LBL file: please run ./mk_c2h6_lbl_lw_lowres_ec_uranus"
+    echo ": No LBL file: please run ./mk_c2h6_lbl_lw_highres_ec_uranus"
     exit 1
   else
     rm -f $sp_dir/c2h6_lw_l*
+    # Cover bands from 2 to 18 only, as there're no data beyond
     Ccorr_k -F ${PT_DIR}/${PT_FILE} \
-      -R 218 ${NBANDS_LR_LW} -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
+      -R 2 18 -l 46 ${COL_MASS_K_C2H6} -b 5.0e-4 \
       -s $skelfile +p -lk \
       -o $sp_dir/c2h6_lw_l -m $sp_dir/c2h6_lw_lm \
       -L $C2H6_LBL_LW \
@@ -117,7 +118,7 @@ $specfile
 6
 n
 t
-60 540
+20 200
 500
 5
 $sp_dir/ch4_lw_l
